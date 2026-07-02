@@ -1,0 +1,8 @@
+# CAD kernel + tests (required)
+build123d>=0.9
+pytest>=8
+
+# preview rendering (optional, used by tools/render_previews.py and CI)
+trimesh>=4
+matplotlib>=3.8
+numpy>=1.26

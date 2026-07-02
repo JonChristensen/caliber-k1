@@ -1,0 +1,27 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  geometry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Geometry sanity tests
+        run: python -m pytest tests/ -q
+      - name: Regenerate exports
+        run: python -m caliber_m1.export out
+      - name: Render previews
+        run: python tools/render_previews.py out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: caliber-m1-exports
+          path: out/
