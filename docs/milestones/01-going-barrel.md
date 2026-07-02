@@ -11,14 +11,23 @@ hangs off this barrel.
 
 | Part | Qty | Material | Nozzle | Layer | Infill | Notes |
 |---|---|---|---|---|---|---|
-| `mainspring` | 1 (+spares) | **PETG** | 0.4 | 0.20 | 100% | The consumable. Print 2–3; creep kills them over days. No supports; print flat. |
+| `mainspring` | 1 (+spares) | **regular PETG — not HF** | 0.4 | 0.20 | 100% | The consumable. Print 2–3; creep kills them over days. No supports; print flat. |
 | `drum` | 1 | PLA | 0.4 | 0.20 | 25% | Flat on floor. |
 | `cover` | 1 | PLA | 0.4 | 0.20 | 25% | Tabs up (print upside-down). |
-| `arbor` | 1 | **PETG** | 0.4 | 0.12 | 100% | Vertical, square up. Torque part. |
-| `ratchet_wheel` | 1 | PETG | 0.4 | 0.16 | 60% | Flat. |
-| `click` | 1 | **PETG** | 0.4 | 0.16 | 100% | Flexure — PETG mandatory, PLA will creep/snap. Pegs up (print upside-down, or supports under pegs). |
-| `winding_key` | 1 | PETG | 0.4 | 0.20 | 40% | Socket down, no supports needed up to the handle. |
-| `lock_pin` | 1 | PETG | 0.4 | 0.16 | 100% | Head up. |
+| `arbor` | 1 | PETG (HF is fine) | 0.4 | 0.12 | 100% | Vertical, square up. Torque part. |
+| `ratchet_wheel` | 1 | PETG (HF is fine) | 0.4 | 0.16 | 60% | Flat. |
+| `click` | 1 | **regular PETG — not HF** | 0.4 | 0.16 | 100% | Flexure — PLA will creep, PETG HF may snap. Pegs up (print upside-down, or supports under pegs). |
+| `winding_key` | 1 | PETG (HF is fine) | 0.4 | 0.20 | 40% | Socket down, no supports needed up to the handle. |
+| `lock_pin` | 1 | PETG (HF is fine) | 0.4 | 0.16 | 100% | Head up. |
+
+**Why "not HF" on the spring parts:** high-flow PETG (e.g. Bambu PETG HF) trades
+mechanical margin for print speed — by Bambu's own datasheet it yields at
+~34 MPa vs ~47–50 MPa for regular PETG, and breaks at 8.6% elongation where
+regular PETG bends without fracturing. A wound spring and a flexing pawl are
+exactly the parts that need that ductility headroom; a stressed HF spring takes
+a set (loses torque) sooner and fails by sudden snap. HF's stiffness is fine —
+use it freely for arbors, wheels, keys, and structure. Whatever PETG you print
+springs from: dry it first (65 °C, 4+ h) — wet PETG loses layer adhesion badly.
 | `bottom_plate`, `top_plate` | 1 ea | PLA | 0.4 | 0.20 | 25% | Flat. |
 | `pillar` | 4 | PLA | 0.4 | 0.20 | 40% | Vertical. |
 
