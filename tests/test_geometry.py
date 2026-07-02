@@ -8,7 +8,7 @@ from math import sqrt
 
 import pytest
 
-from caliber_m1.parameters import (
+from caliber_k1.parameters import (
     ARBOR, BARREL, RATCHET, SPRING, STAND, TOL,
     approx_winding_turns, pillar_height, spring_pitch, spring_radial_span,
 )
@@ -62,7 +62,7 @@ def test_stack_height_consistent():
 # --- solid-construction checks (build real OCCT geometry) ------------------
 
 def test_parts_build_and_have_volume():
-    from caliber_m1 import barrel, stand
+    from caliber_k1 import barrel, stand
 
     for maker in (barrel.ratchet_wheel, barrel.click, barrel.lock_pin, stand.pillar):
         part = maker()
@@ -70,7 +70,7 @@ def test_parts_build_and_have_volume():
 
 
 def test_arbor_length_matches_stack():
-    from caliber_m1.barrel import arbor, arbor_total_length
+    from caliber_k1.barrel import arbor, arbor_total_length
 
     part = arbor()
     bb = part.bounding_box()

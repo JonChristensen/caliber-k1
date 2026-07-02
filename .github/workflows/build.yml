@@ -18,10 +18,10 @@ jobs:
       - name: Geometry sanity tests
         run: python -m pytest tests/ -q
       - name: Regenerate exports
-        run: python -m caliber_m1.export out
+        run: python -m caliber_k1.export out
       - name: Render previews
         run: python tools/render_previews.py out
       - uses: actions/upload-artifact@v4
         with:
-          name: caliber-m1-exports
+          name: caliber-k1-exports
           path: out/

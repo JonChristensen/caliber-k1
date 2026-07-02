@@ -1,4 +1,4 @@
-"""Caliber M1 — Milestone 1 test stand.
+"""Caliber K1 — Milestone 1 test stand.
 
 Two plates + four pillars, bolted with M3×40. The top plate is a 3-spoke
 "spider" so the barrel drum and its pointer stay visible (and filmable).

@@ -1,6 +1,6 @@
 """Regenerate every Milestone 1 part: STEP + STL per part, assembly STEP + SVG.
 
-Usage:  python -m caliber_m1.export [out_dir]
+Usage:  python -m caliber_k1.export [out_dir]
 """
 
 import sys
@@ -63,7 +63,7 @@ def build_assembly(parts: dict) -> Compound:
     children.append(
         Pos(pin_x, pin_y, top_plate_z + STAND.plate_t - pin_len) * parts["lock_pin"]
     )
-    return Compound(label="caliber_m1_milestone1", children=children)
+    return Compound(label="caliber_k1_milestone1", children=children)
 
 
 def export_svg_views(assembly, out: Path):

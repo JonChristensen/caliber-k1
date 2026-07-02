@@ -1,7 +1,7 @@
-"""Caliber M1 — master parameter file.
+"""Caliber K1 — master parameter file.
 
 Every dimension in the caliber derives from the values here. Change a value,
-re-run `python -m caliber_m1.export`, and every affected part regenerates.
+re-run `python -m caliber_k1.export`, and every affected part regenerates.
 
 Units: millimeters, degrees.
 
@@ -37,7 +37,7 @@ TOL = Tolerances()
 # Movement-wide targets (Milestone 2+ — reference values, not yet consumed)
 # ---------------------------------------------------------------------------
 
-MOVEMENT_DIAMETER = 110.0     # target main plate diameter for Caliber M1
+MOVEMENT_DIAMETER = 110.0     # target main plate diameter for Caliber K1
 GEAR_MODULE = 1.0             # train gear module (Laimer proved >=0.7 printable)
 BALANCE_FREQ_HZ = 1.0         # candidate beat: 1 Hz, majestic desk-scale tick
 TARGET_RUNTIME_MIN = 60       # goal for the finished going train

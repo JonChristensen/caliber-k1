@@ -1,4 +1,4 @@
-"""Caliber M1 — Milestone 1: going barrel group.
+"""Caliber K1 — Milestone 1: going barrel group.
 
 Parts: drum, cover, arbor, mainspring, ratchet wheel, click, winding key,
 drum-lock pin. All geometry derives from parameters.py.

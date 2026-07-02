@@ -1,4 +1,4 @@
-# Caliber M1 — an open-source, 3D-printable, complication-ready watch movement
+# Caliber K1 — an open-source, 3D-printable, complication-ready watch movement
 
 **Nobody has published a working, printable, conventional watch movement designed
 as a platform for complications. This project builds one — in public.**
@@ -15,7 +15,7 @@ complications that don't exist yet in mechanical horology:
    plus perigean spring tides via an anomalistic-month cam.
 
 Everything is **parametric Python ([build123d](https://github.com/gumyr/build123d))**:
-the CAD is code, every dimension traces to [`caliber_m1/parameters.py`](caliber_m1/parameters.py),
+the CAD is code, every dimension traces to [`caliber_k1/parameters.py`](caliber_k1/parameters.py),
 every design decision is a reviewable git diff, and geometry is unit-tested
 before any printer wastes plastic.
 
@@ -40,7 +40,7 @@ printed tourbillon](https://www.thingiverse.com/thing:1249221) (Ø102 mm, runs).
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m pytest tests/          # geometry sanity checks
-.venv/bin/python -m caliber_m1.export      # writes STEP/STL/SVG to out/
+.venv/bin/python -m caliber_k1.export      # writes STEP/STL/SVG to out/
 .venv/bin/python tools/render_previews.py  # PNG previews of every part
 ```
 
@@ -50,17 +50,17 @@ Print settings and the metal-parts shopping list are in
 
 ## Repository layout
 
-- `caliber_m1/parameters.py` — every dimension in the caliber, one file
-- `caliber_m1/barrel.py` — Milestone 1 parts (drum, spring, arbor, ratchet, click…)
-- `caliber_m1/stand.py` — test-stand fixture
-- `caliber_m1/export.py` — regenerates all output files
+- `caliber_k1/parameters.py` — every dimension in the caliber, one file
+- `caliber_k1/barrel.py` — Milestone 1 parts (drum, spring, arbor, ratchet, click…)
+- `caliber_k1/stand.py` — test-stand fixture
+- `caliber_k1/export.py` — regenerates all output files
 - `tests/` — geometry checks that run in CI before anything gets printed
 - `docs/milestones/` — build guides, print settings, BOMs
 - `docs/log/` — the engineering log (decisions and why)
 
 ## Licensing
 
-- **Hardware designs** (everything under `caliber_m1/`, plus generated geometry):
+- **Hardware designs** (everything under `caliber_k1/`, plus generated geometry):
   [CERN-OHL-S v2](LICENSE) — strongly reciprocal open hardware license.
 - **Tooling** (`tools/`, CI): [MIT](LICENSE-MIT).
 
