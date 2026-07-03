@@ -338,3 +338,16 @@ def test_moon_phase_accuracy():
 def test_hour_pipe_passes_dial_cock():
     # hour wheel pipe Ø9 must journal inside the dial cock's T bore
     assert 4.5 + TOL.pivot_clearance > 4.5, "cock bore must clear the pipe"
+
+
+# --- Rev B: dual-train arithmetic --------------------------------------------
+
+def test_revb_trains_exact():
+    from caliber_k1.revb import train_check
+    for variant in ("metal", "print"):
+        r = train_check(variant)
+        assert r["center_min"] == pytest.approx(60.0), f"{variant}: center wheel"
+        assert r["fourth_s"] == pytest.approx(60.0), f"{variant}: seconds"
+        assert r["esc_s"] == pytest.approx(30.0), f"{variant}: escape (1 Hz, 30t)"
+    assert train_check("metal")["runtime_h"] >= 40, "metal variant: 40h+ reserve"
+    assert train_check("print")["runtime_h"] >= 8, "print variant: overnight run"
