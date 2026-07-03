@@ -21,6 +21,12 @@ before any printer wastes plastic.
 
 ## Status
 
+**Rev B in progress** — after a design review of the assembled rev A, the
+movement is being rearchitected from a storey stack into classic two-plate
+watch construction (see [log 0009](docs/log/0009-rev-b-architecture.md)).
+Rev A remains fully documented below as the proving ground for every
+library rev B is built from.
+
 | Milestone | What | Status |
 |---|---|---|
 | 1 | **Going barrel** — printed mainspring, drum, arbor, ratchet & click, test stand | 🟢 frame printed & verified; spring/click await PETG |
