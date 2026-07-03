@@ -455,3 +455,22 @@ def m4_layout() -> dict:
         "deck_pillar_a": (57.0, -17.0),  # plate-rooted, carry deck + cock
         "deck_pillar_b": (2.0, -79.0),
     }
+
+
+# --- M5 moon phase (kickoff): two-stage lunation train ----------------------
+# hour arbor (0.5 d/rev) --46/9--> --104/9--> moon disc
+# lunation modeled 29.5308642 d vs 29.530588853 true: 23.8 s/lunation,
+# ~1 day of phase error in 290 years. Found by exhaustive search (<=120t).
+@dataclass(frozen=True)
+class MoonPhase:
+    s1_wheel: int = 46
+    s1_pinion: int = 9
+    s2_wheel: int = 104
+    s2_pinion: int = 9
+
+
+MOON = MoonPhase()
+
+
+def lunation_days() -> float:
+    return 0.5 * (MOON.s1_wheel / MOON.s1_pinion) * (MOON.s2_wheel / MOON.s2_pinion)

@@ -325,3 +325,11 @@ def test_m4_parts_build():
     for maker in (motion.r1_arbor, motion.t_arbor, motion.deck_plate,
                   motion.dial_cock, motion.winding_knob):
         assert maker().volume > 150, f"{maker.__name__} implausibly small"
+
+
+def test_moon_phase_accuracy():
+    from caliber_k1.parameters import lunation_days
+    true_lun = 29.530588853
+    err_per_lun = abs(lunation_days() - true_lun)          # days
+    years_to_one_day = true_lun / err_per_lun / 12.368
+    assert years_to_one_day > 100, "moon phase must hold 1 day for >100 years"
