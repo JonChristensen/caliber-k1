@@ -189,3 +189,17 @@ def test_bridge_band_clears_pillars_and_drum():
         d = seg_dist((0.0, 0.0), path[i], path[i + 1])
         assert d - half_w > 36.0 + 1.0, \
             f"bridge segment {i} edge too close to the drum wall"
+
+
+def test_wave_tube_is_a_balance_seat():
+    """Milestone 3 contract: the wave tube center must stay at Swiss-lever
+    span from the escape arbor (2.0-2.4x escape pitch radius), so the
+    balance jewel can live in the barrel of the wave."""
+    from caliber_k1.decor import wave_tube_center
+    lay = train_layout()
+    path = [lay["foot_a"], lay["w1"], lay["w4"], lay["esc"], lay["foot_b"]]
+    tube = wave_tube_center(path)
+    esc_r = TRAIN.esc_wheel * TRAIN.module / 2
+    span = _dist(tube, lay["esc"])
+    assert 2.0 * esc_r < span < 2.4 * esc_r, \
+        f"tube at {span:.1f}mm from escape arbor — outside lever-escapement reach"

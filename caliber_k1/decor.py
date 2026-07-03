@@ -137,6 +137,25 @@ def _chaikin(points, iterations: int = 3):
     return pts
 
 
+def crest_frame(path_points, crest_at: float = 0.40):
+    """(point, normal, travel) local frame at the wave crest."""
+    path = _resample(path_points, 90)
+    ci = int((crest_at + 0.03) * (len(path) - 1))
+    j0, j1 = max(0, ci - 1), min(len(path) - 1, ci + 1)
+    dx, dy = path[j1][0] - path[j0][0], path[j1][1] - path[j0][1]
+    L = (dx * dx + dy * dy) ** 0.5
+    n = (-dy / L, dx / L)
+    return path[ci], n, (n[1], -n[0])
+
+
+def wave_tube_center(path_points, crest_at: float = 0.40):
+    """Center of the wave's tube — reserved as the BALANCE lower-pivot
+    seat: the jewel sits in the barrel of the wave (Milestone 3).
+    Must track the tube construction in wave_bridge_face."""
+    (px, py), (nx, ny), (tx, ty) = crest_frame(path_points, crest_at)
+    return (px + tx * 9.0 + nx * 9.0, py + ty * 9.0 + ny * 9.0)
+
+
 def wave_bridge_face(path_points, half_w: float = 6.5,
                      crest_at: float = 0.40, curl_r: float = 9.0):
     """Bridge body along path_points with an ocean-swell top edge and a
