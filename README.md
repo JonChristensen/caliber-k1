@@ -23,17 +23,22 @@ before any printer wastes plastic.
 
 | Milestone | What | Status |
 |---|---|---|
-| 1 | **Going barrel** — printed mainspring, drum, arbor, ratchet & click, test stand | 🟡 designed, first print pending |
-| 2 | Going train — cycloidal wheels & pinions, depthing rig | ⚪ next |
-| 3 | Escapement + balance — Swiss lever, printed hairspring: *it ticks* | ⚪ |
+| 1 | **Going barrel** — printed mainspring, drum, arbor, ratchet & click, test stand | 🟢 frame printed & verified; spring/click await PETG |
+| 2 | **Going train** — cycloidal wheels, whirlpool spokes, the wave bridge | 🟡 designed, print pending |
+| 3 | Escapement + balance — Swiss lever, printed hairspring: *it ticks* | ⚪ next |
 | 4 | Motion works, hands, dial + published complication-module interface | ⚪ |
 | 5 | First complication module: moon phase (Oechslin-style epicyclic) | ⚪ |
 | 6 | The haptic metronome | ⚪ |
 | 7 | The tide complication | ⚪ |
 
-Scale: this is a desk-scale movement (Ø110 mm target) — watch architecture at a
+Scale: this is a desk-scale movement (Ø150 mm plate) — watch architecture at a
 size FDM printing genuinely masters. Proven precedent: [Christoph Laimer's
 printed tourbillon](https://www.thingiverse.com/thing:1249221) (Ø102 mm, runs).
+
+The ocean — the tide complication's destination — lives in the frame itself:
+the train bridge is a breaking wave, and the wheels spin on whirlpool spokes.
+
+![the wave bridge](docs/images/m2-wave-bridge.png)
 
 ## Build it
 

@@ -38,13 +38,26 @@ BOTTOM = (Align.CENTER, Align.CENTER, Align.MIN)
 # Drum
 # ---------------------------------------------------------------------------
 
-def drum():
+def drum(toothed: bool = True):
+    """Barrel drum. With toothed=True (Milestone 2+) the lower band carries
+    the 72-tooth ring gear that drives the train; the drum IS the great
+    wheel, as in a real going barrel. toothed=False reproduces the plain
+    Milestone 1 print."""
     b = BARREL
     body_h = b.floor_t + b.inner_h
     outer_r = b.drum_outer_d / 2
     inner_r = b.inner_d / 2
 
     part = Cylinder(outer_r, body_h, align=BOTTOM)
+    if toothed:
+        from . import gears
+        from .parameters import TRAIN
+        gear = gears.wheel_face(TRAIN.drum_teeth, TRAIN.w1_pinion)
+        blank = Circle(outer_r + TRAIN.wheel_addendum * TRAIN.module + 2)
+        # over the lower band only: add proud tooth tips (to r37), then
+        # carve the tooth gaps back into the wall (root r34.75)
+        part += extrude(gear, TRAIN.drum_band_h)
+        part -= extrude(blank - gear, TRAIN.drum_band_h)
     # hollow out the spring chamber
     part -= Pos(0, 0, b.floor_t) * Cylinder(inner_r, b.inner_h + 1, align=BOTTOM)
     # floor bore rides the arbor's lower journal (hub_d is inside the chamber)

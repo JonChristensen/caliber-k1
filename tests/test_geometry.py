@@ -75,3 +75,117 @@ def test_arbor_length_matches_stack():
     part = arbor()
     bb = part.bounding_box()
     assert bb.size.Z == pytest.approx(arbor_total_length(), abs=0.01)
+
+
+# --- Milestone 2: train math, layout clearances, and the tripod fix --------
+
+from caliber_k1.parameters import TRAIN, train_layout, train_periods
+
+
+def _dist(a, b):
+    return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
+
+
+def test_pillar_positions_distinct():
+    from caliber_k1.stand import _pillar_positions
+    pts = _pillar_positions()
+    for i in range(len(pts)):
+        for j in range(i + 1, len(pts)):
+            assert _dist(pts[i], pts[j]) > STAND.pillar_d, \
+                f"pillars {i} and {j} overlap — the v1 duplicate-pillar bug"
+
+
+def test_train_ratios_exact():
+    p = train_periods()
+    assert p["w4"] == pytest.approx(60.0), "seconds arbor must be exactly 60 s"
+    assert p["esc"] == pytest.approx(30.0)
+    # 30-tooth escape wheel at 30 s/rev = 1 tooth/s = 1 Hz balance in M3
+    assert TRAIN.esc_wheel / p["esc"] == pytest.approx(1.0)
+
+
+def test_mesh_center_distances():
+    lay = train_layout()
+    m = TRAIN.module
+    assert _dist((0, 0), lay["w1"]) == pytest.approx(
+        m * (TRAIN.drum_teeth + TRAIN.w1_pinion) / 2)
+    assert _dist(lay["w1"], lay["w4"]) == pytest.approx(
+        m * (TRAIN.w1_wheel + TRAIN.w4_pinion) / 2)
+    assert _dist(lay["w4"], lay["esc"]) == pytest.approx(
+        m * (TRAIN.w4_wheel + TRAIN.esc_pinion) / 2)
+
+
+def test_layout_clearances():
+    """Every rotating tip circle clears every static obstacle by >=1.5mm."""
+    from caliber_k1.stand import _pillar_positions
+    from caliber_k1.parameters import MOVEMENT_DIAMETER
+    lay = train_layout()
+    m = TRAIN.module
+    add = TRAIN.wheel_addendum * m
+    tip = {
+        "w1": m * TRAIN.w1_wheel / 2 + add,
+        "w4": m * TRAIN.w4_wheel / 2 + add,
+        "esc": m * TRAIN.esc_pinion / 2 + 1.0,
+    }
+    drum_tip = m * TRAIN.drum_teeth / 2 + add
+    obstacles = [(p, STAND.pillar_d / 2, "pillar") for p in _pillar_positions()]
+    obstacles += [(lay["foot_a"], 4.0, "foot_a"), (lay["foot_b"], 4.0, "foot_b")]
+    for key, r in tip.items():
+        c = lay[key]
+        # inside the plate rim
+        assert _dist(c, (0, 0)) + r < MOVEMENT_DIAMETER / 2 - 2, \
+            f"{key} pokes past the rig plate rim"
+        for (ox, oy), orad, oname in obstacles:
+            assert _dist(c, (ox, oy)) > r + orad + 1.5, \
+                f"{key} tip circle hits {oname}"
+    # wheels that must NOT touch the drum (only W1's pinion meshes it)
+    for key in ("w4", "esc"):
+        assert _dist(lay[key], (0, 0)) > drum_tip + tip[key] - add + 1.5, \
+            f"{key} wheel fouls the drum teeth"
+
+
+def test_train_under_spider():
+    from caliber_k1.parameters import TRAIN_LEVELS
+    bridge_top = TRAIN_LEVELS["bridge_z"] + TRAIN_LEVELS["bridge_t"]
+    assert bridge_top < pillar_height() - 1.0, \
+        "wave bridge must clear the spider plate underside"
+
+
+def test_m2_parts_build():
+    from caliber_k1 import train_parts
+    w1 = train_parts.w1_arbor()
+    bridge = train_parts.wave_bridge()
+    plate = train_parts.rig_plate()
+    assert w1.volume > 500
+    assert bridge.volume > 1000
+    assert plate.volume > 10000
+    from caliber_k1.parameters import TRAIN_LEVELS
+    expected = 4 + TRAIN_LEVELS["bridge_z"] + 4  # pivot..bridge-pivot top
+    assert w1.bounding_box().size.Z == pytest.approx(expected, abs=0.01)
+
+
+def test_bridge_band_clears_pillars_and_drum():
+    """The bridge body (half-width 6.5) must not sweep through a pillar,
+    and its inner edge must clear the spinning drum wall (r36)."""
+    from caliber_k1.stand import _pillar_positions
+    lay = train_layout()
+    path = [lay["foot_a"], lay["w1"], lay["w4"], lay["esc"], lay["foot_b"]]
+    half_w = 6.5
+
+    def seg_dist(p, a, b):
+        ax, ay = a; bx, by = b; px, py = p
+        dx, dy = bx - ax, by - ay
+        L2 = dx * dx + dy * dy
+        t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / L2))
+        cx, cy = ax + t * dx, ay + t * dy
+        return ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5
+
+    for pil in _pillar_positions():
+        for i in range(len(path) - 1):
+            d = seg_dist(pil, path[i], path[i + 1])
+            assert d > half_w + STAND.pillar_d / 2 + 0.5, \
+                f"bridge segment {i} sweeps through pillar at {pil}"
+    # drum wall clearance: nearest approach of the band centerline to origin
+    for i in range(len(path) - 1):
+        d = seg_dist((0.0, 0.0), path[i], path[i + 1])
+        assert d - half_w > 36.0 + 1.0, \
+            f"bridge segment {i} edge too close to the drum wall"

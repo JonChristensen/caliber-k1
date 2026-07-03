@@ -9,15 +9,18 @@ from pathlib import Path
 
 from build123d import Compound, Pos, export_step, export_stl
 
-from . import barrel, stand
+from . import barrel, stand, train_parts
 from .parameters import (
     ARBOR, BARREL, SPRING, STAND, TOL,
     approx_winding_turns, pillar_height, spring_radial_span, spring_pitch,
+    train_layout, train_periods,
 )
 
 
 def build_parts() -> dict:
     return {
+        # Milestone 1 (drum now ships toothed for M2; drum(toothed=False)
+        # reproduces the original plain M1 print)
         "drum": barrel.drum(),
         "cover": barrel.cover(),
         "arbor": barrel.arbor(),
@@ -26,9 +29,14 @@ def build_parts() -> dict:
         "click": barrel.click(),
         "winding_key": barrel.winding_key(),
         "lock_pin": barrel.lock_pin(),
-        "bottom_plate": stand.bottom_plate(),
         "top_plate": stand.top_plate(),
         "pillar": stand.pillar(),
+        # Milestone 2 (rig_plate supersedes M1's bottom_plate)
+        "rig_plate": train_parts.rig_plate(),
+        "w1_arbor": train_parts.w1_arbor(),
+        "w4_arbor": train_parts.w4_arbor(),
+        "esc_arbor": train_parts.esc_arbor(),
+        "wave_bridge": train_parts.wave_bridge(),
     }
 
 
@@ -44,7 +52,7 @@ def build_assembly(parts: dict) -> Compound:
         + ARBOR.pivot_len
 
     children = [
-        Pos(0, 0, 0) * parts["bottom_plate"],
+        Pos(0, 0, 0) * parts["rig_plate"],
         Pos(0, 0, drum_z) * parts["drum"],
         Pos(0, 0, spring_z) * parts["mainspring"],
         Pos(0, 0, 0) * parts["arbor"],
@@ -63,7 +71,15 @@ def build_assembly(parts: dict) -> Compound:
     children.append(
         Pos(pin_x, pin_y, top_plate_z + STAND.plate_t - pin_len) * parts["lock_pin"]
     )
-    return Compound(label="caliber_k1_milestone1", children=children)
+    # going train + wave bridge
+    lay = train_layout()
+    az = train_parts.assembly_positions()
+    for key, part_name in (("w1", "w1_arbor"), ("w4", "w4_arbor"),
+                           ("esc", "esc_arbor")):
+        x, y = lay[key]
+        children.append(Pos(x, y, az["arbor_z0"]) * parts[part_name])
+    children.append(Pos(0, 0, az["bridge_z"]) * parts["wave_bridge"])
+    return Compound(label="caliber_k1_milestone2", children=children)
 
 
 def export_svg_views(assembly, out: Path):
@@ -107,6 +123,15 @@ def main():
     print(f"approx winding turns : {approx_winding_turns():.1f}")
     print(f"arbor length         : {barrel.arbor_total_length():.1f} mm")
     print(f"stand height overall : {STAND.plate_t * 2 + pillar_height():.1f} mm")
+    periods = train_periods()
+    print("--- train ---")
+    print(f"drum period          : {periods['drum']:.2f} s ({periods['drum']/60:.2f} min/rev)")
+    print(f"W1 period            : {periods['w1']:.2f} s")
+    print(f"W4 (seconds) period  : {periods['w4']:.4f} s")
+    print(f"escape pinion period : {periods['esc']:.4f} s")
+    lay = train_layout()
+    for k in ("w1", "w4", "esc"):
+        print(f"{k:4s} center          : ({lay[k][0]:6.1f}, {lay[k][1]:6.1f})")
     print(f"exports written to   : {out.resolve()}")
 
 

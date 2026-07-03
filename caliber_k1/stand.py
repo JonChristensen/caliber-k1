@@ -37,14 +37,17 @@ PIN_R = 30.0
 
 
 def _pillar_positions():
+    """Three pillars, 120° apart — a tripod.
+
+    History note: v1 generated four positions of which two coincided
+    (5.7°+180° == 125.7°+60° == 185.7°), so printed plates only ever had
+    three unique holes. Three points define a plane; the tripod is the
+    honest design. Guarded by test_pillar_positions_distinct.
+    """
     r = STAND.pillar_circle_d / 2
-    # rotated 45° off the spokes so pillars sit in the window gaps
     return [
         (r * cos((a + 60) * pi / 180), r * sin((a + 60) * pi / 180))
         for a in SPOKE_ANGLES
-    ] + [
-        (r * cos((SPOKE_ANGLES[0] + 180) * pi / 180),
-         r * sin((SPOKE_ANGLES[0] + 180) * pi / 180))
     ]
 
 

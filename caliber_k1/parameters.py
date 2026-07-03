@@ -34,13 +34,111 @@ TOL = Tolerances()
 
 
 # ---------------------------------------------------------------------------
-# Movement-wide targets (Milestone 2+ — reference values, not yet consumed)
+# Movement-wide targets
 # ---------------------------------------------------------------------------
 
-MOVEMENT_DIAMETER = 110.0     # target main plate diameter for Caliber K1
+MOVEMENT_DIAMETER = 150.0     # main plate diameter (H2C bed allows up to ~300)
 GEAR_MODULE = 1.0             # train gear module (Laimer proved >=0.7 printable)
-BALANCE_FREQ_HZ = 1.0         # candidate beat: 1 Hz, majestic desk-scale tick
+BALANCE_FREQ_HZ = 1.0         # 1 Hz beat: majestic desk-scale tick
 TARGET_RUNTIME_MIN = 60       # goal for the finished going train
+
+
+# ---------------------------------------------------------------------------
+# Milestone 2 — Going train
+#
+# Timing chain, all ratios exact by construction:
+#   drum (72t) --> W1 pinion (16)     : x4.5
+#   W1 wheel (50t) --> W4 pinion (12) : x4.1667
+#   W4 wheel (24t) --> escape pinion (12) : x2
+#
+# The spring yields ~3.2 usable turns. Drum period is set to 1125 s
+# (18.75 min/rev) so that 3.2 turns x 1125 s = 60 min runtime, and:
+#   W4 period = 1125 / 4.5 / (50/12) = exactly 60 s  --> seconds arbor
+#   escape period = 30 s --> a 30-tooth escape wheel at 1 Hz beat (M3)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class Train:
+    module: float = GEAR_MODULE
+    drum_teeth: int = 72              # ring gear cut on the drum's lower band
+    w1_wheel: int = 50
+    w1_pinion: int = 16
+    w4_wheel: int = 24
+    w4_pinion: int = 12
+    esc_pinion: int = 12
+    esc_wheel: int = 30               # Milestone 3 (sets 30 s escape period)
+    backlash: float = 0.15            # tangential, at the pitch circle
+    wheel_addendum: float = 1.0       # x module
+    wheel_dedendum: float = 1.3       # x module
+    pivot_d: float = 3.0              # printed pivots for rig v1 (steel later)
+    pinion_h: float = 5.0
+    wheel_h: float = 4.0
+    drum_band_h: float = 5.0          # toothed band height at drum bottom
+
+
+TRAIN = Train()
+
+
+def train_layout() -> dict:
+    """XY centers of train arbors + wave-bridge feet, barrel at (0, 0).
+
+    Angles chosen so every wheel clears the drum (tip r37), the three
+    stand pillars (r43, Ø10), and the rig plate rim (r75). Every clearance
+    is asserted pairwise in tests/test_geometry.py.
+    """
+    from math import cos, sin, radians
+
+    m = TRAIN.module
+    d_w1 = m * (TRAIN.drum_teeth + TRAIN.w1_pinion) / 2       # 44.0
+    d_w1_w4 = m * (TRAIN.w1_wheel + TRAIN.w4_pinion) / 2      # 31.0
+    d_w4_esc = m * (TRAIN.w4_wheel + TRAIN.esc_pinion) / 2    # 18.0
+
+    # The whole train sits in the pillar gap centered on azimuth 245.7°
+    # (pillars are at 65.7/185.7/305.7), then folds counterclockwise.
+    a1 = radians(245.7)
+    w1 = (d_w1 * cos(a1), d_w1 * sin(a1))
+    a2 = radians(160)
+    w4 = (w1[0] + d_w1_w4 * cos(a2), w1[1] + d_w1_w4 * sin(a2))
+    a3 = radians(120)
+    esc = (w4[0] + d_w4_esc * cos(a3), w4[1] + d_w4_esc * sin(a3))
+    return {
+        "w1": w1,
+        "w4": w4,
+        "esc": esc,
+        "foot_a": (12.0, -51.0),      # wave-bridge feet (integral posts)
+        "foot_b": (-62.7, -2.6),
+    }
+
+
+# Vertical stack above the rig plate top (z=0), keeping the whole train
+# UNDER the Milestone 1 spider plate (whose underside sits at z=22.8):
+#   drum gear band 0.5..5.5 | W1 pinion 0.5..5.5 | W1 wheel 6..10
+#   W4 pinion 6..11 | W4 wheel 11.5..15.5 | esc pinion 11.5..16.5
+#   bridge 17..21  (1.8 mm clear of the spider underside)
+TRAIN_LEVELS = {
+    "w1_pinion_z": 0.5,
+    "w1_wheel_z": 6.0,
+    "w4_pinion_z": 6.0,
+    "w4_wheel_z": 11.5,
+    "esc_pinion_z": 11.5,
+    "bridge_z": 17.0,
+    "bridge_t": 4.0,
+    "post_h": 17.0,
+}
+
+
+def train_periods() -> dict:
+    """Rotation period of each arbor in seconds, from the 60 min runtime goal."""
+    drum_period = TARGET_RUNTIME_MIN * 60 / approx_winding_turns_nominal()
+    w1 = drum_period / (TRAIN.drum_teeth / TRAIN.w1_pinion)
+    w4 = w1 / (TRAIN.w1_wheel / TRAIN.w4_pinion)
+    esc = w4 / (TRAIN.w4_wheel / TRAIN.esc_pinion)
+    return {"drum": drum_period, "w1": w1, "w4": w4, "esc": esc}
+
+
+def approx_winding_turns_nominal() -> float:
+    """The design-point usable turns (3.2) that set the drum period."""
+    return 3.2
 
 
 # ---------------------------------------------------------------------------
