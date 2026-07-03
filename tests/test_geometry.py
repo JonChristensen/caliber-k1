@@ -371,3 +371,10 @@ def test_revb_layout_meshes_and_fits():
     # P1: center vs fourth wheel)
     assert _dist(m["barrel"], m["third"]) > 37 + 31 + 1.5
     assert _dist(m["center"], m["fourth"]) > 33 + 13 + 1.5
+
+
+def test_revb_mainplate_builds():
+    from caliber_k1.revb_parts import mainplate
+    p = mainplate()
+    assert p.volume > 80000, "mainplate implausibly small"
+    assert p.bounding_box().size.Z == pytest.approx(4.0, abs=0.01)
