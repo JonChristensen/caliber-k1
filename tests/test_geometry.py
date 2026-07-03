@@ -576,3 +576,20 @@ def test_moon_is_actually_visible():
         Align.CENTER, Align.CENTER, Align.MIN))
     inter = dial_platform() & probe
     assert (inter.volume if inter else 0) < 0.5, "moon hidden behind the guard"
+
+
+def test_plate_bushings_open_from_the_top():
+    """A pivot must be able to ENTER every bridge-side bushing (they
+    sealed shut when PLATE_T grew — never again)."""
+    from build123d import Cylinder, Pos, Align
+    from caliber_k1.revb import revb_layout, PLATE_T
+    from caliber_k1.revb_parts import mainplate
+    p = mainplate()
+    m = revb_layout()
+    for k, r in (("barrel", 3.9), ("center", 1.4), ("third", 1.4),
+                 ("fourth", 1.4), ("escape", 1.4), ("balance", 1.15)):
+        x, y = m[k]
+        probe = Pos(x, y, PLATE_T - 2.5) * Cylinder(r, 4, align=(
+            Align.CENTER, Align.CENTER, Align.MIN))
+        inter = p & probe
+        assert (inter.volume if inter else 0) < 0.5, f"{k} bushing sealed"

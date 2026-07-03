@@ -17,19 +17,19 @@ def mainplate():
     from .revb import PLATE_T, M2E, motion_layout_b
     m = revb_layout()
     part = Cylinder(85, PLATE_T, align=BOTTOM)
-    # barrel arbor: Ø8 pivot (reuses the proven M1 arbor), blind 3 deep
+    # bridge-side bushings, cut FROM THE TOP (they sealed shut when the
+    # plate thickened to 6.5 — Jon's full-movement request exposed it).
+    # Depth 3, floor at PLATE_T-3 > pocket ceiling 2.8: worlds stay apart.
     bx, by = m["barrel"]
-    part -= Pos(bx, by, 1.0) * Cylinder(
-        ARBOR.pivot_d / 2 + TOL.pivot_clearance, 5, align=BOTTOM)
-    # train lower pivots Ø3, blind 3 deep
+    part -= Pos(bx, by, PLATE_T - 3.0) * Cylinder(
+        ARBOR.pivot_d / 2 + TOL.pivot_clearance, 4, align=BOTTOM)
     for k in ("center", "third", "fourth", "escape"):
         x, y = m[k]
-        part -= Pos(x, y, 1.0) * Cylinder(1.5 + TOL.pivot_clearance, 5,
-                                          align=BOTTOM)
-    # balance staff lower pivot Ø2.5
+        part -= Pos(x, y, PLATE_T - 3.0) * Cylinder(1.5 + TOL.pivot_clearance,
+                                                    4, align=BOTTOM)
     x, y = m["balance"]
-    part -= Pos(x, y, 1.0) * Cylinder(1.25 + TOL.pivot_clearance, 5,
-                                      align=BOTTOM)
+    part -= Pos(x, y, PLATE_T - 3.0) * Cylinder(1.25 + TOL.pivot_clearance,
+                                                4, align=BOTTOM)
     # 2e-r: center arbor passes through; dial-face POCKET hosts motion +
     # moon works (log 0013); stub bushings live in the pocket floor
     part -= Cylinder(_dial_bore(1.5), 20)
