@@ -203,3 +203,65 @@ def test_wave_tube_is_a_balance_seat():
     span = _dist(tube, lay["esc"])
     assert 2.0 * esc_r < span < 2.4 * esc_r, \
         f"tube at {span:.1f}mm from escape arbor — outside lever-escapement reach"
+
+
+# --- Milestone 3: escapement + balance --------------------------------------
+
+from caliber_k1.parameters import (
+    BAL, ESC, M3_LEVELS, MOVEMENT_DIAMETER, m3_layout, predicted_period,
+)
+
+
+def test_predicted_period_in_trim_band():
+    assert 0.80 < predicted_period() < 1.25, \
+        "balance/hairspring combo can't be trimmed to 1 Hz with rim nuts"
+
+
+def test_pallet_pins_symmetric():
+    m = m3_layout()
+    d0 = _dist(m["pins"][0], m["P"])
+    d1 = _dist(m["pins"][1], m["P"])
+    assert d0 == pytest.approx(d1, abs=0.01), "anchor arms must be symmetric"
+
+
+def test_hairspring_coils_dont_fuse():
+    pitch = (BAL.hs_r_out - BAL.hs_r_in) / BAL.hs_coils
+    assert pitch - BAL.hs_t > 0.55, "hairspring coils too close to print"
+
+
+def test_balance_fits_plate():
+    m = m3_layout()
+    reach = _dist(m["B"], (0, 0)) + BAL.ring_od / 2
+    assert reach < MOVEMENT_DIAMETER / 2 - 2
+
+
+def test_cock_column_clears_balance():
+    m = m3_layout()
+    assert _dist(m["cock_foot"], m["B"]) > BAL.ring_od / 2 + 5.0 + 1.5, \
+        "cock column inside the balance sweep"
+
+
+def test_platform_pillars_clear_moving_parts():
+    m = m3_layout()
+    lay = train_layout()
+    for key in ("pillar_a", "pillar_b"):
+        c = m[key]
+        assert _dist(c, m["E"]) > ESC.wheel_tip_r + 3.5 + 1.5, \
+            f"{key} inside the escape wheel sweep"
+        assert _dist(c, (0, 0)) > 37.0 + 3.5 + 1.5, f"{key} hits the drum"
+        assert _dist(c, lay["w1"]) > 26.0 + 3.5 + 1.5, f"{key} hits W1"
+        assert _dist(c, lay["w4"]) > 13.0 + 3.5 + 1.5, f"{key} hits W4"
+        assert _dist(c, m["B"]) > 5.5 + 3.5 + 1.0, f"{key} hits the staff/roller"
+        assert _dist(c, (0, 0)) + 3.5 < MOVEMENT_DIAMETER / 2 - 2
+
+
+def test_balance_ring_clears_platform():
+    assert M3_LEVELS["balance_z"] >= M3_LEVELS["platform_z"] + M3_LEVELS["platform_t"] + 0.5
+
+
+def test_m3_parts_build():
+    from caliber_k1 import escapement
+    for maker in (escapement.escape_wheel, escapement.pallet_lever,
+                  escapement.balance_cock, escapement.hairspring):
+        part = maker()
+        assert part.volume > 200, f"{maker.__name__} implausibly small"

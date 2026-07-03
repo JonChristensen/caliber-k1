@@ -25,7 +25,7 @@ before any printer wastes plastic.
 |---|---|---|
 | 1 | **Going barrel** — printed mainspring, drum, arbor, ratchet & click, test stand | 🟢 frame printed & verified; spring/click await PETG |
 | 2 | **Going train** — cycloidal wheels, whirlpool spokes, the wave bridge | 🟡 designed, print pending |
-| 3 | Escapement + balance — Swiss lever, printed hairspring: *it ticks* | ⚪ next |
+| 3 | **Escapement + balance** — pin-pallet lever, printed hairspring, the jewel in the wave | 🟡 designed, print pending |
 | 4 | Motion works, hands, dial + published complication-module interface | ⚪ |
 | 5 | First complication module: moon phase (Oechslin-style epicyclic) | ⚪ |
 | 6 | The haptic metronome | ⚪ |

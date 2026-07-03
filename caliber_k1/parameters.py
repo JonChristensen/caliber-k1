@@ -37,7 +37,7 @@ TOL = Tolerances()
 # Movement-wide targets
 # ---------------------------------------------------------------------------
 
-MOVEMENT_DIAMETER = 150.0     # main plate diameter (H2C bed allows up to ~300)
+MOVEMENT_DIAMETER = 170.0     # main plate diameter (grew for the balance; H2C fits ~300)
 GEAR_MODULE = 1.0             # train gear module (Laimer proved >=0.7 printable)
 BALANCE_FREQ_HZ = 1.0         # 1 Hz beat: majestic desk-scale tick
 TARGET_RUNTIME_MIN = 60       # goal for the finished going train
@@ -260,3 +260,128 @@ def approx_winding_turns() -> float:
         / SPRING.thickness
     )
     return turns_wound - turns_relaxed
+
+
+# ---------------------------------------------------------------------------
+# Milestone 3 — Escapement + balance ("the jewel in the wave")
+#
+# Architecture: the escapement is a storey ABOVE the wave bridge.
+#   z 17-21  wave bridge (M2)                  z 26.5-29.5 lever + roller
+#   z 23-26  escape wheel                      z 31-34     escapement platform
+#   z 35-40  balance ring (sweeps the crest)   z 41-44     hairspring
+#   z ~45-49 balance cock arm
+# Balance center = decor.wave_tube_center() — CI-enforced contract.
+#
+# Escapement type: PIN-PALLET lever (Roskopf). Chosen for FDM: cylindrical
+# pallet pins + pointed teeth tolerate print error far better than club-tooth
+# Swiss lever faces; proven in printed-watch practice. Upgrade path later.
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class Escapement:
+    wheel_teeth: int = 30             # = TRAIN.esc_wheel (30 s/rev, 1 Hz)
+    wheel_tip_r: float = 16.0
+    wheel_root_r: float = 12.5
+    tooth_lean_deg: float = 4.0       # face draw angle
+    wheel_t: float = 3.0
+    pin_d: float = 2.0                # pallet pins (printed; 2mm steel later)
+    engage: float = 1.6               # pin dip inside the tip circle
+    span_half_deg: float = 21.0       # pins subtend 3.5 tooth spaces (42 deg)
+    pallet_offset_deg: float = 25.0   # pallet line rotated off the balance line
+    lever_swing_deg: float = 5.5      # each side of center (banking-limited)
+    fork_slot_w: float = 3.1          # impulse pin 2.5 + play
+    roller_r: float = 5.5             # impulse pin orbit radius
+    impulse_pin_d: float = 2.5
+
+
+@dataclass(frozen=True)
+class Balance:
+    ring_od: float = 50.0
+    ring_id: float = 40.0
+    ring_h: float = 5.0
+    staff_d: float = 5.0
+    pivot_d: float = 2.5
+    timing_holes: int = 6             # M3 rim holes; nuts = timing weights
+    # hairspring (printed, PLA — stiffness sets the rate)
+    hs_t: float = 0.45                # strip thickness (single-ish wall)
+    hs_h: float = 4.0
+    hs_r_in: float = 8.0
+    hs_r_out: float = 24.0
+    hs_coils: int = 11
+    pla_modulus_gpa: float = 3.3      # +-20%; bench-trimmed via rim nuts
+    pla_density: float = 1.24e-3      # g/mm^3
+
+
+ESC = Escapement()
+BAL = Balance()
+
+M3_LEVELS = {
+    "esc_wheel_z": 23.0,
+    "lever_z": 26.5, "lever_t": 3.0,
+    "platform_z": 31.0, "platform_t": 3.0,
+    "balance_z": 35.0,
+    "hairspring_z": 41.0,
+    "cock_arm_z": 45.0, "cock_arm_t": 4.0,
+}
+
+
+def balance_inertia() -> float:
+    """Ring inertia in kg*m^2 (spokes ~+10%)."""
+    r_o, r_i = BAL.ring_od / 2, BAL.ring_id / 2
+    vol = pi * (r_o**2 - r_i**2) * BAL.ring_h            # mm^3
+    mass = vol * BAL.pla_density * 1e-3                  # kg
+    r_g2 = (r_o**2 + r_i**2) / 2 * 1e-6                  # m^2
+    return 1.10 * mass * r_g2
+
+
+def hairspring_length() -> float:
+    return pi * (BAL.hs_r_in + BAL.hs_r_out) * BAL.hs_coils  # mm
+
+
+def hairspring_stiffness() -> float:
+    """Torsional stiffness k = E*I/L in N*m/rad."""
+    E = BAL.pla_modulus_gpa * 1e9
+    I_sec = BAL.hs_h * BAL.hs_t**3 / 12 * 1e-12          # m^4
+    return E * I_sec / (hairspring_length() * 1e-3)
+
+
+def predicted_period() -> float:
+    """T = 2*pi*sqrt(I/k) — must land near 1.0 s (trim via rim nuts)."""
+    return 2 * pi * (balance_inertia() / hairspring_stiffness()) ** 0.5
+
+
+def m3_layout() -> dict:
+    """Escapement geometry, all derived. E=escape, P=pallet, B=balance."""
+    from math import atan2, cos, sin, radians
+    from .decor import wave_tube_center
+
+    lay = train_layout()
+    path = [lay["foot_a"], lay["w1"], lay["w4"], lay["esc"], lay["foot_b"]]
+    E = lay["esc"]
+    B = wave_tube_center(path)
+    ang_EB = atan2(B[1] - E[1], B[0] - E[0])
+    # pallet center: on a ray rotated off the balance line, at locking distance
+    rho = ESC.wheel_tip_r + ESC.pin_d / 2 - ESC.engage      # pin orbit about E
+    a = rho / cos(radians(ESC.span_half_deg))
+    ang_EP = ang_EB + radians(ESC.pallet_offset_deg)
+    P = (E[0] + a * cos(ang_EP), E[1] + a * sin(ang_EP))
+    # pallet pins: symmetric about the E->P line, on the rho circle
+    pins = []
+    for s in (+1, -1):
+        th = ang_EP + s * radians(ESC.span_half_deg)
+        pins.append((E[0] + rho * cos(th), E[1] + rho * sin(th)))
+    # unit vectors
+    u_pb = ((B[0] - P[0]), (B[1] - P[1]))
+    L_pb = (u_pb[0] ** 2 + u_pb[1] ** 2) ** 0.5
+    u_pb = (u_pb[0] / L_pb, u_pb[1] / L_pb)
+    u_pe = ((P[0] - E[0]) / a, (P[1] - E[1]) / a)
+    n_pe = (-u_pe[1], u_pe[0])
+    # platform supports: two plate-rooted pillars in verified-open zones
+    # (clear of drum r37, W1 r26 sweep, W4 r13 sweep, escape wheel r16,
+    # the lever fan, the crest art, and the balance staff)
+    pillar_a = (-72.0, -28.0)
+    pillar_b = (-60.0, -44.0)
+    cock_foot = (-28.0, -73.4)
+    return {"E": E, "B": B, "P": P, "pins": pins, "fork_len": L_pb,
+            "u_pb": u_pb, "n_pe": n_pe, "pillar_a": pillar_a,
+            "pillar_b": pillar_b, "cock_foot": cock_foot}

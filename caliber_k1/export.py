@@ -9,7 +9,7 @@ from pathlib import Path
 
 from build123d import Compound, Pos, export_step, export_stl
 
-from . import barrel, stand, train_parts
+from . import barrel, escapement, stand, train_parts
 from .parameters import (
     ARBOR, BARREL, SPRING, STAND, TOL,
     approx_winding_turns, pillar_height, spring_radial_span, spring_pitch,
@@ -37,6 +37,16 @@ def build_parts() -> dict:
         "w4_arbor": train_parts.w4_arbor(),
         "esc_arbor": train_parts.esc_arbor(),
         "wave_bridge": train_parts.wave_bridge(),
+        # Milestone 3
+        "escape_wheel": escapement.escape_wheel(),
+        "pallet_lever": escapement.pallet_lever(),
+        "roller": escapement.roller(),
+        "balance_staff": escapement.balance_staff(),
+        "balance_wheel": escapement.balance_wheel(),
+        "hairspring": escapement.hairspring(),
+        "tube_chaton": escapement.tube_chaton(),
+        "platform": escapement.platform(),
+        "balance_cock": escapement.balance_cock(),
     }
 
 
@@ -79,6 +89,22 @@ def build_assembly(parts: dict) -> Compound:
         x, y = lay[key]
         children.append(Pos(x, y, az["arbor_z0"]) * parts[part_name])
     children.append(Pos(0, 0, az["bridge_z"]) * parts["wave_bridge"])
+    # escapement storey
+    from .parameters import M3_LEVELS, m3_layout
+    m3 = m3_layout()
+    E, B = m3["E"], m3["P"]
+    Bc = m3["B"]
+    children += [
+        Pos(E[0], E[1], p + M3_LEVELS["esc_wheel_z"]) * parts["escape_wheel"],
+        Pos(B[0], B[1], p + M3_LEVELS["lever_z"]) * parts["pallet_lever"],
+        Pos(Bc[0], Bc[1], p + M3_LEVELS["lever_z"]) * parts["roller"],
+        Pos(Bc[0], Bc[1], p + 18.0) * parts["balance_staff"],
+        Pos(Bc[0], Bc[1], p + M3_LEVELS["balance_z"]) * parts["balance_wheel"],
+        Pos(Bc[0], Bc[1], p + M3_LEVELS["hairspring_z"]) * parts["hairspring"],
+        Pos(Bc[0], Bc[1], p + 15.5) * parts["tube_chaton"],
+        Pos(0, 0, p + M3_LEVELS["platform_z"]) * parts["platform"],
+        Pos(0, 0, p) * parts["balance_cock"],
+    ]
     return Compound(label="caliber_k1_milestone2", children=children)
 
 

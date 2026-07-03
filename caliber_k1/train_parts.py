@@ -93,14 +93,25 @@ def esc_arbor():
     t = TRAIN
     pivot_r = t.pivot_d / 2
     pinion = gears.pinion_face(t.esc_pinion)
+    from .parameters import M3_LEVELS
     sections = [
         (pivot_r, 4.0),
         (2.5, LV["esc_pinion_z"]),                        # lower shaft (11.5)
         (pinion, t.pinion_h),
         (2.5, LV["bridge_z"] - (LV["esc_pinion_z"] + t.pinion_h)),
-        (pivot_r, 4.0),
+        # M3: journal through the bridge, then up to carry the escape wheel
+        (pivot_r, LV["bridge_t"]),
+        (pivot_r, M3_LEVELS["esc_wheel_z"] - (LV["bridge_z"] + LV["bridge_t"])),
     ]
-    return _arbor_stack(sections)
+    part = _arbor_stack(sections)
+    # D-flat wheel seat + continuation to the platform's upper bearing
+    z_seat = 4.0 + M3_LEVELS["esc_wheel_z"]               # local z of wheel
+    seat_h = 3.2
+    top_len = (M3_LEVELS["platform_z"] + M3_LEVELS["platform_t"] - 1.0) \
+        - (M3_LEVELS["esc_wheel_z"] + seat_h)
+    part += Pos(0, 0, z_seat) * Cylinder(pivot_r, seat_h + top_len, align=BOTTOM)
+    part -= Pos(1.1 + 15, 0, z_seat) * Box(30, 30, seat_h, align=BOTTOM)
+    return part
 
 
 def wave_bridge():
@@ -129,6 +140,23 @@ def wave_bridge():
         x, y = lay[key]
         part -= Pos(x, y, 0) * Cylinder(1.6 + TOL.snug_clearance,
                                         LV["bridge_t"] * 3)
+    # --- Milestone 3 additions ---
+    from .decor import crest_frame, wave_tube_center
+    from .parameters import m3_layout
+    m = m3_layout()
+    # pallet pad: fused to the band's inboard side, carries the pallet
+    # arbor's lower bearing and the leg_pad spigot socket
+    part += Pos(m["P"][0], m["P"][1], 0) * Cylinder(8.0, LV["bridge_t"],
+                                                    align=BOTTOM)
+    part -= Pos(m["P"][0], m["P"][1], LV["bridge_t"] - 3.0) * Cylinder(
+        1.5 + TOL.pivot_clearance, 4, align=BOTTOM)
+    # chaton spigot holes under the tube (from the bridge underside)
+    tube = wave_tube_center(path)
+    _, n_hat, _ = crest_frame(path)
+    for s in (+1, -1):
+        part -= Pos(tube[0] + s * 6.8 * n_hat[0],
+                    tube[1] + s * 6.8 * n_hat[1], 0) * Cylinder(
+            1.05, 1.6, align=BOTTOM)
     return part
 
 
@@ -161,6 +189,26 @@ def rig_plate():
         part += Pos(x, y, s.plate_t) * Cylinder(4.0, LV["post_h"], align=BOTTOM)
         part += Pos(x, y, s.plate_t + LV["post_h"]) * Cylinder(
             1.6, LV["bridge_t"], align=BOTTOM
+        )
+    # --- Milestone 3 additions ---
+    from .parameters import M3_LEVELS, m3_layout
+    m = m3_layout()
+    # plate-rooted pillars supporting the escapement platform
+    for key in ("pillar_a", "pillar_b"):
+        px, py = m[key]
+        part += Pos(px, py, s.plate_t) * Cylinder(3.5, M3_LEVELS["platform_z"],
+                                                  align=BOTTOM)
+        part += Pos(px, py, s.plate_t + M3_LEVELS["platform_z"]) * Cylinder(
+            1.6, M3_LEVELS["platform_t"], align=BOTTOM)
+    # balance cock foot: 2x M3 + nut pockets
+    fx, fy = m["cock_foot"]
+    L = (fx * fx + fy * fy) ** 0.5
+    tang = (-fy / L, fx / L)
+    for sgn in (+1, -1):
+        hx, hy = fx + sgn * 4.5 * tang[0], fy + sgn * 4.5 * tang[1]
+        part -= Pos(hx, hy, 0) * Cylinder(s.bolt_clear_d / 2, s.plate_t * 3)
+        part -= Pos(hx, hy, 0) * extrude(
+            RegularPolygon(s.nut_pocket_w / 3**0.5, 6), s.nut_pocket_t
         )
     return part
 
