@@ -100,3 +100,23 @@ def escapement_layout_b() -> dict:
     feet = [(P[0] + 8 * perp[0], P[1] + 8 * perp[1]),
             (P[0] - 8 * perp[0], P[1] - 8 * perp[1])]
     return {"E": E, "B": B, "P": P, "pins": pins, "pallet_feet": feet}
+
+
+def keyless_layout_b() -> dict:
+    """2d: winding path. Stem enters the rim at the barrel azimuth (105 deg,
+    inside the reserved 90-120 sector), axis aimed at the barrel arbor at
+    z26.25 (crown-wheel mid-plane). Ratchet + crown wheel ride ABOVE the
+    broad bridge (z24.5-28); click mounts on the bridge top. The crown
+    wheel is a FACE GEAR (printable) meshing the stem's 10t spur pinion.
+    Hand-setting: deferred to 2e (friction cannon on the center arbor)."""
+    from math import cos, sin, radians
+    m = revb_layout()
+    bx, by = m["barrel"]
+    az = radians(105)
+    stem_dir = (-cos(az), -sin(az))              # rim -> inward
+    crown_wheel = (bx + 24 * cos(az), by + 24 * sin(az))  # 24 = ratchet(24t)+crown(24t) mesh c-c
+    stem_tip = (crown_wheel[0], crown_wheel[1])
+    return {"stem_az_deg": 105.0, "stem_z": 26.25,
+            "crown_wheel": crown_wheel, "ratchet": (bx, by),
+            "crown_knob_r": (85.0, "at the rim, az 105"),
+            "z_ratchet": (24.5, 28.0), "z_crown": (24.5, 28.0)}

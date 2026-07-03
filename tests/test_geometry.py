@@ -436,3 +436,23 @@ def test_revb_cocks_build():
     from caliber_k1.revb_parts import pallet_cock, balance_cock_b
     assert pallet_cock().volume > 200
     assert balance_cock_b().volume > 800
+
+
+def test_bridge_stays_on_the_plate():
+    from caliber_k1.revb_parts import broad_wave_bridge
+    bb = broad_wave_bridge().bounding_box()
+    for v in (bb.min.X, bb.min.Y, bb.max.X, bb.max.Y):
+        assert abs(v) <= 85.5, f"bridge overhangs the mainplate rim: {v:.1f}"
+
+
+def test_keyless_layout():
+    from caliber_k1.revb import keyless_layout_b, revb_layout
+    k, m = keyless_layout_b(), revb_layout()
+    # crown wheel meshes the ratchet at 24t+24t module-1 center distance
+    assert _dist(k["crown_wheel"], m["barrel"]) == pytest.approx(24.0, abs=0.05)
+    # crown wheel stays inside the rim and clear of the center pad
+    assert _dist(k["crown_wheel"], (0, 0)) + 13 < 84
+    # stem sector: crown wheel azimuth within the reserved 90-120 band
+    from math import atan2, degrees
+    az = degrees(atan2(k["crown_wheel"][1], k["crown_wheel"][0])) % 360
+    assert 90 <= az <= 120

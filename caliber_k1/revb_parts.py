@@ -85,16 +85,16 @@ def broad_wave_bridge():
     bx, by = m["barrel"]
 
     outline = [
-        (-11, 95), (32, 82), (50, 30), (52, 2),
+        (-11, 84), (30, 74), (50, 30), (52, 2),
         (40, -24), (48, -34),          # swell 1
         (34, -46), (40, -58),          # swell 2
         (22, -64), (24, -76),          # swell 3 (building)
         (0, -78), (-24, -80),          # approach to the crest
         (-52, -70), (-64, -44),        # past the well, SW
-        (-62, -12), (-56, 22), (-50, 52), (-36, 84),
+        (-62, -12), (-56, 22), (-48, 50), (-34, 74),
     ]
     face = _ccw_polygon(_chaikin(outline))
-    face += P_(bx, by) * Circle(43.0)                     # barrel plateau
+    face += P_(bx, by) * Circle(42.0)                     # barrel plateau (rim-flush)
     face += Circle(13.0)                                  # center pad
     for k in ("third", "fourth", "escape"):
         face += P_(*m[k]) * Circle(9.0)
