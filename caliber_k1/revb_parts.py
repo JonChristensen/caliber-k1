@@ -114,6 +114,20 @@ def broad_wave_bridge():
     part -= P_(bx, by, 0) * Cyl(ARBOR.pivot_d / 2 + TOL.pivot_clearance, 12)
     for f in ((44.0, 8.0), (14.0, 40.0), (-54.0, -20.0), (0.0, -70.0)):
         part -= P_(f[0], f[1], 0) * Cyl(1.7, 12)
+    # 2d additions: stem tunnel block (bore at z30.5 global = local 9.5)
+    # and two click spigot holes near the ratchet
+    from math import cos, sin, radians
+    from build123d import Rot, Box
+    az = radians(105)
+    tx, ty = 79 * cos(az), 79 * sin(az)
+    part += P_(tx, ty, 3.0) * Rot(0, 0, 105) * Box(
+        10, 12, 9.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    part -= P_(tx, ty, 9.5) * Rot(0, 90, 0) * Rot(0, 0, 105) * Cyl(2.2, 30)
+    m4l = revb_layout()
+    bx2, by2 = m4l["barrel"]
+    for dx, dy in ((14, -16), (19, -16)):
+        part -= P_(bx2 + dx, by2 + dy, 1.0) * Cyl(1.65, 4,
+                    align=(Align.CENTER, Align.CENTER, Align.MIN))
     return part
 
 
@@ -162,4 +176,64 @@ def balance_cock_b():
                                      align=(Align.CENTER, Align.CENTER, Align.MIN))
     part -= P_(B[0], B[1], 1.5) * Cyl(2.1, 5,
                                       align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return part
+
+
+def ratchet_b():
+    """24t wheel on the barrel square above the bridge (z24.5-28):
+    winds via the crown wheel, holds via the click."""
+    from . import gears
+    face = gears.wheel_face(24, 24)
+    part = extrude(face, 3.5)
+    sq = ARBOR.square_side + 2 * TOL.snug_clearance
+    from build123d import Rectangle
+    part -= extrude(Rectangle(sq, sq), 10)
+    return part
+
+
+def crown_wheel_b():
+    """Spur 24t rim (meshes the ratchet) + 20 face slots on top (meshed
+    by the stem pinion): the printable axis-turner. Rides a Ø4 stud."""
+    from math import cos, sin, pi
+    from build123d import Box, Rot, Cylinder as Cyl, Pos as P_
+    from . import gears
+    part = extrude(gears.wheel_face(24, 24), 3.5)
+    for k in range(20):
+        a = 360 * k / 20
+        part -= Rot(0, 0, a) * P_(10.0, 0, 1.0) * Box(
+            4.0, 1.6, 3.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    part -= Cyl(2.0 + TOL.pivot_clearance, 12)
+    return part
+
+
+def stem_crown():
+    """Crown, stem, and 10t pinion — one print, axis along +X (local);
+    the export rotates it to az105. Pinion teeth dip into the crown
+    wheel's face slots."""
+    from build123d import Rot, Cylinder as Cyl, Pos as P_
+    from . import gears
+    part = Rot(0, 90, 0) * Cyl(7.0, 6.0)               # crown knob at x~0
+    for k in range(18):                                 # grip flutes
+        a = 360 * k / 18
+        part -= Rot(a, 0, 0) * P_(0, 7.2, 0) * Rot(0, 90, 0) * Cyl(1.2, 8)
+    part += P_(3, 0, 0) * Rot(0, 90, 0) * Cyl(2.0, 14, align=(
+        Align.CENTER, Align.CENTER, Align.MIN))         # shaft x3..17
+    pin = extrude(gears.pinion_face(10), 4.0)           # 10t, module 1
+    part += P_(17, 0, 0) * Rot(0, 90, 0) * pin          # pinion x17..21
+    part += P_(21, 0, 0) * Rot(0, 90, 0) * Cyl(1.0, 2.5, align=(
+        Align.CENTER, Align.CENTER, Align.MIN))         # pilot tip
+    return part
+
+
+def click_b():
+    """Flexure click on the bridge top, engaging the ratchet. Two Ø3.15
+    spigot pegs drop into the bridge; PETG print."""
+    from build123d import Cylinder as Cyl, Pos as P_
+    from .revb import revb_layout
+    face = _ccw_band([(0, 0), (14, 3), (22, 9)], 2.0)
+    face += Circle(4.0)
+    part = extrude(face, 3.0)
+    for x in (0, 5):
+        part += P_(x, 0, -3.2) * Cyl(1.55, 3.2,
+                                     align=(Align.CENTER, Align.CENTER, Align.MIN))
     return part

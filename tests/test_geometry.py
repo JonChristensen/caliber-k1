@@ -456,3 +456,9 @@ def test_keyless_layout():
     from math import atan2, degrees
     az = degrees(atan2(k["crown_wheel"][1], k["crown_wheel"][0])) % 360
     assert 90 <= az <= 120
+
+
+def test_revb_keyless_parts_build():
+    from caliber_k1 import revb_parts as rp
+    for mk in (rp.ratchet_b, rp.crown_wheel_b, rp.stem_crown, rp.click_b):
+        assert mk().volume > 150, f"{mk.__name__} implausibly small"
