@@ -462,3 +462,11 @@ def test_revb_keyless_parts_build():
     from caliber_k1 import revb_parts as rp
     for mk in (rp.ratchet_b, rp.crown_wheel_b, rp.stem_crown, rp.click_b):
         assert mk().volume > 150, f"{mk.__name__} implausibly small"
+
+
+def test_click_actually_reaches_the_ratchet():
+    from caliber_k1.revb import click_geometry_b
+    g = click_geometry_b()
+    root_r, tip_r = 12.0 - 1.3, 13.0          # 24t module-1 wheel
+    assert root_r + 0.3 < g["tip_r"] < tip_r - 0.3, \
+        f"click tip at r{g['tip_r']:.1f} does not engage teeth ({root_r}-{tip_r})"

@@ -120,3 +120,27 @@ def keyless_layout_b() -> dict:
             "crown_wheel": crown_wheel, "ratchet": (bx, by),
             "crown_knob_r": (85.0, "at the rim, az 105"),
             "z_ratchet": (24.5, 28.0), "z_crown": (24.5, 28.0)}
+
+
+def click_geometry_b() -> dict:
+    """Click in the RATCHET frame (origin = ratchet center), M1's proven
+    jamming layout scaled to the 24t/Ø26 wheel: block at r~20, tangential
+    arm, wedge tip at r12.1 (0.9 into the teeth). CCW push runs along the
+    arm axis -> tip digs in (blocks let-down); CW lifts it (winding).
+    Mounted rotated -30 deg about the ratchet, SE of the wheel."""
+    outline = [(16.9, -1.3), (22.1, -1.3), (22.1, 5.2), (16.9, 5.2),
+               (16.9, 4.2), (4.0, 13.5), (2.9, 11.8), (4.6, 12.1),
+               (16.9, 2.9)]
+    pegs = [(18.0, 1.5), (21.5, 1.5)]
+    return {"outline": outline, "pegs": pegs, "angle_deg": -30.0,
+            "tip_r": (2.9**2 + 11.8**2) ** 0.5}
+
+
+def click_peg_points_global() -> list:
+    """Peg positions in movement coordinates (shared by click + bridge)."""
+    from math import cos, sin, radians
+    g = click_geometry_b()
+    bx, by = revb_layout()["barrel"]
+    a = radians(g["angle_deg"])
+    return [(bx + x * cos(a) - y * sin(a), by + x * sin(a) + y * cos(a))
+            for x, y in g["pegs"]]
