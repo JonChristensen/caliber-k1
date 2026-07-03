@@ -72,44 +72,47 @@ def wave_bridge_b():
 
 
 def broad_wave_bridge():
-    """The NH35-style broad train+barrel bridge (log 0010): ONE plate at
-    z21-24 covering barrel and train, underside bosses reaching down to
-    z16 for the four train upper pivots, barrel arbor bearing in-plate,
-    and a Ø54 balance well where the balance swims visible. The wave
-    rolls along the outboard edge, cresting at the well, breaking away
-    from the balance (serenity direction, per Jon)."""
+    """The NH35-style broad train+barrel bridge, v2 (log 0010): the wave
+    IS the plate's outboard boundary. Three swells roll along the SE edge
+    as bulges of the outline itself; the crest lobe straddles the balance
+    well's SW rim, so cutting the well carves the curl into an open
+    crescent — the balance emerges from the wave into calm water."""
     from build123d import Cylinder as Cyl, Pos as P_
-    from .decor import wave_bridge_face
+    from math import cos, sin, radians
+    from .decor import _ccw_polygon, _chaikin
     m = revb_layout()
     BAL = m["balance"]
     bx, by = m["barrel"]
 
-    # structural body: pads over every station, joined by wide bands
-    face = P_(bx, by) * Circle(43.0)
+    outline = [
+        (-11, 95), (32, 82), (50, 30), (52, 2),
+        (40, -24), (48, -34),          # swell 1
+        (34, -46), (40, -58),          # swell 2
+        (22, -64), (24, -76),          # swell 3 (building)
+        (0, -78), (-24, -80),          # approach to the crest
+        (-52, -70), (-64, -44),        # past the well, SW
+        (-62, -12), (-56, 22), (-50, 52), (-36, 84),
+    ]
+    face = _ccw_polygon(_chaikin(outline))
+    face += P_(bx, by) * Circle(43.0)                     # barrel plateau
     face += Circle(13.0)                                  # center pad
     for k in ("third", "fourth", "escape"):
         face += P_(*m[k]) * Circle(9.0)
-    face += _ccw_band([m["barrel"], m["center"], m["third"],
-                       m["fourth"], m["escape"]], 10.0)
     face += P_(*BAL) * Circle(32.0)                       # well surround
-    # the wave: decorative band along the outboard rim, crest at the well
-    wave_path = [(58.0, 16.0), (46.0, -20.0), (26.0, -54.0),
-                 (-2.0, -66.0), (-30.0, -70.0)]
-    face += wave_bridge_face(wave_path, half_w=6.5, crest_at=0.62)
-    # the balance well (cuts the curl open at its rim)
-    face -= P_(*BAL) * Circle(27.0)
+    # crest lobe straddling the well rim (SW): the well cut opens it
+    ca = radians(215)
+    face += P_(BAL[0] + 33 * cos(ca), BAL[1] + 33 * sin(ca)) * Circle(13.0)
+    face -= P_(*BAL) * Circle(27.0)                       # the balance well
     part = extrude(face, 3.0)
-    # train bosses: hang from plate underside to z16 (plate local z0=21)
+    # train bosses to z16 (plate local z0 = 21) + open bearings
     for k in ("center", "third", "fourth", "escape"):
         x, y = m[k]
         part += P_(x, y, -5.0) * Cyl(4.0, 5.0,
                                      align=(Align.CENTER, Align.CENTER, Align.MIN))
         part -= P_(x, y, -6.0) * Cyl(1.5 + TOL.pivot_clearance, 12,
                                      align=(Align.CENTER, Align.CENTER, Align.MIN))
-    # barrel arbor bearing, in-plate (drum top at 20.5, plate bottom 21)
     part -= P_(bx, by, 0) * Cyl(ARBOR.pivot_d / 2 + TOL.pivot_clearance, 12)
-    # feet: 4x M3 in solid zones, clear of the stem sector (az 90-120)
-    for f in ((56.0, 14.0), (40.0, -40.0), (-30.0, -68.0), (14.0, 40.0)):
+    for f in ((44.0, 8.0), (14.0, 40.0), (-54.0, -20.0), (0.0, -70.0)):
         part -= P_(f[0], f[1], 0) * Cyl(1.7, 12)
     return part
 
