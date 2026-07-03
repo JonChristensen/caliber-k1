@@ -56,3 +56,16 @@ def revb_layout() -> dict:
     BAL = (E[0] + 34.5 * cos(radians(160)), E[1] + 34.5 * sin(radians(160)))
     return {"barrel": B, "center": C, "third": T3, "fourth": F,
             "escape": E, "balance": BAL}
+
+
+# --- Reserved zones (claimed now so no later step squats on them) -----------
+# Keyless works: crown/stem enters the plate edge at the barrel azimuth,
+# running radially to a crown wheel over the barrel arbor. The edge sector
+# az 90-120 and the dial-side annulus around the barrel are RESERVED.
+STEM_AZIMUTH_DEG = 105.0
+STEM_SECTOR_DEG = (90.0, 120.0)
+# Moon phase: dial-side module (disc + aperture) per interface v0. The
+# dial side owns a 5mm height budget in front of the mainplate; the moon
+# disc sector az 200-280 at r 20-55 is RESERVED on the dial side.
+DIAL_SIDE_BUDGET_MM = 5.0
+MOON_DIAL_SECTOR = dict(az=(200.0, 280.0), r=(20.0, 55.0))
