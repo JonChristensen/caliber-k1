@@ -265,3 +265,12 @@ def test_m3_parts_build():
                   escapement.balance_cock, escapement.hairspring):
         part = maker()
         assert part.volume > 200, f"{maker.__name__} implausibly small"
+
+
+# --- Milestone 4: motion works arithmetic ------------------------------------
+
+def test_motion_works_exact():
+    from caliber_k1.parameters import motion_periods
+    p = motion_periods()
+    assert p["minute_s"] == pytest.approx(3600.0), "minute hand must be exactly 1 hr"
+    assert p["hour_s"] == pytest.approx(43200.0), "hour hand must be exactly 12 hr"

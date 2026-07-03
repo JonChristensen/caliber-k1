@@ -385,3 +385,34 @@ def m3_layout() -> dict:
     return {"E": E, "B": B, "P": P, "pins": pins, "fork_len": L_pb,
             "u_pb": u_pb, "n_pe": n_pe, "pillar_a": pillar_a,
             "pillar_b": pillar_b, "cock_foot": cock_foot}
+
+
+# ---------------------------------------------------------------------------
+# Milestone 4 — Motion works (time display) + module interface
+#
+# The train has no 1-hour arbor, so time display derives from W1 (250 s/rev):
+#   W1 pinion (16, already cut) --> R wheel (48)  : x3.0   -> 750 s
+#   R pinion (10) --> T wheel (48)                : x4.8   -> 3600 s = MINUTE
+#   cannon (12) --> M wheel (36), M pinion (10) --> hour wheel (40) : x12
+# Total W1->minute = 14.4 exactly; minute->hour = 12 exactly.
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class MotionWorks:
+    r_wheel: int = 48
+    r_pinion: int = 10
+    t_wheel: int = 48                 # the minute arbor ("dial center")
+    cannon: int = 12
+    m_wheel: int = 36
+    m_pinion: int = 10
+    hour_wheel: int = 40
+
+
+MOTION = MotionWorks()
+
+
+def motion_periods() -> dict:
+    w1 = train_periods()["w1"]
+    minute = w1 * (MOTION.r_wheel / TRAIN.w1_pinion) * (MOTION.t_wheel / MOTION.r_pinion)
+    hour = minute * (MOTION.m_wheel / MOTION.cannon) * (MOTION.hour_wheel / MOTION.m_pinion)
+    return {"minute_s": minute, "hour_s": hour}
