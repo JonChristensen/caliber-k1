@@ -414,3 +414,25 @@ def test_broad_bridge_well_and_bearings():
         inter = b & probe
         assert (inter.volume if inter else 0) < 1.0, f"{k} bearing blocked"
     assert b.volume > 15000
+
+
+def test_revb_escapement_packing():
+    from caliber_k1.revb import escapement_layout_b, revb_layout, ZB
+    e, m = escapement_layout_b(), revb_layout()
+    # pallet feet must clear the escape wheel sweep (r16) at post level
+    for f in e["pallet_feet"]:
+        assert _dist(f, e["E"]) > 16 + 1.55 + 0.5, "pallet foot in wheel sweep"
+    # pallet cock top must clear the ring bottom
+    assert ZB["pallet_cock"][1] + 0.4 <= ZB["ring"][0]
+    # cock feet must land outside the well on the bridge
+    from math import cos, sin, radians
+    for a in (35, 80):
+        f = (m["balance"][0] + 33 * cos(radians(a)),
+             m["balance"][1] + 33 * sin(radians(a)))
+        assert _dist(f, m["balance"]) > 27 + 5.0, "cock foot inside the well"
+
+
+def test_revb_cocks_build():
+    from caliber_k1.revb_parts import pallet_cock, balance_cock_b
+    assert pallet_cock().volume > 200
+    assert balance_cock_b().volume > 800

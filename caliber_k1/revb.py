@@ -69,3 +69,34 @@ STEM_SECTOR_DEG = (90.0, 120.0)
 # disc sector az 200-280 at r 20-55 is RESERVED on the dial side.
 DIAL_SIDE_BUDGET_MM = 5.0
 MOON_DIAL_SECTOR = dict(az=(200.0, 280.0), r=(20.0, 55.0))
+
+
+# --- 2c: escapement + balance z-stack (rel mainplate top) --------------------
+ZB = {
+    "esc_wheel": (12.5, 15.5), "lever": (12.5, 15.5),   # coplanar, clock-style
+    "pallet_cock": (16.5, 18.0),                        # under the ring
+    "ring": (18.5, 23.5),                               # swims in the well
+    "hairspring": (24.5, 28.5),
+    "cock_arm": (29.0, 32.0),                           # jewel on top
+}
+
+
+def escapement_layout_b() -> dict:
+    """Pin-pallet geometry on rev B positions. The pallet arbor lands
+    under the balance ring (dist to BAL ~21 < ring r25) — intentional:
+    fork below, ring above, classic watch stacking."""
+    from math import atan2, cos, sin, radians
+    m = revb_layout()
+    E, B = m["escape"], m["balance"]
+    ang_EB = atan2(B[1] - E[1], B[0] - E[0])
+    rho = 16.0 + 1.0 - 1.6                      # tip + pin_r - engage
+    a = rho / cos(radians(21))
+    ang_EP = ang_EB + radians(25)
+    P = (E[0] + a * cos(ang_EP), E[1] + a * sin(ang_EP))
+    pins = [(E[0] + rho * cos(ang_EP + s * radians(21)),
+             E[1] + rho * sin(ang_EP + s * radians(21))) for s in (1, -1)]
+    u_pe = ((P[0] - E[0]) / a, (P[1] - E[1]) / a)
+    perp = (-u_pe[1], u_pe[0])
+    feet = [(P[0] + 8 * perp[0], P[1] + 8 * perp[1]),
+            (P[0] - 8 * perp[0], P[1] - 8 * perp[1])]
+    return {"E": E, "B": B, "P": P, "pins": pins, "pallet_feet": feet}

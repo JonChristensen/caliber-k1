@@ -120,3 +120,46 @@ def broad_wave_bridge():
 def _ccw_band(path, half_w):
     from .decor import _ccw_polygon, _polyline_band
     return _ccw_polygon(_polyline_band(path, half_w))
+
+
+def pallet_cock():
+    """Small finger bridge under the balance ring: holds the pallet
+    arbor's upper bearing at z16.5-18. Feet = Ø3.15 spigots into the
+    mainplate (glue/press), tucked below the ring with 0.5 air."""
+    from build123d import Cylinder as Cyl, Pos as P_
+    from .revb import escapement_layout_b, ZB
+    e = escapement_layout_b()
+    face = _ccw_band([e["pallet_feet"][0], e["P"], e["pallet_feet"][1]], 4.0)
+    part = extrude(face, ZB["pallet_cock"][1] - ZB["pallet_cock"][0])
+    part -= P_(e["P"][0], e["P"][1], 0) * Cyl(1.5 + TOL.pivot_clearance, 8)
+    for f in e["pallet_feet"]:
+        part += P_(f[0], f[1], -16.5 + 1.0) * Cyl(
+            1.55, 15.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return part
+
+
+def balance_cock_b():
+    """Spans the well from the calm-water (NE) side: two feet on the
+    broad bridge top (z24), riser to the arm at z29-32, bearing boss
+    over the staff with the 4mm red cabochon pocket — the jewel, at
+    last, exactly where the first sketch promised."""
+    from build123d import Cylinder as Cyl, Pos as P_
+    from math import cos, sin, radians
+    from .revb import revb_layout, ZB
+    B = revb_layout()["balance"]
+    a1, a2 = radians(35), radians(80)
+    feet = [(B[0] + 33 * cos(a1), B[1] + 33 * sin(a1)),
+            (B[0] + 33 * cos(a2), B[1] + 33 * sin(a2))]
+    face = _ccw_band([feet[0], B, feet[1]], 5.5)
+    face += P_(*B) * Circle(7.0)
+    part = extrude(face, 3.0)                      # arm plate (local z0=29)
+    for f in feet:                                 # risers down to bridge top
+        part += P_(f[0], f[1], -5.0) * Cyl(5.0, 5.0,
+                                           align=(Align.CENTER, Align.CENTER, Align.MIN))
+        part -= P_(f[0], f[1], -6.0) * Cyl(1.7, 12,
+                                           align=(Align.CENTER, Align.CENTER, Align.MIN))
+    part -= P_(B[0], B[1], -1) * Cyl(1.25 + TOL.pivot_clearance, 2.5,
+                                     align=(Align.CENTER, Align.CENTER, Align.MIN))
+    part -= P_(B[0], B[1], 1.5) * Cyl(2.1, 5,
+                                      align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return part
