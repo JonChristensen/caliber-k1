@@ -114,7 +114,14 @@ def broad_wave_bridge():
     part -= P_(bx, by, 0) * Cyl(ARBOR.pivot_d / 2 + TOL.pivot_clearance, 12)
     for f in ((44.0, 8.0), (14.0, 40.0), (-54.0, -20.0), (0.0, -70.0)):
         part -= P_(f[0], f[1], 0) * Cyl(1.7, 12)
-    # 2d additions: stem tunnel block (bore at z30.5 global = local 9.5)
+    # 2d/A: flush recesses for ratchet + crown wheel (6498 style) — the
+    # two pockets overlap where the teeth mesh, forming a figure-eight
+    from .revb import keyless_layout_b
+    kk = keyless_layout_b()
+    for cx, cy in (m["barrel"], kk["crown_wheel"]):
+        part -= P_(cx, cy, 2.0) * Cyl(14.5, 2,
+                    align=(Align.CENTER, Align.CENTER, Align.MIN))
+    # 2d additions: stem tunnel block (bore now at z29.5 global = local 8.5)
     # and two click spigot holes near the ratchet
     from math import cos, sin, radians
     from build123d import Rot, Box
@@ -122,7 +129,7 @@ def broad_wave_bridge():
     tx, ty = 79 * cos(az), 79 * sin(az)
     part += P_(tx, ty, 3.0) * Rot(0, 0, 105) * Box(
         10, 12, 9.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    part -= P_(tx, ty, 9.5) * Rot(0, 90, 0) * Rot(0, 0, 105) * Cyl(2.2, 30)
+    part -= P_(tx, ty, 8.5) * Rot(0, 90, 0) * Rot(0, 0, 105) * Cyl(2.2, 30)
     m4l = revb_layout()
     bx2, by2 = m4l["barrel"]
     for dx, dy in ((14, -16), (19, -16)):
@@ -186,7 +193,10 @@ def ratchet_b():
     face = gears.wheel_face(24, 24)
     part = extrude(face, 3.5)
     sq = ARBOR.square_side + 2 * TOL.snug_clearance
-    from build123d import Rectangle
+    from build123d import Rectangle, Pos as P_
+    from .decor import swirl_windows
+    for w in swirl_windows(4.5, 9.5, spokes=5, spoke_w=1.8):
+        part -= P_(0, 0, 3.0) * extrude(w, 0.6)
     part -= extrude(Rectangle(sq, sq), 10)
     return part
 
@@ -202,6 +212,9 @@ def crown_wheel_b():
         a = 360 * k / 20
         part -= Rot(0, 0, a) * P_(10.0, 0, 1.0) * Box(
             4.0, 1.6, 3.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    from .decor import swirl_windows
+    for w in swirl_windows(4.0, 7.5, spokes=5, spoke_w=1.6):
+        part -= P_(0, 0, 3.0) * extrude(w, 0.6)
     part -= Cyl(2.0 + TOL.pivot_clearance, 12)
     return part
 
