@@ -17,16 +17,16 @@ TRAINS = {
     #  fourth_pinion, fourth_z, esc_pinion) at module 1.0
     # metal: barrel 96/12 -> center 60min; center 64/8 -> third 7.5min;
     #        third 60/8 -> fourth 60s; fourth 24/12 -> escape 30s (30t, 1Hz)
-    "metal": dict(barrel=96, c_pin=12, center=64, t_pin=8, third=60,
+    "metal": dict(barrel=72, c_pin=12, center=64, t_pin=8, third=60,
                   f_pin=8, fourth=24, e_pin=12,
-                  barrel_hours=8.0, usable_turns=5.5),   # steel spring
+                  barrel_hours=6.0, usable_turns=7.0),   # steel spring
     # print: barrel 72/16 -> center: 72/16=4.5 -> center 26.667min?? NO —
     # print keeps center at 60 min too, via barrel 96/12 but accepts the
     # torque tax with a HIGHER-torque spring (thicker strip, fewer turns):
     # runtime = turns x 8h; even 1.5 turns = 12h. Same wheels as metal.
-    "print": dict(barrel=96, c_pin=12, center=64, t_pin=8, third=60,
+    "print": dict(barrel=72, c_pin=12, center=64, t_pin=8, third=60,
                   f_pin=8, fourth=24, e_pin=12,
-                  barrel_hours=8.0, usable_turns=1.5),   # thick PETG spring
+                  barrel_hours=6.0, usable_turns=1.5),   # thick PETG spring
 }
 
 
@@ -49,7 +49,7 @@ def revb_layout() -> dict:
     Wave-bridge crest/tube lands on the balance center (0003 contract)."""
     from math import cos, sin, radians
     C = (0.0, 0.0)
-    B = (54 * cos(radians(105)), 54 * sin(radians(105)))      # barrel
+    B = (42 * cos(radians(105)), 42 * sin(radians(105)))      # barrel
     T3 = (36 * cos(radians(-30)), 36 * sin(radians(-30)))     # third
     F = (T3[0] + 34 * cos(radians(-100)), T3[1] + 34 * sin(radians(-100)))
     E = (F[0] + 18 * cos(radians(-170)), F[1] + 18 * sin(radians(-170)))

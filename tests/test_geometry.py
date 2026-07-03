@@ -349,7 +349,7 @@ def test_revb_trains_exact():
         assert r["center_min"] == pytest.approx(60.0), f"{variant}: center wheel"
         assert r["fourth_s"] == pytest.approx(60.0), f"{variant}: seconds"
         assert r["esc_s"] == pytest.approx(30.0), f"{variant}: escape (1 Hz, 30t)"
-    assert train_check("metal")["runtime_h"] >= 40, "metal variant: 40h+ reserve"
+    assert train_check("metal")["runtime_h"] >= 40, "metal: 40h+ reserve (7 turns x 6h)"
     assert train_check("print")["runtime_h"] >= 8, "print variant: overnight run"
 
 
@@ -363,11 +363,11 @@ def test_revb_layout_meshes_and_fits():
              ("escape", "balance", 34.5)]                  # lever span
     for a, b, d in pairs:
         assert _dist(m[a], m[b]) == pytest.approx(d, abs=0.05), f"{a}-{b}"
-    tips = {"barrel": 49, "center": 33, "third": 31, "fourth": 13,
+    tips = {"barrel": 37, "center": 33, "third": 31, "fourth": 13,
             "escape": 16, "balance": 25}
     for k, tip in tips.items():
         assert _dist(m[k], (0, 0)) + tip < 83, f"{k} past the rim"
     # same-plane wheel bodies must clear (P0: barrel vs third wheel;
     # P1: center vs fourth wheel)
-    assert _dist(m["barrel"], m["third"]) > 49 + 31 + 1.5
+    assert _dist(m["barrel"], m["third"]) > 37 + 31 + 1.5
     assert _dist(m["center"], m["fourth"]) > 33 + 13 + 1.5
