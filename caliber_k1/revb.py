@@ -204,6 +204,8 @@ M2E = {
     "hour_hand_z": -2.6, "minute_hand_z": -3.4,
     "hour_mesh_module": 0.96,    # (12+36)/2*1.0 == (10+40)/2*0.96 == 24.0
     "moon_module": 0.6,
+    # where dial + platform both open to show the moon (on the r18 orbit)
+    "moon_aperture_az_deg": 240.0,
 }
 
 

@@ -559,3 +559,20 @@ def test_the_dial_actually_fits():
     assert dial_top <= M2E["platform"][1] - 0.15, "dial rubs the platform"
     assert M2E["hour_hand_z"] <= dial_bottom - 0.3, "hour hand rubs the dial"
     assert dial_top - dial_bottom >= 0.8 - 1e-9, "dial too thin to print"
+
+
+def test_moon_is_actually_visible():
+    """Jon's catch: the guard sealed the moon in. The platform must have
+    open sky over a moon sitting at the aperture position."""
+    from math import cos, sin, radians
+    from build123d import Cylinder, Pos, Align
+    from caliber_k1.revb import M2E, motion_layout_b
+    from caliber_k1.revb_parts import dial_platform
+    ml = motion_layout_b()
+    a = radians(M2E["moon_aperture_az_deg"])
+    ax = ml["disc"][0] + 18 * cos(a)
+    ay = ml["disc"][1] + 18 * sin(a)
+    probe = Pos(ax, ay, -2) * Cylinder(4.5, 6, align=(
+        Align.CENTER, Align.CENTER, Align.MIN))
+    inter = dial_platform() & probe
+    assert (inter.volume if inter else 0) < 0.5, "moon hidden behind the guard"

@@ -360,8 +360,11 @@ def dial_platform():
     part -= Cyl(3.4 + 0.3, 4)                       # hour pipe passes
     for px, py in ((30, 14), (-20, 30)):
         part -= P_(px, py, 0) * Cyl(1.7, 4)
-    # moon window: the aperture lives in the DIAL; the guard gets a
-    # generous opening over the disc's moon orbit instead
+    # the moon window: platform and dial open together over the r18
+    # moon orbit, at the shared aperture azimuth
+    from math import cos, sin, radians
     dx, dy = ml["disc"]
+    a = radians(M2E["moon_aperture_az_deg"])
+    part -= P_(dx + 18 * cos(a), dy + 18 * sin(a), 0) * Cyl(5.75, 4)
     part -= P_(dx, dy, 0) * Cyl(0.5, 4)             # disc arbor relief
     return part
