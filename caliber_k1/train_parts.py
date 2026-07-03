@@ -202,6 +202,16 @@ def rig_plate():
                                                   align=BOTTOM)
         part += Pos(px, py, s.plate_t + M3_LEVELS["platform_z"]) * Cylinder(
             1.6, M3_LEVELS["platform_t"], align=BOTTOM)
+    # M4 deck pillars: carry the deck plate (z28.2) and dial cock (z52.5)
+    from .parameters import M4_LEVELS, m4_layout
+    m4 = m4_layout()
+    for key in ("deck_pillar_a", "deck_pillar_b"):
+        px, py = m4[key]
+        part += Pos(px, py, s.plate_t) * Cylinder(3.5, M4_LEVELS["deck_plate_z"],
+                                                  align=BOTTOM)
+        part += Pos(px, py, s.plate_t + M4_LEVELS["deck_plate_z"]) * Cylinder(
+            1.6, M4_LEVELS["dial_cock_z"] - M4_LEVELS["deck_plate_z"]
+            + M4_LEVELS["dial_cock_t"], align=BOTTOM)
     # balance cock foot: 2x M3 + nut pockets
     fx, fy = m["cock_foot"]
     L = (fx * fx + fy * fy) ** 0.5
