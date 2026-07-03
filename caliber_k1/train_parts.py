@@ -62,7 +62,9 @@ def w1_arbor():
         (pinion, t.pinion_h),                             # 16-leaf pinion
         (4.0, LV["w1_wheel_z"] - LV["w1_pinion_z"] - t.pinion_h),  # spacer
         (wheel, t.wheel_h),                               # 50t wave wheel
-        (3.5, LV["bridge_z"] - (LV["w1_wheel_z"] + t.wheel_h)),
+        (3.5, 0.5),
+        (pinion, 5.0),            # M4 takeoff: second 16t pinion z10.5-15.5
+        (3.5, LV["bridge_z"] - (LV["w1_wheel_z"] + t.wheel_h) - 5.5),
         (pivot_r, 4.0),                                   # bridge bushing
     ]
     return _arbor_stack(sections)

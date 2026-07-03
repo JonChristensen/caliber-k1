@@ -9,7 +9,7 @@ from pathlib import Path
 
 from build123d import Compound, Pos, export_step, export_stl
 
-from . import barrel, escapement, stand, train_parts
+from . import barrel, escapement, motion, stand, train_parts
 from .parameters import (
     ARBOR, BARREL, SPRING, STAND, TOL,
     approx_winding_turns, pillar_height, spring_radial_span, spring_pitch,
@@ -47,6 +47,17 @@ def build_parts() -> dict:
         "tube_chaton": escapement.tube_chaton(),
         "platform": escapement.platform(),
         "balance_cock": escapement.balance_cock(),
+        # Milestone 4
+        "r1_arbor": motion.r1_arbor(),
+        "r2_arbor": motion.r2_arbor(),
+        "t_arbor": motion.t_arbor(),
+        "m_arbor": motion.m_arbor(),
+        "hour_wheel": motion.hour_wheel(),
+        "deck_plate": motion.deck_plate(),
+        "dial_cock": motion.dial_cock(),
+        "winding_knob": motion.winding_knob(),
+        "minute_hand": motion.minute_hand(),
+        "hour_hand": motion.hour_hand(),
     }
 
 

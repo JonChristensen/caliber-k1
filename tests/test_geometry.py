@@ -318,3 +318,10 @@ def test_m4_zstack_consistent():
     assert L["mesh2_z"] >= L["mesh1_z"] + 5.5 and L["mesh3_z"] >= L["mesh2_z"] + 5.5
     assert L["dial_cock_z"] >= L["mesh4_z"] + 5.0
     assert L["hands_z"] > L["dial_cock_z"] + L["dial_cock_t"]
+
+
+def test_m4_parts_build():
+    from caliber_k1 import motion
+    for maker in (motion.r1_arbor, motion.t_arbor, motion.deck_plate,
+                  motion.dial_cock, motion.winding_knob):
+        assert maker().volume > 150, f"{maker.__name__} implausibly small"
