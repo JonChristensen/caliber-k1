@@ -274,3 +274,47 @@ def test_motion_works_exact():
     p = motion_periods()
     assert p["minute_s"] == pytest.approx(3600.0), "minute hand must be exactly 1 hr"
     assert p["hour_s"] == pytest.approx(43200.0), "hour hand must be exactly 12 hr"
+
+
+# --- Milestone 4: upper-deck motion works layout -----------------------------
+
+def test_m4_mesh_distances_exact():
+    from caliber_k1.parameters import m4_layout
+    m = m4_layout()
+    W1 = train_layout()["w1"]
+    assert _dist(W1, m["R1"]) == pytest.approx((16 + 24) / 2, abs=0.05)
+    assert _dist(m["R1"], m["R2"]) == pytest.approx((10 + 32) / 2, abs=0.05)
+    assert _dist(m["R2"], m["T"]) == pytest.approx((10 + 30) / 2, abs=0.05)
+    assert _dist(m["T"], m["M"]) == pytest.approx((12 + 36) / 2, abs=0.05)
+
+
+def test_m4_deck_clearances():
+    from caliber_k1.parameters import m4_layout, m3_layout
+    m, e = m4_layout(), m3_layout()
+    tips = {"R1": 13, "R2": 17, "T": 16, "M": 19}
+    # R1's wheel lives DOWN at z10.5-15.5: check the ground-floor gap
+    lay = train_layout()
+    assert _dist(m["R1"], lay["foot_a"]) > 13 + 4.5 + 1.5, "R1 hits foot_a post"
+    # rim, cock column, balance ring (z36+ meshes), winding-knob sweep r23.5
+    for k, tip in tips.items():
+        c = m[k]
+        assert _dist(c, (0, 0)) + tip < 83, f"{k} past rim"
+        assert _dist(c, e["cock_foot"]) > tip + 5.5 + 1.5, f"{k} hits cock column"
+        if k in ("R2", "T", "M"):
+            assert _dist(c, e["B"]) > tip + 25 + 1.5, f"{k} hits balance ring"
+            assert _dist(c, (0, 0)) - tip > 23.5, f"{k} hits winding knob sweep"
+    # deck pillars clear all rotating tips + R1's lower wheel (z10.5-15.5)
+    for pk in ("deck_pillar_a", "deck_pillar_b"):
+        p = m[pk]
+        for k, tip in tips.items():
+            assert _dist(p, m[k]) > tip + 3.5 + 1.4, f"{pk} hits {k}"
+        assert _dist(p, (0, 0)) + 3.5 < 83, f"{pk} past rim"
+
+
+def test_m4_zstack_consistent():
+    from caliber_k1.parameters import M4_LEVELS as L
+    assert L["deck_plate_z"] > 27.8        # flies over the spider
+    assert L["mesh1_z"] >= L["deck_plate_z"] + L["deck_plate_t"]
+    assert L["mesh2_z"] >= L["mesh1_z"] + 5.5 and L["mesh3_z"] >= L["mesh2_z"] + 5.5
+    assert L["dial_cock_z"] >= L["mesh4_z"] + 5.0
+    assert L["hands_z"] > L["dial_cock_z"] + L["dial_cock_t"]

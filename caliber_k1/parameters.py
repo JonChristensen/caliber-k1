@@ -399,9 +399,11 @@ def m3_layout() -> dict:
 
 @dataclass(frozen=True)
 class MotionWorks:
-    r_wheel: int = 48
-    r_pinion: int = 10
-    t_wheel: int = 48                 # the minute arbor ("dial center")
+    r1_wheel: int = 24    # 1.5 x 3.2 x 3.0 = 14.4 exact (log 0007:
+    r1_pinion: int = 10   # R1 shrunk to pass the foot_a/cock gap;
+    r2_wheel: int = 32    # the big wheel moved up to the open deck)
+    r2_pinion: int = 10
+    t_wheel: int = 30                 # the minute arbor ("dial center")
     cannon: int = 12
     m_wheel: int = 36
     m_pinion: int = 10
@@ -413,6 +415,43 @@ MOTION = MotionWorks()
 
 def motion_periods() -> dict:
     w1 = train_periods()["w1"]
-    minute = w1 * (MOTION.r_wheel / TRAIN.w1_pinion) * (MOTION.t_wheel / MOTION.r_pinion)
+    minute = w1 * (MOTION.r1_wheel / TRAIN.w1_pinion) \
+        * (MOTION.r2_wheel / MOTION.r1_pinion) * (MOTION.t_wheel / MOTION.r2_pinion)
     hour = minute * (MOTION.m_wheel / MOTION.cannon) * (MOTION.hour_wheel / MOTION.m_pinion)
     return {"minute_s": minute, "hour_s": hour}
+
+
+# --- M4 upper-deck layout (log 0006/0007): verified coordinates -------------
+# Deck plate z28.2-30.2 flies 0.4 over the spider; R1 climbs from L2 to the
+# deck; all motion-works meshing happens at z>=30.5 where the plate is open.
+M4_LEVELS = {
+    "deck_plate_z": 28.2, "deck_plate_t": 2.0,
+    "r1_wheel_z": 10.5,                  # meshes W1's second 16t pinion
+    "mesh1_z": 30.5,                     # R1 pinion 10 -> R2 wheel 24 (h5)
+    "mesh2_z": 36.0,                     # R2 pinion 10 -> T wheel 30 (h5)
+    "mesh3_z": 41.5,                     # cannon 12 -> M wheel 36 (h5)
+    "mesh4_z": 47.0,                     # M pinion 10 -> hour wheel 40 (h5)
+    "dial_cock_z": 52.5, "dial_cock_t": 3.0,
+    "hands_z": 56.0,
+}
+
+
+def m4_layout() -> dict:
+    """Motion-works arbor centers (mesh distances exact by construction)."""
+    from math import cos, sin, radians
+    W1 = train_layout()["w1"]
+    R1 = (W1[0] + 20 * cos(radians(-65)), W1[1] + 20 * sin(radians(-65)))
+    T = (14.8, -36.8)                    # the dial center
+    # R2: intersection of circle(R1, 21) and circle(T, 20), upper branch
+    dx, dy = T[0] - R1[0], T[1] - R1[1]
+    d = (dx * dx + dy * dy) ** 0.5
+    a = (21**2 - 20**2 + d * d) / (2 * d)
+    h = (21**2 - a * a) ** 0.5
+    mx, my = R1[0] + a * dx / d, R1[1] + a * dy / d
+    R2 = (mx + h * dy / d, my - h * dx / d)   # outboard branch
+    return {
+        "R1": R1, "R2": R2, "T": T,
+        "M": (T[0] + 24, T[1]),          # 24.0 from T
+        "deck_pillar_a": (57.0, -17.0),  # plate-rooted, carry deck + cock
+        "deck_pillar_b": (2.0, -79.0),
+    }
