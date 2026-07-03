@@ -130,10 +130,9 @@ def broad_wave_bridge():
     part += P_(tx, ty, 3.0) * Rot(0, 0, 105) * Box(
         10, 12, 9.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
     part -= P_(tx, ty, 8.5) * Rot(0, 90, 0) * Rot(0, 0, 105) * Cyl(2.2, 30)
-    m4l = revb_layout()
-    bx2, by2 = m4l["barrel"]
-    for dx, dy in ((14, -16), (19, -16)):
-        part -= P_(bx2 + dx, by2 + dy, 1.0) * Cyl(1.65, 4,
+    from .revb import click_peg_points_global
+    for px, py in click_peg_points_global():
+        part -= P_(px, py, 1.0) * Cyl(1.65, 4,
                     align=(Align.CENTER, Align.CENTER, Align.MIN))
     return part
 
@@ -239,14 +238,16 @@ def stem_crown():
 
 
 def click_b():
-    """Flexure click on the bridge top, engaging the ratchet. Two Ø3.15
-    spigot pegs drop into the bridge; PETG print."""
+    """Flexure click in the RATCHET frame (revb.click_geometry_b): M1's
+    proven jamming layout scaled to the 24t wheel. The export rotates it
+    -30 deg about the ratchet center; pegs match the bridge's holes via
+    the shared geometry function. PETG."""
     from build123d import Cylinder as Cyl, Pos as P_
-    from .revb import revb_layout
-    face = _ccw_band([(0, 0), (14, 3), (22, 9)], 2.0)
-    face += Circle(4.0)
-    part = extrude(face, 3.0)
-    for x in (0, 5):
-        part += P_(x, 0, -3.2) * Cyl(1.55, 3.2,
+    from .revb import click_geometry_b
+    from .decor import _ccw_polygon
+    g = click_geometry_b()
+    part = extrude(_ccw_polygon(g["outline"]), 2.8)
+    for x, y in g["pegs"]:
+        part += P_(x, y, -3.2) * Cyl(1.55, 3.2,
                                      align=(Align.CENTER, Align.CENTER, Align.MIN))
     return part

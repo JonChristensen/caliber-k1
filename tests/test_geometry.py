@@ -470,3 +470,21 @@ def test_click_actually_reaches_the_ratchet():
     root_r, tip_r = 12.0 - 1.3, 13.0          # 24t module-1 wheel
     assert root_r + 0.3 < g["tip_r"] < tip_r - 0.3, \
         f"click tip at r{g['tip_r']:.1f} does not engage teeth ({root_r}-{tip_r})"
+
+
+def test_click_part_tip_engages_in_place():
+    """Build the actual click PART, place it as the assembly does, and
+    verify solid material lands inside the tooth engagement band."""
+    from math import radians
+    from build123d import Cylinder, Pos, Rot, Align
+    from caliber_k1.revb import revb_layout
+    from caliber_k1.revb_parts import click_b
+    bx, by = revb_layout()["barrel"]
+    placed = Pos(bx, by, 0) * Rot(0, 0, -30) * click_b()
+    band = Pos(bx, by, -1) * Cylinder(12.6, 6, align=(
+        Align.CENTER, Align.CENTER, Align.MIN)) - \
+        Pos(bx, by, -2) * Cylinder(11.0, 9, align=(
+            Align.CENTER, Align.CENTER, Align.MIN))
+    inter = placed & band
+    # wedge tip ~0.6mm^2 cross-section x 2.8 height => ~1.7mm^3 engaged
+    assert inter and inter.volume > 1.0, "click tip not in the tooth band"
