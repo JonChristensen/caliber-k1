@@ -69,3 +69,51 @@ def wave_bridge_b():
     for f in (foot_a, foot_b):
         part -= P_(f[0], f[1], 0) * Cyl(1.65, 10)
     return part
+
+
+def broad_wave_bridge():
+    """The NH35-style broad train+barrel bridge (log 0010): ONE plate at
+    z21-24 covering barrel and train, underside bosses reaching down to
+    z16 for the four train upper pivots, barrel arbor bearing in-plate,
+    and a Ø54 balance well where the balance swims visible. The wave
+    rolls along the outboard edge, cresting at the well, breaking away
+    from the balance (serenity direction, per Jon)."""
+    from build123d import Cylinder as Cyl, Pos as P_
+    from .decor import wave_bridge_face
+    m = revb_layout()
+    BAL = m["balance"]
+    bx, by = m["barrel"]
+
+    # structural body: pads over every station, joined by wide bands
+    face = P_(bx, by) * Circle(43.0)
+    face += Circle(13.0)                                  # center pad
+    for k in ("third", "fourth", "escape"):
+        face += P_(*m[k]) * Circle(9.0)
+    face += _ccw_band([m["barrel"], m["center"], m["third"],
+                       m["fourth"], m["escape"]], 10.0)
+    face += P_(*BAL) * Circle(32.0)                       # well surround
+    # the wave: decorative band along the outboard rim, crest at the well
+    wave_path = [(58.0, 16.0), (46.0, -20.0), (26.0, -54.0),
+                 (-2.0, -66.0), (-30.0, -70.0)]
+    face += wave_bridge_face(wave_path, half_w=6.5, crest_at=0.62)
+    # the balance well (cuts the curl open at its rim)
+    face -= P_(*BAL) * Circle(27.0)
+    part = extrude(face, 3.0)
+    # train bosses: hang from plate underside to z16 (plate local z0=21)
+    for k in ("center", "third", "fourth", "escape"):
+        x, y = m[k]
+        part += P_(x, y, -5.0) * Cyl(4.0, 5.0,
+                                     align=(Align.CENTER, Align.CENTER, Align.MIN))
+        part -= P_(x, y, -6.0) * Cyl(1.5 + TOL.pivot_clearance, 12,
+                                     align=(Align.CENTER, Align.CENTER, Align.MIN))
+    # barrel arbor bearing, in-plate (drum top at 20.5, plate bottom 21)
+    part -= P_(bx, by, 0) * Cyl(ARBOR.pivot_d / 2 + TOL.pivot_clearance, 12)
+    # feet: 4x M3 in solid zones, clear of the stem sector (az 90-120)
+    for f in ((56.0, 14.0), (40.0, -40.0), (-30.0, -68.0), (14.0, 40.0)):
+        part -= P_(f[0], f[1], 0) * Cyl(1.7, 12)
+    return part
+
+
+def _ccw_band(path, half_w):
+    from .decor import _ccw_polygon, _polyline_band
+    return _ccw_polygon(_polyline_band(path, half_w))

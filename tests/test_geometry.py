@@ -393,3 +393,24 @@ def test_revb_wave_bridge_tube_clears_balance_staff():
     assert (inter.volume if inter else 0) < 1.0, \
         "wave tube does not clear the balance staff passage"
     assert b.volume > 3000
+
+
+def test_broad_bridge_well_and_bearings():
+    from build123d import Cylinder, Pos, Align
+    from caliber_k1.revb import revb_layout
+    from caliber_k1.revb_parts import broad_wave_bridge
+    b = broad_wave_bridge()
+    m = revb_layout()
+    BM = (Align.CENTER, Align.CENTER, Align.MIN)
+    # balance ring (r25) must swim free in the well
+    x, y = m["balance"]
+    ring = Pos(x, y, -8) * Cylinder(25.5, 16, align=BM)
+    inter = b & ring
+    assert (inter.volume if inter else 0) < 1.0, "balance ring hits the well rim"
+    # every arbor's upper pivot path must be open through plate + boss
+    for k in ("center", "third", "fourth", "escape"):
+        px, py = m[k]
+        probe = Pos(px, py, -8) * Cylinder(1.4, 16, align=BM)
+        inter = b & probe
+        assert (inter.volume if inter else 0) < 1.0, f"{k} bearing blocked"
+    assert b.volume > 15000
