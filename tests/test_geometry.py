@@ -488,3 +488,14 @@ def test_click_part_tip_engages_in_place():
     inter = placed & band
     # wedge tip ~0.6mm^2 cross-section x 2.8 height => ~1.7mm^3 engaged
     assert inter and inter.volume > 1.0, "click tip not in the tooth band"
+
+
+def test_crown_knob_clears_the_bridge():
+    """Crown at r88: its inner face (r85) must stay outboard of the
+    bridge's maximum extent (<=85.5 asserted elsewhere, real edge ~84)."""
+    from caliber_k1.revb_parts import broad_wave_bridge
+    bb = broad_wave_bridge().bounding_box()
+    bridge_max_r = max(abs(bb.min.X), abs(bb.min.Y), bb.max.X, bb.max.Y)
+    knob_inner_r = 88 - 3
+    assert knob_inner_r - bridge_max_r >= 0.5, \
+        "crown knob crowds the bridge's north edge"

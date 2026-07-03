@@ -23,3 +23,10 @@ that is the showpiece, and it is also better engineering.
 Inspection gate for the rebuild: exports/revb/wave_bridge.step over the
 massing — swells legible at arm's length, curl open at the balance well,
 five bearing bosses over their arbors, stem sector untouched.
+
+## Print-vs-metal deviation register (running)
+
+- Stem line at z29.5: forced by the 20.5mm printed drum the stem must
+  overfly. Metal variant: ~5mm barrel, stem drops to plate level
+  (NH35-style). Crown moved to r88, overhanging the plate edge with
+  >=0.5mm proven clearance to the bridge's north edge.

@@ -228,11 +228,11 @@ def stem_crown():
     for k in range(18):                                 # grip flutes
         a = 360 * k / 18
         part -= Rot(a, 0, 0) * P_(0, 7.2, 0) * Rot(0, 90, 0) * Cyl(1.2, 8)
-    part += P_(3, 0, 0) * Rot(0, 90, 0) * Cyl(2.0, 4, align=(
-        Align.CENTER, Align.CENTER, Align.MIN))         # shaft x3..7
+    part += P_(3, 0, 0) * Rot(0, 90, 0) * Cyl(2.0, 7, align=(
+        Align.CENTER, Align.CENTER, Align.MIN))         # shaft x3..10
     pin = extrude(gears.pinion_face(10), 4.0)           # 10t, module 1
-    part += P_(7, 0, 0) * Rot(0, 90, 0) * pin           # pinion x7..11:
-    part += P_(11, 0, 0) * Rot(0, 90, 0) * Cyl(1.0, 2.5, align=(
+    part += P_(10, 0, 0) * Rot(0, 90, 0) * pin          # pinion x10..14
+    part += P_(14, 0, 0) * Rot(0, 90, 0) * Cyl(1.0, 2.5, align=(
         Align.CENTER, Align.CENTER, Align.MIN))         # over the slot ring
     return part
 
