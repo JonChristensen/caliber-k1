@@ -138,7 +138,7 @@ def _chaikin(points, iterations: int = 3):
 
 
 def wave_bridge_face(path_points, half_w: float = 6.5,
-                     crest_at: float = 0.45, curl_r: float = 9.0):
+                     crest_at: float = 0.40, curl_r: float = 9.0):
     """Bridge body along path_points with an ocean-swell top edge and a
     curling crest.
 
@@ -174,22 +174,39 @@ def wave_bridge_face(path_points, half_w: float = 6.5,
         outboard.append((x + nx * off, y + ny * off))
     body = _ccw_polygon(inboard + outboard[::-1])
 
-    # the curl: logarithmic spiral ribbon rolling forward over the crest
+    # The crest: a thick C-form rolling forward over the tallest swell.
+    # What makes a wave read isn't the lip — it's the TUBE, the round
+    # negative space under it. The C is a thick elliptical arc in the
+    # local (travel, outboard) frame: rooted in the swell mass behind
+    # the peak, arching over it, and diving forward until its lip kisses
+    # the band edge — enclosing a round hollow. Minimum section ~3.5mm:
+    # nothing to snap off.
     ci = int((crest_at + 0.03) * (n_pts - 1))
     nx, ny = normal(ci)
-    cx = path[ci][0] + nx * (half_w + swells[-1][0] - curl_r * 0.30)
-    cy = path[ci][1] + ny * (half_w + swells[-1][0] - curl_r * 0.30)
-    tx, ty = ny, -nx                       # travel direction (left-normal frame)
-    base_ang = atan2(ny, nx)               # spiral starts pointing outboard
-    spiral_out, spiral_in = [], []
-    n = 36
+    tx, ty = ny, -nx                        # forward along the path
+    # solid crest lobe: an ellipse leaning forward over the tallest swell
+    ox = path[ci][0] + nx * 10.0 + tx * 2.0
+    oy = path[ci][1] + ny * 10.0 + ty * 2.0
+    a_l, b_l = 12.0, 8.5
+    lobe = []
+    n = 48
     for i in range(n + 1):
-        th = 2.5 * pi * i / n
-        r_o = curl_r * exp(-0.20 * th)
-        # ribbon never thinner than 1.2mm (3 perimeters at 0.4 nozzle)
-        r_i = max(min(r_o - 1.2, r_o - 2.6 * exp(-0.25 * th)), 0.4)
-        a = base_ang - th                  # curl rolls forward/down-swell
-        spiral_out.append((cx + r_o * cos(a), cy + r_o * sin(a)))
-        spiral_in.append((cx + r_i * cos(a), cy + r_i * sin(a)))
-    body += _ccw_polygon(spiral_out + spiral_in[::-1])
+        phi = 2 * pi * i / n
+        c_p, s_p = cos(phi), sin(phi)
+        lobe.append((ox + a_l * c_p * tx + b_l * s_p * nx,
+                     oy + a_l * c_p * ty + b_l * s_p * ny))
+    body += _ccw_polygon(lobe)
+    # the tube: an open round bite forward of the lobe center — it eats
+    # the lobe's forward flank AND breaks out through the descending
+    # swell edge, so the upper lip arcs over an OPEN hollow (the mouth
+    # faces forward, like a wave about to close out). Positioned clear
+    # of the W4 bearing boss (asserted by eye + clearance re-render).
+    tube_r = 6.0
+    tcx = path[ci][0] + tx * 9.0 + nx * 9.0
+    tcy = path[ci][1] + ty * 9.0 + ny * 9.0
+    tube = []
+    for i in range(n + 1):
+        phi = 2 * pi * i / n
+        tube.append((tcx + tube_r * cos(phi), tcy + tube_r * sin(phi)))
+    body -= _ccw_polygon(tube)
     return body
