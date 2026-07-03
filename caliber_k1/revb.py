@@ -185,3 +185,30 @@ def stem_line_z(variant: Variant = None) -> float:
     v = variant or active_variant()
     drum_top = 3.5 + v.drum_h                 # drum sits 3.5 over the plate
     return drum_top + 5.0 + 2.0 * v.endshake + 3.0
+
+
+# --- 2e: dial side (z below the mainplate, hands outermost) ------------------
+M2E = {
+    "planeA": (-0.6, -2.4),      # cannon pinion + minute wheel
+    "planeB": (-2.6, -4.4),      # minute pinion + hour wheel (module 0.96!)
+    "moon_p": (-4.6, -5.8),      # 14t pipe pinion + s1 wheel (module 0.6)
+    "moon_d": (-6.0, -7.2),      # s1 pinion + 105t moon disc (module 0.6)
+    "hour_hand_z": -7.6, "minute_hand_z": -8.4,
+    "hour_mesh_module": 0.96,    # (12+36)/2*1.0 == (10+40)/2*0.96 == 24.0
+    "moon_module": 0.6,
+}
+
+
+def motion_layout_b() -> dict:
+    """Dial-side arbor centers. Minute arbor at r24 serves BOTH meshes
+    (cannon m1.0, hour m0.96 — the classic motion-works module trick).
+    Moon: pipe 14t -> s1 63t -> s1 pinion 8t -> disc 105t, all m0.6;
+    the Ø64 disc tucks in the SW sector, clear of the center stack."""
+    from math import cos, sin, radians
+    minute = (24 * cos(radians(90)), 24 * sin(radians(90)))
+    m_moon = M2E["moon_module"]
+    s1 = ((14 + 63) / 2 * m_moon * cos(radians(240)),
+          (14 + 63) / 2 * m_moon * sin(radians(240)))
+    d = (8 + 105) / 2 * m_moon
+    disc = (s1[0] + d * cos(radians(170)), s1[1] + d * sin(radians(170)))
+    return {"minute": minute, "s1": s1, "disc": disc}

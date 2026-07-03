@@ -519,3 +519,29 @@ def test_variants_share_the_layout():
     for key in ("barrel", "c_pin", "center", "t_pin", "third",
                 "f_pin", "fourth", "e_pin"):
         assert TRAINS["print"][key] == TRAINS["metal"][key]
+
+
+# --- 2e: dial side ------------------------------------------------------------
+
+def test_motion_works_module_trick():
+    from caliber_k1.revb import M2E, motion_layout_b
+    m = motion_layout_b()
+    assert _dist(m["minute"], (0, 0)) == pytest.approx((12 + 36) / 2 * 1.0)
+    assert (10 + 40) / 2 * M2E["hour_mesh_module"] == pytest.approx(24.0)
+    assert (36 / 12) * (40 / 10) == 12.0
+
+
+def test_moon_disc_packs_clear():
+    from caliber_k1.revb import M2E, motion_layout_b
+    m = motion_layout_b()
+    tip = 105 * M2E["moon_module"] / 2 + M2E["moon_module"]
+    assert _dist(m["disc"], (0, 0)) + tip < 84, "disc past the rim"
+    assert _dist(m["disc"], (0, 0)) - tip > 3.5, "disc eats the center pipes"
+    assert _dist(m["disc"], m["s1"]) == pytest.approx((8 + 105) / 2 * 0.6, abs=0.05)
+
+
+def test_dial_parts_build():
+    from caliber_k1 import revb_parts as rp
+    for mk in (rp.cannon_pinion_b, rp.minute_wheel_b, rp.hour_wheel_dial_b,
+               rp.moon_s1_b, rp.moon_disc_b):
+        assert mk().volume > 80, f"{mk.__name__} implausibly small"
