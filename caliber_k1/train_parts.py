@@ -205,6 +205,9 @@ def rig_plate():
     # M4 deck pillars: carry the deck plate (z28.2) and dial cock (z52.5)
     from .parameters import M4_LEVELS, m4_layout
     m4 = m4_layout()
+    # R1 lower pivot bushing (blind, like the train arbors)
+    part -= Pos(m4["R1"][0], m4["R1"][1], s.plate_t - 4.0) * Cylinder(
+        1.5 + TOL.pivot_clearance, 6, align=BOTTOM)
     for key in ("deck_pillar_a", "deck_pillar_b"):
         px, py = m4[key]
         part += Pos(px, py, s.plate_t) * Cylinder(3.5, M4_LEVELS["deck_plate_z"],
