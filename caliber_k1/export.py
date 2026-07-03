@@ -81,7 +81,6 @@ def build_assembly(parts: dict) -> Compound:
         Pos(0, 0, top_plate_z) * parts["top_plate"],
         Pos(0, 0, square_z) * parts["ratchet_wheel"],
         Pos(0, 0, top_plate_z + STAND.plate_t) * parts["click"],
-        Pos(0, 0, square_z + ARBOR.square_len + 3) * parts["winding_key"],
     ]
     for x, y in stand._pillar_positions():
         children.append(Pos(x, y, p) * parts["pillar"])
@@ -115,6 +114,21 @@ def build_assembly(parts: dict) -> Compound:
         Pos(Bc[0], Bc[1], p + 15.5) * parts["tube_chaton"],
         Pos(0, 0, p + M3_LEVELS["platform_z"]) * parts["platform"],
         Pos(0, 0, p) * parts["balance_cock"],
+    ]
+    # motion works + dial storey (Milestone 4)
+    from .parameters import M4_LEVELS, m4_layout
+    m4 = m4_layout()
+    children += [
+        Pos(m4["R1"][0], m4["R1"][1], p - 4.0) * parts["r1_arbor"],
+        Pos(m4["R2"][0], m4["R2"][1], p + 28.7) * parts["r2_arbor"],
+        Pos(m4["T"][0], m4["T"][1], p + 28.7) * parts["t_arbor"],
+        Pos(m4["M"][0], m4["M"][1], p + 28.7) * parts["m_arbor"],
+        Pos(m4["T"][0], m4["T"][1], p + M4_LEVELS["mesh4_z"]) * parts["hour_wheel"],
+        Pos(0, 0, p + M4_LEVELS["deck_plate_z"]) * parts["deck_plate"],
+        Pos(0, 0, p + M4_LEVELS["dial_cock_z"]) * parts["dial_cock"],
+        Pos(m4["T"][0], m4["T"][1], p + M4_LEVELS["hands_z"]) * parts["minute_hand"],
+        Pos(m4["T"][0], m4["T"][1], p + M4_LEVELS["mesh4_z"] + 5.0) * parts["hour_hand"],
+        Pos(0, 0, square_z + 2) * parts["winding_knob"],
     ]
     return Compound(label="caliber_k1_milestone2", children=children)
 
