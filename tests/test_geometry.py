@@ -378,3 +378,18 @@ def test_revb_mainplate_builds():
     p = mainplate()
     assert p.volume > 80000, "mainplate implausibly small"
     assert p.bounding_box().size.Z == pytest.approx(4.0, abs=0.01)
+
+
+def test_revb_wave_bridge_tube_clears_balance_staff():
+    """The staff's path through the bridge must be genuinely empty."""
+    from build123d import Cylinder, Pos, Align
+    from caliber_k1.revb import revb_layout
+    from caliber_k1.revb_parts import wave_bridge_b
+    b = wave_bridge_b()
+    x, y = revb_layout()["balance"]
+    probe = Pos(x, y, -5) * Cylinder(2.8, 20,
+                                     align=(Align.CENTER, Align.CENTER, Align.MIN))
+    inter = b & probe
+    assert (inter.volume if inter else 0) < 1.0, \
+        "wave tube does not clear the balance staff passage"
+    assert b.volume > 3000

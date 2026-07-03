@@ -35,3 +35,35 @@ def mainplate():
         part -= Pos(78 * cos(radians(az)), 78 * sin(radians(az)), 0) * \
             Cylinder(1.7, 12)
     return part
+
+
+def wave_bridge_b():
+    """Rev B train bridge — THE wave, on top of the movement (z16-19).
+    Spans third/fourth/escape upper pivots; the crest's tube lands on the
+    balance center so the staff rises through the barrel of the wave.
+    Feet: (56,14) barrel-side, (-30.77,-35.37) past the crest."""
+    from math import cos, sin, radians, hypot
+    from build123d import Pos as P_, Cylinder as Cyl
+    from .decor import wave_bridge_face
+    m = revb_layout()
+    BAL = m["balance"]
+    d = (cos(radians(200)), sin(radians(200)))       # crest travel direction
+    n = (-d[1], d[0])
+    pc = (BAL[0] - 9 * (d[0] + n[0]), BAL[1] - 9 * (d[1] + n[1]))
+    k1 = (pc[0] - 14 * d[0], pc[1] - 14 * d[1])
+    foot_b = (pc[0] + 12 * d[0], pc[1] + 12 * d[1])
+    foot_a = (56.0, 14.0)
+    path = [foot_a, m["third"], m["fourth"], m["escape"], k1, foot_b]
+    # crest fraction = arc length to pc / total arc length
+    pts = path[:4] + [pc, foot_b]
+    seg = lambda a, b: hypot(b[0] - a[0], b[1] - a[1])
+    arcs = [seg(pts[i], pts[i + 1]) for i in range(len(pts) - 1)]
+    f_c = sum(arcs[:4]) / sum(arcs)
+    # wave_bridge_face evaluates the crest at (crest_at + 0.03): compensate
+    face = wave_bridge_face(path, half_w=6.5, crest_at=f_c - 0.03)
+    part = extrude(face, 3.0)
+    for k in ("third", "fourth", "escape"):
+        part -= P_(m[k][0], m[k][1], 0) * Cyl(1.5 + TOL.pivot_clearance, 10)
+    for f in (foot_a, foot_b):
+        part -= P_(f[0], f[1], 0) * Cyl(1.65, 10)
+    return part
