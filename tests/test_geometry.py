@@ -499,3 +499,23 @@ def test_crown_knob_clears_the_bridge():
     knob_inner_r = 88 - 3
     assert knob_inner_r - bridge_max_r >= 0.5, \
         "crown knob crowds the bridge's north edge"
+
+
+# --- The variant switch -------------------------------------------------------
+
+def test_variant_switch_reflows_the_stem():
+    from caliber_k1.revb import VARIANTS, stem_line_z
+    zp = stem_line_z(VARIANTS["print"])
+    zm = stem_line_z(VARIANTS["metal"])
+    assert zp == pytest.approx(29.5, abs=0.1), "print stem must match built geometry"
+    assert zm < 17.0, "metal stem must drop toward plate level"
+    assert zm == pytest.approx(3.5 + 4.5 + 5.0 + 0.2 + 3.0, abs=0.01)
+
+
+def test_variants_share_the_layout():
+    """The whole point: identical wheels, identical positions, both worlds.
+    Layout functions take no variant — geometry cannot fork by accident."""
+    from caliber_k1.revb import TRAINS
+    for key in ("barrel", "c_pin", "center", "t_pin", "third",
+                "f_pin", "fourth", "e_pin"):
+        assert TRAINS["print"][key] == TRAINS["metal"][key]

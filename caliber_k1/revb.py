@@ -144,3 +144,44 @@ def click_peg_points_global() -> list:
     a = radians(g["angle_deg"])
     return [(bx + x * cos(a) - y * sin(a), by + x * sin(a) + y * cos(a))
             for x, y in g["pegs"]]
+
+
+# --- The variant switch: one geometry, two material worlds ------------------
+# Set K1_VARIANT=metal (env) or pass variant= explicitly. Print and metal
+# share ALL layout coordinates and wheel counts; they differ only in the
+# dimension tables below — and every derived height (like the stem line)
+# is computed FROM these, so flipping the switch reflows the movement.
+from dataclasses import dataclass as _dc
+import os as _os
+
+
+@_dc(frozen=True)
+class Variant:
+    name: str
+    drum_h: float           # barrel drum height (spring volume driver)
+    usable_turns: float
+    pivot_clearance: float  # running fits
+    endshake: float
+    spring: str             # mainspring spec
+    escapement: str         # pin_pallet (proven print) | swiss_lever (metal)
+
+
+VARIANTS = {
+    "print": Variant("print", 17.0, 1.5, 0.20, 0.50,
+                     "PETG strip 1.6x16", "pin_pallet"),
+    "metal": Variant("metal", 4.5, 7.0, 0.04, 0.10,
+                     "steel 0.30x14 (spec at DFM pass)", "swiss_lever"),
+}
+
+
+def active_variant() -> Variant:
+    return VARIANTS[_os.environ.get("K1_VARIANT", "print")]
+
+
+def stem_line_z(variant: Variant = None) -> float:
+    """The stem axis height, DERIVED: it overflies the drum by pinion
+    radius + running clearance. Print: ~29.5 (tall PETG drum). Metal:
+    drops toward plate level as the drum shrinks — no fork, one formula."""
+    v = variant or active_variant()
+    drum_top = 3.5 + v.drum_h                 # drum sits 3.5 over the plate
+    return drum_top + 5.0 + 2.0 * v.endshake + 3.0
