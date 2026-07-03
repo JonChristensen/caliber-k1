@@ -51,7 +51,7 @@ def wave_bridge_b():
     n = (-d[1], d[0])
     pc = (BAL[0] - 9 * (d[0] + n[0]), BAL[1] - 9 * (d[1] + n[1]))
     k1 = (pc[0] - 14 * d[0], pc[1] - 14 * d[1])
-    foot_b = (pc[0] + 12 * d[0], pc[1] + 12 * d[1])
+    foot_b = (pc[0] + 30 * d[0], pc[1] + 30 * d[1])   # runway encloses the tube
     foot_a = (56.0, 14.0)
     path = [foot_a, m["third"], m["fourth"], m["escape"], k1, foot_b]
     # crest fraction = arc length to pc / total arc length
@@ -61,6 +61,8 @@ def wave_bridge_b():
     f_c = sum(arcs[:4]) / sum(arcs)
     # wave_bridge_face evaluates the crest at (crest_at + 0.03): compensate
     face = wave_bridge_face(path, half_w=6.5, crest_at=f_c - 0.03)
+    for f in (foot_a, foot_b):                    # end caps: feet get pads
+        face += Pos(*f) * Circle(6.0)
     part = extrude(face, 3.0)
     for k in ("third", "fourth", "escape"):
         part -= P_(m[k][0], m[k][1], 0) * Cyl(1.5 + TOL.pivot_clearance, 10)

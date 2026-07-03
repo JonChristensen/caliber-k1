@@ -176,9 +176,9 @@ def wave_bridge_face(path_points, half_w: float = 6.5,
         L = (dx * dx + dy * dy) ** 0.5
         return (-dy / L, dx / L)
 
-    swells = [(4.0, crest_at - 0.30, 0.075),      # (height, center, width)
-              (7.0, crest_at - 0.14, 0.075),
-              (11.0, crest_at + 0.03, 0.085)]
+    swells = [(5.0, crest_at - 0.30, 0.095),      # (height, center, width)
+              (9.0, crest_at - 0.14, 0.095),
+              (13.0, crest_at + 0.03, 0.105)]
 
     def lift(f):
         return sum(h * exp(-((f - c) / w) ** 2) for h, c, w in swells)
