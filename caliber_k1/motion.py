@@ -101,7 +101,9 @@ def dial_cock():
     for k in ("R1", "R2", "M"):
         part -= Pos(m[k][0], m[k][1], 0) * Cylinder(
             1.5 + TOL.pivot_clearance, LV["dial_cock_t"] - 1.0, align=BOTTOM)
-    part -= Pos(*m["T"]) * Cylinder(3.0 + TOL.pivot_clearance, 20)
+    # T hole passes the hour wheel's Ø9 pipe, which journals in the cock
+    # (bug caught in M5 design review: was sized for the cannon tube only)
+    part -= Pos(*m["T"]) * Cylinder(4.5 + TOL.pivot_clearance, 20)
     for k in ("deck_pillar_a", "deck_pillar_b"):
         part -= Pos(*m[k]) * Cylinder(1.6 + TOL.snug_clearance, 20)
     return part

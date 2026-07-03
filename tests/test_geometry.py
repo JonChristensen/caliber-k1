@@ -333,3 +333,8 @@ def test_moon_phase_accuracy():
     err_per_lun = abs(lunation_days() - true_lun)          # days
     years_to_one_day = true_lun / err_per_lun / 12.368
     assert years_to_one_day > 100, "moon phase must hold 1 day for >100 years"
+
+
+def test_hour_pipe_passes_dial_cock():
+    # hour wheel pipe Ø9 must journal inside the dial cock's T bore
+    assert 4.5 + TOL.pivot_clearance > 4.5, "cock bore must clear the pipe"

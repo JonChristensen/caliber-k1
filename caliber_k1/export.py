@@ -18,7 +18,7 @@ from .parameters import (
 
 
 def build_parts() -> dict:
-    return {
+    parts = {
         # Milestone 1 (drum now ships toothed for M2; drum(toothed=False)
         # reproduces the original plain M1 print)
         "drum": barrel.drum(),
@@ -59,6 +59,11 @@ def build_parts() -> dict:
         "minute_hand": motion.minute_hand(),
         "hour_hand": motion.hour_hand(),
     }
+    # label each shape so STEP viewers (Fusion, etc.) show real part names;
+    # Pos * part deep-copies, so positioned assembly children inherit these
+    for name, part in parts.items():
+        part.label = name
+    return parts
 
 
 def build_assembly(parts: dict) -> Compound:
