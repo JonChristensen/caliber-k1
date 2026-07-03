@@ -458,19 +458,22 @@ def m4_layout() -> dict:
 
 
 # --- M5 moon phase (kickoff): two-stage lunation train ----------------------
-# hour arbor (0.5 d/rev) --46/9--> --104/9--> moon disc
-# lunation modeled 29.5308642 d vs 29.530588853 true: 23.8 s/lunation,
-# ~1 day of phase error in 290 years. Found by exhaustive search (<=120t).
+# hour pipe 14t pinion --> 63t | 8t pinion --> 105t moon disc (module 0.8)
+# lunation modeled 29.53125 d vs 29.530588853 true: 57 s/lunation ->
+# 1 day of phase error per ~122 years. (The first-pass 46/9x104/9 train
+# was more accurate on paper but needed a 9-leaf pinion that cannot exist
+# on the Ø6.8-bore hour pipe — see log 0008. Physics defers to plumbing.)
 @dataclass(frozen=True)
 class MoonPhase:
-    s1_wheel: int = 46
-    s1_pinion: int = 9
-    s2_wheel: int = 104
-    s2_pinion: int = 9
+    module: float = 0.8
+    pipe_pinion: int = 14
+    s1_wheel: int = 63
+    s1_pinion: int = 8
+    s2_wheel: int = 105
 
 
 MOON = MoonPhase()
 
 
 def lunation_days() -> float:
-    return 0.5 * (MOON.s1_wheel / MOON.s1_pinion) * (MOON.s2_wheel / MOON.s2_pinion)
+    return 0.5 * (MOON.s1_wheel / MOON.pipe_pinion) * (MOON.s2_wheel / MOON.s1_pinion)
