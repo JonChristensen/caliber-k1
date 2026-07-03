@@ -39,3 +39,20 @@ def train_check(variant: str) -> dict:
     runtime_h = t["usable_turns"] * t["barrel_hours"]
     return dict(center_min=center_min, fourth_s=fourth_s, esc_s=esc_s,
                 runtime_h=runtime_h)
+
+
+def revb_layout() -> dict:
+    """Flat layout, center wheel at ORIGIN (hands live here). Gear planes:
+    P0 z2-7 (barrel gear, center pinion, third wheel, fourth pinion),
+    P1 z8-13 (center wheel, third pinion, fourth wheel, escape pinion),
+    escapement z14-17, balance over the bridge z18-24. Total 24mm.
+    Wave-bridge crest/tube lands on the balance center (0003 contract)."""
+    from math import cos, sin, radians
+    C = (0.0, 0.0)
+    B = (54 * cos(radians(105)), 54 * sin(radians(105)))      # barrel
+    T3 = (36 * cos(radians(-30)), 36 * sin(radians(-30)))     # third
+    F = (T3[0] + 34 * cos(radians(-100)), T3[1] + 34 * sin(radians(-100)))
+    E = (F[0] + 18 * cos(radians(-170)), F[1] + 18 * sin(radians(-170)))
+    BAL = (E[0] + 34.5 * cos(radians(160)), E[1] + 34.5 * sin(radians(160)))
+    return {"barrel": B, "center": C, "third": T3, "fourth": F,
+            "escape": E, "balance": BAL}
