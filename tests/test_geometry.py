@@ -545,3 +545,14 @@ def test_dial_parts_build():
     for mk in (rp.cannon_pinion_b, rp.minute_wheel_b, rp.hour_wheel_dial_b,
                rp.moon_s1_b, rp.moon_disc_b):
         assert mk().volume > 80, f"{mk.__name__} implausibly small"
+
+
+def test_the_dial_actually_fits():
+    """Jon's question: is there room for the dial between the moon disc
+    and the hour hand? There must be, forever."""
+    from caliber_k1.revb import M2E
+    disc_bottom = M2E["moon_d"][1]
+    dial_top, dial_bottom = M2E["dial_z"]
+    assert dial_top <= disc_bottom - 0.2, "dial rubs the moon disc"
+    assert M2E["hour_hand_z"] <= dial_bottom - 0.3, "hour hand rubs the dial"
+    assert dial_top - dial_bottom >= 0.8 - 1e-9, "dial too thin to print"

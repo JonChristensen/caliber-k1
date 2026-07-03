@@ -193,7 +193,8 @@ M2E = {
     "planeB": (-2.6, -4.4),      # minute pinion + hour wheel (module 0.96!)
     "moon_p": (-4.6, -5.8),      # 14t pipe pinion + s1 wheel (module 0.6)
     "moon_d": (-6.0, -7.2),      # s1 pinion + 105t moon disc (module 0.6)
-    "hour_hand_z": -7.6, "minute_hand_z": -8.4,
+    "dial_z": (-7.4, -8.2),      # the dial plate: moon aperture cut here
+    "hour_hand_z": -8.6, "minute_hand_z": -9.4,
     "hour_mesh_module": 0.96,    # (12+36)/2*1.0 == (10+40)/2*0.96 == 24.0
     "moon_module": 0.6,
 }
