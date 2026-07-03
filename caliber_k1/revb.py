@@ -187,17 +187,65 @@ def stem_line_z(variant: Variant = None) -> float:
     return drum_top + 5.0 + 2.0 * v.endshake + 3.0
 
 
-# --- 2e: dial side (z below the mainplate, hands outermost) ------------------
+# --- 2e-r: dial side, pocketed into the plate (log 0013) ---------------------
+# z here = depth INTO the plate from its dial face (face = 0, going up).
+# One 2.8mm pocket hosts both motion planes AND the moon train; a 0.8mm
+# retaining platform closes it (date-platform analog, doubles as moon
+# guard). Only pipes + hands stand proud of the face.
+PLATE_T = 6.5
 M2E = {
-    "planeA": (-0.6, -2.4),      # cannon pinion + minute wheel
-    "planeB": (-2.6, -4.4),      # minute pinion + hour wheel (module 0.96!)
-    "moon_p": (-4.6, -5.8),      # 14t pipe pinion + s1 wheel (module 0.6)
-    "moon_d": (-6.0, -7.2),      # s1 pinion + 105t moon disc (module 0.6)
-    "dial_z": (-7.4, -8.2),      # the dial plate: moon aperture cut here
-    "hour_hand_z": -8.6, "minute_hand_z": -9.4,
+    "pocket_depth": 2.8,
+    "planeA": (1.6, 2.8),        # cannon 12t + minute wheel 36t (h1.2)
+    "planeB": (0.4, 1.6),        # minute pinion 10t + hour wheel 40t
+    "moon_p": (1.6, 2.8),        # hour-pipe 14t + s1 63t (share plane A band)
+    "moon_d": (0.2, 1.4),        # s1 pinion 8t + 105t disc, own recess
+    "platform": (0.0, -0.8),     # retaining platform, proud below the face
+    "dial_z": (-1.0, -1.8),
+    "hour_hand_z": -2.6, "minute_hand_z": -3.4,
     "hour_mesh_module": 0.96,    # (12+36)/2*1.0 == (10+40)/2*0.96 == 24.0
     "moon_module": 0.6,
 }
+
+
+# --- The variant switch: one geometry, two material worlds ------------------
+# Set K1_VARIANT=metal (env) or pass variant= explicitly. Print and metal
+# share ALL layout coordinates and wheel counts; they differ only in the
+# dimension tables below — and every derived height (like the stem line)
+# is computed FROM these, so flipping the switch reflows the movement.
+from dataclasses import dataclass as _dc
+import os as _os
+
+
+@_dc(frozen=True)
+class Variant:
+    name: str
+    drum_h: float           # barrel drum height (spring volume driver)
+    usable_turns: float
+    pivot_clearance: float  # running fits
+    endshake: float
+    spring: str             # mainspring spec
+    escapement: str         # pin_pallet (proven print) | swiss_lever (metal)
+
+
+VARIANTS = {
+    "print": Variant("print", 17.0, 1.5, 0.20, 0.50,
+                     "PETG strip 1.6x16", "pin_pallet"),
+    "metal": Variant("metal", 4.5, 7.0, 0.04, 0.10,
+                     "steel 0.30x14 (spec at DFM pass)", "swiss_lever"),
+}
+
+
+def active_variant() -> Variant:
+    return VARIANTS[_os.environ.get("K1_VARIANT", "print")]
+
+
+def stem_line_z(variant: Variant = None) -> float:
+    """The stem axis height, DERIVED: it overflies the drum by pinion
+    radius + running clearance. Print: ~29.5 (tall PETG drum). Metal:
+    drops toward plate level as the drum shrinks — no fork, one formula."""
+    v = variant or active_variant()
+    drum_top = 3.5 + v.drum_h                 # drum sits 3.5 over the plate
+    return drum_top + 5.0 + 2.0 * v.endshake + 3.0
 
 
 def motion_layout_b() -> dict:

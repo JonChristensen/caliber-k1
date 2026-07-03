@@ -14,8 +14,9 @@ BOTTOM = (Align.CENTER, Align.CENTER, Align.MIN)
 def mainplate():
     """Ø170 x 4. Blind bushings for every lower pivot (no through-holes:
     the dial side stays clean — the watch way)."""
+    from .revb import PLATE_T, M2E, motion_layout_b
     m = revb_layout()
-    part = Cylinder(85, 4, align=BOTTOM)
+    part = Cylinder(85, PLATE_T, align=BOTTOM)
     # barrel arbor: Ø8 pivot (reuses the proven M1 arbor), blind 3 deep
     bx, by = m["barrel"]
     part -= Pos(bx, by, 1.0) * Cylinder(
@@ -29,15 +30,25 @@ def mainplate():
     x, y = m["balance"]
     part -= Pos(x, y, 1.0) * Cylinder(1.25 + TOL.pivot_clearance, 5,
                                       align=BOTTOM)
-    # 2e: center arbor now passes THROUGH to the dial side (cannon rides
-    # its Ø3 pipe extension); three dial-side blind bushings (from below)
+    # 2e-r: center arbor passes through; dial-face POCKET hosts motion +
+    # moon works (log 0013); stub bushings live in the pocket floor
     part -= Cylinder(_dial_bore(1.5), 20)
-    from .revb import motion_layout_b
     ml = motion_layout_b()
-    for k in ("minute", "s1", "disc"):
+    pocket = Pos(0, 0, -1) * Cylinder(26, M2E["pocket_depth"] + 1, align=BOTTOM)
+    pocket += Pos(ml["minute"][0], ml["minute"][1], -1) * Cylinder(
+        20, M2E["pocket_depth"] + 1, align=BOTTOM)
+    pocket += Pos(ml["s1"][0], ml["s1"][1], -1) * Cylinder(
+        21, M2E["pocket_depth"] + 1, align=BOTTOM)
+    pocket += Pos(ml["disc"][0], ml["disc"][1], -1) * Cylinder(
+        33.5, M2E["moon_d"][1] + 1, align=BOTTOM)
+    part -= pocket
+    for k, r in (("minute", 1.0), ("s1", 1.0), ("disc", 1.0)):
         px, py = ml[k]
-        part -= Pos(px, py, -1) * Cylinder(_dial_bore(1.0) + 0.25, 4,
-                                           align=BOTTOM)
+        part -= Pos(px, py, 0) * Cylinder(_dial_bore(r) + 0.25,
+                                          M2E["pocket_depth"] + 0.8, align=BOTTOM)
+    # platform screw holes (2x M3 into pocket-floor bosses)
+    for px, py in ((30, 14), (-20, 30)):
+        part -= Pos(px, py, -1) * Cylinder(1.25, 5, align=BOTTOM)
     # three mounting feet holes at the rim (M3, for the display stand)
     from math import cos, sin, radians
     for az in (30, 150, 270):
@@ -268,64 +279,89 @@ def _dial_bore(r_nom):
 
 
 def cannon_pinion_b():
-    """12t cannon + pipe to the minute hand; friction slot for setting."""
+    """12t cannon (in-pocket) + pipe to the minute hand; friction slot."""
     from build123d import Cylinder as Cyl, Pos as P_, Rectangle
     from . import gears
     from .revb import M2E
-    part = extrude(gears.pinion_face(12), 1.8)
-    pipe_len = -M2E["minute_hand_z"] - 0.6 + 1.2
-    part += Cyl(2.4, pipe_len, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    part = extrude(gears.pinion_face(12), 1.2)          # z0..1.2 in planeA band
+    pipe_len = 1.2 + (-M2E["minute_hand_z"])
+    part += P_(0, 0, 1.2 - pipe_len) * Cyl(2.4, pipe_len,
+                align=(Align.CENTER, Align.CENTER, Align.MIN))
     part -= Cyl(_dial_bore(1.5), pipe_len * 3)
-    part -= P_(0, 2.4, pipe_len - 2) * extrude(Rectangle(0.8, 1.6), 4)
+    from build123d import Rectangle as R_
+    part -= P_(0, 2.4, 1.2 - pipe_len) * extrude(R_(0.8, 1.6), 2)
     return part
 
 
 def minute_wheel_b():
-    """36t wheel (m1.0, meshes cannon) + 10t pinion (m0.96, meshes hour)."""
-    from build123d import Cylinder as Cyl
+    """36t (m1.0) + 10t pinion (m0.96), both fully in-pocket."""
+    from build123d import Cylinder as Cyl, Location
     from . import gears
-    part = extrude(gears.wheel_face(36, 12), 1.8)
-    part += extrude(gears.pinion_face(10, module=0.96), 2.0) \
-        .moved(__import__('build123d').Location((0, 0, 1.8)))
+    part = extrude(gears.wheel_face(36, 12), 1.2)
+    part += extrude(gears.pinion_face(10, module=0.96), 1.2).moved(
+        Location((0, 0, -1.2)))
     part -= Cyl(_dial_bore(1.25), 12)
     return part
 
 
 def hour_wheel_dial_b():
-    """40t hour wheel (m0.96) + pipe + integral 14t moon pinion (m0.6)."""
+    """40t (m0.96) + integral 14t moon pinion above + pipe below."""
     from build123d import Cylinder as Cyl, Pos as P_
     from . import gears
     from .revb import M2E
-    part = extrude(gears.wheel_face(40, 10, module=0.96), 1.8)
-    part += P_(0, 0, 1.8) * extrude(gears.pinion_face(14, module=M2E["moon_module"]), 1.4)
-    pipe_len = -M2E["hour_hand_z"] - 2.6
-    part += Cyl(3.4, pipe_len, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    part = extrude(gears.wheel_face(40, 10, module=0.96), 1.2)
+    part += P_(0, 0, 1.2) * extrude(
+        gears.pinion_face(14, module=M2E["moon_module"]), 1.2)
+    pipe_len = 0.4 + (-M2E["hour_hand_z"])
+    part += P_(0, 0, -pipe_len) * Cyl(3.4, pipe_len,
+                align=(Align.CENTER, Align.CENTER, Align.MIN))
     part -= Cyl(_dial_bore(2.5), pipe_len * 3)
     return part
 
 
 def moon_s1_b():
-    from build123d import Cylinder as Cyl, Pos as P_
+    from build123d import Cylinder as Cyl, Location
     from . import gears
     from .revb import M2E
     m = M2E["moon_module"]
     part = extrude(gears.wheel_face(63, 14, module=m), 1.2)
-    part += P_(0, 0, 1.2) * extrude(gears.pinion_face(8, module=m), 1.4)
+    part += extrude(gears.pinion_face(8, module=m), 1.2).moved(
+        Location((0, 0, -1.2)))
     part -= Cyl(_dial_bore(1.0), 12)
     return part
 
 
 def moon_disc_b():
-    """105t (m0.6) — the moon carrier. Two Ø9 moon pockets for contrast
-    inserts; face art belongs to the beauty pass."""
+    """105t (m0.6) moon carrier, thin, in its own recess under the guard."""
     from math import cos, pi, sin
     from build123d import Cylinder as Cyl, Pos as P_
     from . import gears
     from .revb import M2E
-    part = extrude(gears.wheel_face(105, 8, module=M2E["moon_module"]), 1.2)
+    part = extrude(gears.wheel_face(105, 8, module=M2E["moon_module"]), 1.0)
     for k in (0, 1):
         a = pi * k
-        part -= P_(18 * cos(a), 18 * sin(a), 0.4) * Cyl(4.5, 2,
+        part -= P_(18 * cos(a), 18 * sin(a), 0.3) * Cyl(4.5, 2,
                     align=(Align.CENTER, Align.CENTER, Align.MIN))
     part -= Cyl(_dial_bore(1.0), 12)
+    return part
+
+
+def dial_platform():
+    """The retaining platform: closes the pocket, guards the moon disc,
+    carries the dial. Holes pass the two pipes; 2x M3 to the plate."""
+    from build123d import Cylinder as Cyl, Pos as P_
+    from .revb import M2E, motion_layout_b
+    ml = motion_layout_b()
+    face = Circle(27.5)
+    face += P_(*ml["minute"]) * Circle(21)
+    face += P_(*ml["s1"]) * Circle(22)
+    face += P_(*ml["disc"]) * Circle(34.5)
+    part = extrude(face, 0.8)
+    part -= Cyl(3.4 + 0.3, 4)                       # hour pipe passes
+    for px, py in ((30, 14), (-20, 30)):
+        part -= P_(px, py, 0) * Cyl(1.7, 4)
+    # moon window: the aperture lives in the DIAL; the guard gets a
+    # generous opening over the disc's moon orbit instead
+    dx, dy = ml["disc"]
+    part -= P_(dx, dy, 0) * Cyl(0.5, 4)             # disc arbor relief
     return part

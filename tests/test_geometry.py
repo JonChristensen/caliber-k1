@@ -377,7 +377,8 @@ def test_revb_mainplate_builds():
     from caliber_k1.revb_parts import mainplate
     p = mainplate()
     assert p.volume > 80000, "mainplate implausibly small"
-    assert p.bounding_box().size.Z == pytest.approx(4.0, abs=0.01)
+    from caliber_k1.revb import PLATE_T
+    assert p.bounding_box().size.Z == pytest.approx(PLATE_T, abs=0.01)
 
 
 def test_revb_wave_bridge_tube_clears_balance_staff():
@@ -543,16 +544,18 @@ def test_moon_disc_packs_clear():
 def test_dial_parts_build():
     from caliber_k1 import revb_parts as rp
     for mk in (rp.cannon_pinion_b, rp.minute_wheel_b, rp.hour_wheel_dial_b,
-               rp.moon_s1_b, rp.moon_disc_b):
+               rp.moon_s1_b, rp.moon_disc_b, rp.dial_platform):
         assert mk().volume > 80, f"{mk.__name__} implausibly small"
 
 
 def test_the_dial_actually_fits():
-    """Jon's question: is there room for the dial between the moon disc
-    and the hour hand? There must be, forever."""
-    from caliber_k1.revb import M2E
-    disc_bottom = M2E["moon_d"][1]
+    """Pocketed scheme (log 0013): works inside the plate, platform
+    closes the pocket, dial beyond it, hands outermost."""
+    from caliber_k1.revb import M2E, PLATE_T
+    assert M2E["pocket_depth"] <= PLATE_T - 3.5, "pocket eats the bridge-side bushings"
+    assert M2E["planeA"][1] <= M2E["pocket_depth"] + 1e-9
+    assert M2E["platform"][1] < 0 < M2E["platform"][0] + 1e-9
     dial_top, dial_bottom = M2E["dial_z"]
-    assert dial_top <= disc_bottom - 0.2, "dial rubs the moon disc"
+    assert dial_top <= M2E["platform"][1] - 0.15, "dial rubs the platform"
     assert M2E["hour_hand_z"] <= dial_bottom - 0.3, "hour hand rubs the dial"
     assert dial_top - dial_bottom >= 0.8 - 1e-9, "dial too thin to print"
