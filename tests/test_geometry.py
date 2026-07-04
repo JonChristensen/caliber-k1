@@ -765,3 +765,20 @@ def test_hairspring_nests_in_the_well():
     assert o["hs_lo"] >= o["ring_hi"] + 0.5, "spring rests on the balance wheel"
     assert o["hs_lo"] >= bridge_z(v), "spring below the well opening"
     assert 24.0 + 1.5 < 27.0, "breathing clearance inside the well"
+
+
+# --- Rev C: the global gate ----------------------------------------------------
+
+def test_revc_layout_globally_clean():
+    """THE test rev A and rev B never had: the entire movement's swept
+    volumes, checked pairwise, forever. Any future part that changes a
+    sweep re-runs this gate."""
+    from caliber_k1.revc import revc_sweeps, check_all, REVC_LAYOUT
+    violations = check_all(revc_sweeps())
+    assert violations == [], f"global collisions: {violations[:5]}"
+    # stack: cock top at 28.7 -> brief target met
+    from caliber_k1.revc import COCK
+    assert COCK[1] <= 28.7 + 1e-9
+    # exactness carried: (Zm/p3)*(Z3/p4) == 60
+    Zd, pm, Zm, p3, Z3, p4, Z4 = REVC_LAYOUT["counts"]
+    assert (Zm / p3) * (Z3 / p4) == 60.0 and Z4 == 24
