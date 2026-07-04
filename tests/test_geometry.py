@@ -776,9 +776,8 @@ def test_revc_layout_globally_clean():
     from caliber_k1.revc import revc_sweeps, check_all, REVC_LAYOUT
     violations = check_all(revc_sweeps())
     assert violations == [], f"global collisions: {violations[:5]}"
-    # stack: cock top at 28.7 -> brief target met
+    # stack: cock top at 20.5 — balance ON the plate (Jon's massing note)
     from caliber_k1.revc import COCK
-    assert COCK[1] <= 28.7 + 1e-9
-    # exactness carried: (Zm/p3)*(Z3/p4) == 60
-    Zd, pm, Zm, p3, Z3, p4, Z4 = REVC_LAYOUT["counts"]
-    assert (Zm / p3) * (Z3 / p4) == 60.0 and Z4 == 24
+    assert COCK[1] <= 20.5 + 1e-9
+    Zd, pm, Zm, p3, Z3, p4, Z4, pe = REVC_LAYOUT["counts"]
+    assert (Zm / p3) * (Z3 / p4) == 60.0 and Z4 == 2 * pe

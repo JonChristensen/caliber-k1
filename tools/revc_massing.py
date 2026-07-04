@@ -22,8 +22,8 @@ for s in revc_sweeps():
 Bx, By = REVC_LAYOUT["balance"]
 kids.append(L("cock (arm zone)", Pos(Bx, By, COCK[0]) * Cylinder(
     8, COCK[1] - COCK[0], align=B)))
-asm = Compound(label="revc_massing_r1", children=kids)
-export_step(asm, "exports/revc/massing_r1.step")
+asm = Compound(label="revc_massing_r2", children=kids)
+export_step(asm, "exports/revc/massing_r2.step")
 bb = asm.bounding_box()
 print(f"rev C massing: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm, "
       f"{len(kids)} components")

@@ -27,7 +27,7 @@ class Sweep:
 MESH_PAIRS = {frozenset(p) for p in [
     ("drum_gear", "min_p"), ("drum", "min_p"), ("min_w", "third_p"), ("third_w", "fourth_p"),
     ("fourth_w", "esc_p"), ("esc_w", "lever"), ("lever", "ring"),
-    ("lever", "spring"),
+    ("lever", "spring"), ("lever", "roller"),
 ]}
 
 
@@ -86,15 +86,19 @@ def runtime_hours(turns, drum_ratio_to_center):
 # third -> fourth -> escape -> lever span -> balance. Planes A/B alternate
 # by mesh parity; escapement+lever plane E above B; ring in the well.
 
-PLANES = {"A": (7.0, 10.5), "B": (11.0, 14.5), "E": (15.0, 18.0)}
-RING = (18.7, 22.7)          # in the bridge's thickness (bridge 19.2-22.2)
-BRIDGE = (19.2, 22.2)
-SPRING_Z = (23.2, 25.7)
-COCK = (26.2, 28.7)          # total stack target <= 28.7 + cabochon
+PLANES = {"A": (7.0, 10.5), "B": (11.0, 14.5)}
+# Jon's massing note, watch-true: the balance lives ON THE PLATE in its
+# own bay — lowest resident, everything steps over it. Escape wheel
+# drops to plane A on an extended arbor to meet the lever down there.
+ROLLER_Z = (7.0, 9.5)        # roller + lever + escape wheel, plate level
+RING = (10.0, 14.0)          # ring right above, in the bay
+SPRING_Z = (14.5, 17.0)
+BRIDGE = (17.5, 20.5)        # ONE bridge, well over the bay
+COCK = (17.5, 20.5)          # coplanar with the bridge (Jon's arrangement)
 
 
 def _station_sweeps(kind, x, y, counts):
-    Zd, pm, Zm, p3, Z3, p4, Z4 = counts
+    Zd, pm, Zm, p3, Z3, p4, Z4, pe = counts
     drum_r = (Zd + 6) / 2
     dh = 4.8 + 6.0
     S = {
@@ -108,9 +112,10 @@ def _station_sweeps(kind, x, y, counts):
                   Sweep("third_w", x, y, Z3/2 + 1, *PLANES["A"])],
         "fourth": [Sweep("fourth_p", x, y, p4/2 + 1, *PLANES["A"]),
                    Sweep("fourth_w", x, y, Z4/2 + 1, *PLANES["B"])],
-        "escape": [Sweep("esc_p", x, y, 7, *PLANES["B"]),
-                   Sweep("esc_w", x, y, 17, *PLANES["E"])],
-        "balance": [Sweep("ring", x, y, 26, *RING),
+        "escape": [Sweep("esc_p", x, y, pe/2 + 1, *PLANES["B"]),
+                   Sweep("esc_w", x, y, 17, *ROLLER_Z)],
+        "balance": [Sweep("roller", x, y, 6, *ROLLER_Z),
+                    Sweep("ring", x, y, 26, *RING),
                     Sweep("spring", x, y, 26, *SPRING_Z)],
     }
     return S[kind]
@@ -125,77 +130,76 @@ def solve_layout(step=12):
     escape = 30 s (30t at 1 Hz). Barrel azimuth fixed (symmetry)."""
     from math import radians
     menu = [
-        # (Zd, pm, Zm, p3, Z3, p4, Z4): (Zm/p3)*(Z3/p4) == 60 exactly.
-        # Big minute wheel lives on plane B (clear above the recessed
-        # drum); plane A keeps only small/medium residents.
-        (56, 14, 80, 8, 48, 8, 24),      # drum 4h/rev
-        (72, 12, 80, 8, 48, 8, 24),      # drum 6h/rev
-        (56, 14, 90, 9, 48, 8, 24),      # drum 4h/rev, alt
+        # (Zd, pm, Zm, p3, Z3, p4, Z4, pe): (Zm/p3)*(Z3/p4) == 60 exact;
+        # Z4/pe == 2 (30s escape). Fourth/escape enlarged to 36/18 so the
+        # plane-A escape wheel clears the fourth arbor (mesh d 27 > 23).
+        (56, 14, 80, 8, 48, 8, 36, 18),
+        (72, 12, 80, 8, 48, 8, 36, 18),
+        (56, 14, 90, 9, 48, 8, 36, 18),
     ]
     best = None
     for counts in menu:
-        Zd, pm, Zm, p3, Z3, p4, Z4 = counts
-        if abs((Zm / p3) * (Z3 / p4) - 60) > 1e-9:
+        Zd, pm, Zm, p3, Z3, p4, Z4, pe = counts
+        if abs((Zm / p3) * (Z3 / p4) - 60) > 1e-9 or Z4 != 2 * pe:
             continue
         d_bm = (Zd + pm) / 2
-        d_mt, d_tf, d_fe = (Zm + p3) / 2, (Z3 + p4) / 2, (Z4 + 12) / 2
-        # barrel on +y axis (rotational symmetry); drum must fit the rim
-        b_r = None
-        for rr in range(30, 60, 2):
-            if rr + (Zd + 6) / 2 <= RIM - 1:
-                b_r = rr
-        bx, by = 0.0, float(b_r)
-        base = _station_sweeps("barrel", bx, by, counts)
-
+        d_mt, d_tf, d_fe = (Zm + p3) / 2, (Z3 + p4) / 2, (Z4 + pe) / 2
         def ring_pts(cx, cy, d):
             for az in range(0, 360, step):
                 yield (cx + d * cos(radians(az)),
                        cy + d * sin(radians(az)))
 
-        for mx, my in ring_pts(bx, by, d_bm):
-            s1 = base + _station_sweeps("minute", mx, my, counts)
-            if check_all(s1):
-                continue
-            for tx, ty in ring_pts(mx, my, d_mt):
-                s2 = s1 + _station_sweeps("third", tx, ty, counts)
-                if check_all(s2):
-                    continue
-                for fx, fy in ring_pts(tx, ty, d_tf):
-                    s3 = s2 + _station_sweeps("fourth", fx, fy, counts)
-                    if check_all(s3):
-                        continue
-                    for ex, ey in ring_pts(fx, fy, d_fe):
-                        s4 = s3 + _station_sweeps("escape", ex, ey, counts)
-                        if check_all(s4):
-                            continue
-                        for Bx, By in ring_pts(ex, ey, 34.5):
-                            s5 = s4 + _station_sweeps("balance", Bx, By, counts)
-                            s5.append(Sweep("lever", (ex+Bx)/2, (ey+By)/2,
-                                            19, *PLANES["E"]))
-                            if check_all(s5):
-                                continue
-                            reach = max(hypot(s.x, s.y) + s.r for s in s5)
-                            cand = (reach, dict(
-                                counts=counts, barrel=(bx, by),
-                                minute=(round(mx,1), round(my,1)),
-                                third=(round(tx,1), round(ty,1)),
-                                fourth=(round(fx,1), round(fy,1)),
-                                escape=(round(ex,1), round(ey,1)),
-                                balance=(round(Bx,1), round(By,1))))
-                            if best is None or cand[0] < best[0]:
-                                best = cand
+        b_max = int(RIM - 1 - (Zd + 6) / 2)
+        for b_r in range(b_max, b_max - 13, -4):
+          bx, by = 0.0, float(b_r)
+          base = _station_sweeps("barrel", bx, by, counts)
+          for mx, my in ring_pts(bx, by, d_bm):
+              s1 = base + _station_sweeps("minute", mx, my, counts)
+              if check_all(s1):
+                  continue
+              for tx, ty in ring_pts(mx, my, d_mt):
+                  s2 = s1 + _station_sweeps("third", tx, ty, counts)
+                  if check_all(s2):
+                      continue
+                  for fx, fy in ring_pts(tx, ty, d_tf):
+                      s3 = s2 + _station_sweeps("fourth", fx, fy, counts)
+                      if check_all(s3):
+                          continue
+                      for ex, ey in ring_pts(fx, fy, d_fe):
+                          s4 = s3 + _station_sweeps("escape", ex, ey, counts)
+                          if check_all(s4):
+                              continue
+                          for Bx, By in ring_pts(ex, ey, 40.0):
+                              s5 = s4 + _station_sweeps("balance", Bx, By, counts)
+                              s5.append(Sweep("lever", (ex+Bx)/2, (ey+By)/2,
+                                              19, *ROLLER_Z))
+                              if check_all(s5):
+                                  continue
+                              reach = max(hypot(s.x, s.y) + s.r for s in s5)
+                              cand = (reach, dict(
+                                  counts=counts, barrel=(bx, by),
+                                  minute=(round(mx,1), round(my,1)),
+                                  third=(round(tx,1), round(ty,1)),
+                                  fourth=(round(fx,1), round(fy,1)),
+                                  escape=(round(ex,1), round(ey,1)),
+                                  balance=(round(Bx,1), round(By,1))))
+                              if best is None or cand[0] < best[0]:
+                                  best = cand
     return best
 
 
 # --- THE REV C LAYOUT (solver output, frozen; Jon's massing gate next) -------
 REVC_LAYOUT = {
-    "counts": (56, 14, 80, 8, 48, 8, 24),   # Zd, pm, Zm, p3, Z3, p4, Z4
-    "barrel": (0.0, 50.0),                   # drum recessed z2.2-11.0
-    "minute": (-23.4, 24.0),                 # 80t on plane B (indirect
-    "third": (-52.9, -8.7),                  #  center display: 1:1 dial-
-    "fourth": (-49.9, -36.6),                #  side transfer to cannon)
-    "escape": (-31.9, -36.6),
-    "balance": (2.6, -36.6),
+    # Zd, pm, Zm, p3, Z3, p4, Z4, pe — fourth/escape enlarged (36/18)
+    # so the plate-level escape wheel clears the fourth arbor
+    "counts": (56, 14, 80, 8, 48, 8, 36, 18),
+    "barrel": (0.0, 39.0),                   # drum recessed z2.2-11.0
+    "minute": (-22.5, 12.2),                 # 80t on plane B (indirect
+    "third": (-30.1, -31.1),                 #  center display: 1:1 dial-
+    "fourth": (-8.7, -49.1),                 #  side transfer to cannon)
+    "escape": (16.7, -39.9),
+    "balance": (42.4, -9.3),                 # ON THE PLATE (Jon's note)
+    "lever_span": 40.0,
     "drum_ratio": 4.0,                       # 4 h/rev -> ~18 h runtime
 }
 
@@ -210,5 +214,5 @@ def revc_sweeps():
         s += _station_sweeps(kind, *L[k], counts)
     ex, ey = L["escape"]
     Bx, By = L["balance"]
-    s.append(Sweep("lever", (ex + Bx) / 2, (ey + By) / 2, 19, *PLANES["E"]))
+    s.append(Sweep("lever", (ex + Bx) / 2, (ey + By) / 2, 22, *ROLLER_Z))
     return s
