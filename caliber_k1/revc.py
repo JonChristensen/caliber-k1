@@ -99,10 +99,12 @@ PLANES = {"A": (7.0, 10.5), "B": (11.0, 14.5)}
 # do this). Constraint carried to the dial-side solve: no dial pocket
 # may share plan-area with this recess (web >= 1.2).
 ROLLER_Z = (4.2, 6.7)        # roller + lever + escape wheel, IN the recess
-RING = (7.2, 11.0)           # ring literally on the plate
+RING = (7.6, 11.0)           # ring just over the plate (0.6 air over the
+                             # pallet strap — the flat-movement squeeze)
 SPRING_Z = (11.7, 14.2)
 BRIDGE = (14.7, 17.7)        # ONE bridge, well over the bay
 COCK = (14.7, 17.7)          # coplanar cock — nothing higher
+BAY_FLOOR = 4.0              # escapement recess floor (2.5 into the plate)
 
 
 def _station_sweeps(kind, x, y, counts):
@@ -122,7 +124,7 @@ def _station_sweeps(kind, x, y, counts):
                    Sweep("fourth_w", x, y, Z4/2 + 1, *PLANES["B"])],
         "escape": [Sweep("esc_p", x, y, pe/2 + 1, *PLANES["B"]),
                    Sweep("esc_w", x, y, 17, *ROLLER_Z)],
-        "balance": [Sweep("roller", x, y, 6, *ROLLER_Z),
+        "balance": [Sweep("roller", x, y, 7, *ROLLER_Z),
                     Sweep("ring", x, y, 26, *RING),
                     Sweep("spring", x, y, 26, *SPRING_Z)],
     }
@@ -208,10 +210,11 @@ REVC_LAYOUT = {
     "minute": (-22.5, 12.2),                 # 80t on plane B (indirect
     "third": (-22.5, -31.8),                 #  center display: 1:1 dial-
     "fourth": (-1.0, -49.8),                 #  side transfer to cannon)
-    "escape": (24.3, -40.6),
-    "balance": (44.3, -5.9),                 # ON THE PLATE (Jon's note)
+    "escape": (24.4, -40.6),                 # snapped +0.1x: fourth-escape
+    "balance": (44.3, -5.9),                 #  mesh distance exact (27.0)
     "lever_span": 40.0,
-    "drum_ratio": 4.0,                       # 4 h/rev -> ~18 h runtime
+    "drum_ratio": 4.0,                       # 4 h/rev; spring_model says
+                                             # ~2.4 turns -> ~10 h (bench!)
     # v3: escapement bay recessed 2.5 into the plate, clearance 2.0
     # everywhere (Jon: use the rim room), stack tops at COCK z1 = 17.7
 }
@@ -228,6 +231,114 @@ def revc_sweeps():
     ex, ey = L["escape"]
     Bx, By = L["balance"]
     ux, uy = (Bx - ex) / 40.0, (By - ey) / 40.0
-    s.append(Sweep("lever_hub", ex + 20.6*ux, ey + 20.6*uy, 13, *ROLLER_Z))
+    s.append(Sweep("lever_hub", ex + 20.6*ux, ey + 20.6*uy, 15.5, *ROLLER_Z))
     s.append(Sweep("lever_fork", ex + 34.0*ux, ey + 34.0*uy, 5, *ROLLER_Z))
     return s
+
+
+# --- part-level z-map (parts port; all ABSOLUTE, dial face = z0) -------------
+# Derived from the frozen bands above; parts assert against these.
+REVC_BACKLASH = 0.30
+ZC = {
+    "bay_cup_floor": BAY_FLOOR - 1.8,        # lower pivot cups in the bay
+    "esc_wheel": (4.2, 6.6),                 # club wheel t2.4
+    "lever": (4.2, 6.3),                     # fork body t2.1, pivots +-
+    "roller_saf": (4.2, 5.15),               # safety tier == guard band
+    "roller_imp": (5.15, 6.7),               # impulse tier == slot band
+    "strap": (6.55, 7.1),                    # removable pallet strap
+    "planeA": (7.25, 10.25),                 # gear metal inside PLANES["A"]
+    "planeB": (11.25, 14.25),                # gear metal inside PLANES["B"]
+    "ring": (7.6, 11.0),
+    "spring": (11.7, 14.1),
+    "bridge": BRIDGE,
+    "bush_floor": PLATE_T - 3.0,             # train lower bushings (blind)
+    "drum": (2.2, 11.0),
+}
+
+
+def mesh_ideals(layout=None):
+    """(name, station_a, station_b, ideal_center_distance) for the four
+    train meshes at module 1.0 — the exactness gate."""
+    L = layout or REVC_LAYOUT
+    Zd, pm, Zm, p3, Z3, p4, Z4, pe = L["counts"]
+    return [("drum-minute", "barrel", "minute", (Zd + pm) / 2),
+            ("minute-third", "minute", "third", (Zm + p3) / 2),
+            ("third-fourth", "third", "fourth", (Z3 + p4) / 2),
+            ("fourth-escape", "fourth", "escape", (Z4 + pe) / 2)]
+
+
+def lever_layout_c(variant=None):
+    """Swiss lever on rev C coordinates (same proven proportions as rev B:
+    r_esc 16, 6.5-space embrace = +-39 deg, stones dip 1.2). E, P, B
+    colinear; strap feet flank P; banking pins rise from the bay floor."""
+    from math import atan2, cos, sin, radians
+    if variant is None:
+        from .revb import active_variant
+        variant = active_variant()
+    E = REVC_LAYOUT["escape"]
+    B = REVC_LAYOUT["balance"]
+    span_mm = REVC_LAYOUT["lever_span"]
+    ang = atan2(B[1] - E[1], B[0] - E[0])
+    r_esc = 16.0
+    span = radians(39)
+    a = r_esc / cos(span)                        # 20.59
+    u = (cos(ang), sin(ang))
+    P = (E[0] + a * u[0], E[1] + a * u[1])
+    dip = r_esc * sin(radians(variant.lock_deg)) + 0.4   # lock -> stone dip
+    r_eng = r_esc - dip
+    contacts = [(E[0] + r_eng * cos(ang + s * span),
+                 E[1] + r_eng * sin(ang + s * span)) for s in (+1, -1)]
+    perp = (-u[1], u[0])
+    feet = [(P[0] + s * 19.5 * perp[0], P[1] + s * 19.5 * perp[1])
+            for s in (+1, -1)]                   # strap feet, on solid plate
+    # banking pins: neck half 2.4 + pin r1.0 + swing room at the 8mm station
+    from math import tan
+    bank_off = 2.4 + 1.0 + 8 * tan(radians(6.5))
+    pins = [(P[0] + 8 * u[0] + s * bank_off * perp[0],
+             P[1] + 8 * u[1] + s * bank_off * perp[1]) for s in (+1, -1)]
+    return {"E": E, "P": P, "B": B, "ang": ang, "a": a, "r_esc": r_esc,
+            "dip": dip, "bank_deg": 6.5,
+            "contacts": contacts, "span_deg": 39.0,
+            "lock_deg": variant.lock_deg, "draw_deg": variant.draw_deg,
+            "fork_len": span_mm - a, "strap_feet": feet, "bank_pins": pins}
+
+
+def bay_stations():
+    """Centers + wall radii of the escapement bay recess (plan outline =
+    resident sweeps + 1.5 wall). Shared by the mainplate and the tests."""
+    Lv = lever_layout_c()
+    E, P, B = Lv["E"], Lv["P"], Lv["B"]
+    u = (cos(Lv["ang"]), sin(Lv["ang"]))
+    fork = (E[0] + 34.0 * u[0], E[1] + 34.0 * u[1])
+    return [(E, 17 + 1.5), (P, 15.5 + 1.5), (fork, 5 + 1.5), (B, 7 + 1.5)]
+
+
+def bay_band():
+    """The E-P connecting band of the recess (same wall as the P circle):
+    without it a concave cusp of solid plate survives between the two wall
+    circles — the lever's exit-arm cap swings through that wedge."""
+    Lv = lever_layout_c()
+    return ([Lv["E"], Lv["P"]], 15.5 + 1.5)
+
+
+def cock_layout_c():
+    """Balance cock: coplanar with the bridge, feet columns to the PLATE
+    (rim side of the balance), stud post at the hairspring's outer end."""
+    from math import atan2, cos, sin, radians
+    B = REVC_LAYOUT["balance"]
+    az = atan2(B[1], B[0])                       # toward the rim
+    feet = [(B[0] + 33 * cos(az + radians(s)), B[1] + 33 * sin(az + radians(s)))
+            for s in (26, -26)]
+    stud_az = az                                 # centered between the arms,
+    stud = (B[0] + 27.2 * cos(stud_az),          # on its own finger off the
+            B[1] + 27.2 * sin(stud_az))          # boss (clear of the columns)
+    return {"B": B, "feet": feet, "stud": stud, "az": az, "stud_az": stud_az}
+
+
+BRIDGE_PILLARS = [(55, 74.0), (145, 74.0), (215, 74.0), (300, 74.0)]
+
+
+def bridge_pillar_xy():
+    from math import cos, sin, radians
+    return [(r * cos(radians(az)), r * sin(radians(az)))
+            for az, r in BRIDGE_PILLARS]

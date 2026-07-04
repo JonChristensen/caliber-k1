@@ -171,13 +171,17 @@ class Variant:
     escapement: str         # swiss_lever both worlds (log 0015); pin_pallet = fallback
     lock_deg: float         # pallet lock: deep for print error, fine for metal
     draw_deg: float
+    backlash: float = 0.30  # train mesh backlash (probe-tuned print default)
+    press_r: float = 0.03   # radial press-fit interference on the O3 staff
 
 
 VARIANTS = {
     "print": Variant("print", 17.0, 1.5, 0.20, 0.50,
-                     "PETG strip 1.6x16", "swiss_lever", 3.0, 15.0),
+                     "PETG strip 1.6x16", "swiss_lever", 3.0, 15.0,
+                     backlash=0.30, press_r=0.03),
     "metal": Variant("metal", 4.5, 7.0, 0.04, 0.10,
-                     "steel 0.30x14 (spec at DFM pass)", "swiss_lever", 1.5, 13.0),
+                     "steel 0.30x14 (spec at DFM pass)", "swiss_lever", 1.5, 13.0,
+                     backlash=0.12, press_r=0.01),
 }
 
 
@@ -227,62 +231,6 @@ M2E = {
     # where dial + platform both open to show the moon (on the r18 orbit)
     "moon_aperture_az_deg": 240.0,
 }
-
-
-# --- The variant switch: one geometry, two material worlds ------------------
-# Set K1_VARIANT=metal (env) or pass variant= explicitly. Print and metal
-# share ALL layout coordinates and wheel counts; they differ only in the
-# dimension tables below — and every derived height (like the stem line)
-# is computed FROM these, so flipping the switch reflows the movement.
-from dataclasses import dataclass as _dc
-import os as _os
-
-
-@_dc(frozen=True)
-class Variant:
-    name: str
-    drum_h: float           # barrel drum height (spring volume driver)
-    usable_turns: float
-    pivot_clearance: float  # running fits
-    endshake: float
-    spring: str             # mainspring spec
-    escapement: str         # swiss_lever both worlds (log 0015); pin_pallet = fallback
-    lock_deg: float         # pallet lock: deep for print error, fine for metal
-    draw_deg: float
-
-
-VARIANTS = {
-    "print": Variant("print", 17.0, 1.5, 0.20, 0.50,
-                     "PETG strip 1.6x16", "swiss_lever", 3.0, 15.0),
-    "metal": Variant("metal", 4.5, 7.0, 0.04, 0.10,
-                     "steel 0.30x14 (spec at DFM pass)", "swiss_lever", 1.5, 13.0),
-}
-
-
-def active_variant() -> Variant:
-    return VARIANTS[_os.environ.get("K1_VARIANT", "print")]
-
-
-def drum_top_z(variant: Variant = None) -> float:
-    """Real drum top: plate + endshake + floor + spring space + cover."""
-    v = variant or active_variant()
-    return PLATE_T + 0.5 + (2.4 + v.drum_h + 2.4)
-
-
-def bridge_z(variant: Variant = None) -> float:
-    """Broad bridge underside: 0.5 over the tallest resident — which is
-    now the high center wheel, itself 0.5 over the drum top."""
-    return p1_high(variant)[1] + 0.5
-
-
-def winding_wheels_z(variant: Variant = None) -> float:
-    """Ratchet + crown wheel seat: recessed 1.0 into the bridge top."""
-    return bridge_z(variant) + 3.0 - 1.0 + 0.5
-
-
-def stem_line_z(variant: Variant = None) -> float:
-    """Stem axis: face-slot mesh height above the winding wheels."""
-    return winding_wheels_z(variant) + 3.5 + 2.5
 
 
 def motion_layout_b() -> dict:
