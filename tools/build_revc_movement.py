@@ -51,9 +51,9 @@ kids = [
     L("barrel arbor (winding square, dial side)",
       Pos(*lay["barrel"], 0) * rp.barrel_arbor_c()),
     L("drum cover", Pos(*lay["barrel"], 0) * rp.drum_cover_c()),
-    L("ratchet (dial side, retains the arbor)",
+    L("ratchet (flush in the bridge pocket)",
       Pos(*lay["barrel"], 0) * rp.ratchet_c()),
-    L("click (dial side, M1's flexure)",
+    L("click (M1's flexure, bridge pocket)",
       Pos(*lay["barrel"], 0) * Rot(0, 0, rp.click_geometry_c()["angle_deg"])
       * rp.click_c()),
     L("minute arbor: 14t pinion + 80t wheel",
@@ -122,13 +122,13 @@ kids += [
     L("transfer idler 2", Pos(*DL["i2"], 0) * Rot(0, 0, R_i2) * dp.idler_d()),
     L("dial platform (moon window NW)", dp.dial_platform_d()),
 ]
-for k, (px, py) in enumerate([DL[n] for n in
-                              ("motion", "w1", "w2", "disc", "i1", "i2")]):
-    kids.append(L(f"arbor post {k+1} (O2 register pin)",
-                  Pos(px, py, 0.3) * dp.arbor_post_d()))
+from caliber_k1.revc_dial import post_specs
+for k, (name, px, py, tip, top) in enumerate(post_specs()):
+    kids.append(L(f"arbor post {k+1}: {name} (O2 register pin)",
+                  Pos(px, py, tip) * dp.arbor_post_d(top - 0.1 - tip)))
 
-asm = Compound(label="revc_movement_r2", children=kids)
-export_step(asm, "exports/revc/movement_r2.step")
+asm = Compound(label="revc_movement_r3", children=kids)
+export_step(asm, "exports/revc/movement_r3.step")
 bb = asm.bounding_box()
-print(f"rev C movement r1: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
+print(f"rev C movement r3: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
       f"(z {bb.min.Z:.1f}..{bb.max.Z:.1f}), {len(kids)} components")

@@ -38,8 +38,8 @@ bridge = Pos(-4.0, -14.0, COCK[0]) * Cylinder(60, COCK[1] - COCK[0], align=B)
 bridge -= Pos(Bx, By, COCK[0] - 0.1) * Cylinder(
     30, COCK[1] - COCK[0] + 0.2, align=B)
 kids.append(L("bridge (cover zone)", bridge))
-asm = Compound(label="revc_massing_r3", children=kids)
-export_step(asm, "exports/revc/massing_r3.step")
+asm = Compound(label="revc_massing_r4", children=kids)
+export_step(asm, "exports/revc/massing_r4.step")
 bb = asm.bounding_box()
 print(f"rev C massing: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm, "
       f"{len(kids)} components")

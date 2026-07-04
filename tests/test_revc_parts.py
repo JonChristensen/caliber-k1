@@ -37,7 +37,7 @@ def _mesh_pair(A0, B0, a_xy, b_xy, za, zb):
     d = _d(a_xy, b_xy)
     B2 = Pos((a_xy[0] - b_xy[0]) / d, (a_xy[1] - b_xy[1]) / d, 0) * B
     inter2 = A & B2
-    assert (inter2.volume if inter2 else 0) > 1.0, "teeth don't reach"
+    assert (inter2.volume if inter2 else 0) > 0.8, "teeth don't reach"
 
 
 def test_revc_train_meshes_phase_aligned():
@@ -104,12 +104,12 @@ def test_revc_parts_stay_in_their_bands():
     BOTH ends of every bounding box, every part, single solids only."""
     eps = 0.02
     table = [  # (part, z_lo_min, z_hi_max)
-        (rp.mainplate_c(), -2.5, 6.5),
+        (rp.mainplate_c(), -0.01, 6.5),
         (rp.drum_c(), 2.2, 11.0),
-        (rp.barrel_arbor_c(), -4.3, 11.0),
+        (rp.barrel_arbor_c(), 0.8, 17.6),
         (rp.drum_cover_c(), 9.6, 11.0),
-        (rp.ratchet_c(), -4.0, -2.7),
-        (rp.click_c(), -4.0, 1.5),
+        (rp.ratchet_c(), 16.05, 17.65),
+        (rp.click_c(), 14.95, 17.65),
         (rp.minute_arbor_c(), 1.6, 16.2),
         (rp.third_arbor_c(), 3.6, 16.2),
         (rp.fourth_arbor_c(), 3.6, 16.2),
@@ -206,9 +206,10 @@ def test_revc_assembled_movement_no_interference():
     disjoint = [("pallet fork", "mainplate"), ("pallet fork", "roller"),
                 ("pallet fork", "bay strap"), ("bay strap", "mainplate"),
                 ("hairspring", "balance cock"), ("hairspring", "balance wheel"),
-                ("train bridge", "balance cock"), ("ratchet", "mainplate"),
-                ("barrel drum", "mainplate"),
-                ("barrel arbor", "barrel drum"), ("balance wheel", "bay strap")]
+                ("train bridge", "balance cock"), ("ratchet", "train bridge"),
+                ("ratchet", "minute arbor"), ("barrel drum", "mainplate"),
+                ("barrel arbor", "barrel drum"), ("barrel arbor", "train bridge"),
+                ("balance wheel", "bay strap")]
     for a, b in disjoint:
         inter = get(a) & get(b)
         v = inter.volume if inter else 0

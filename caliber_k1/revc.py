@@ -115,7 +115,8 @@ def _station_sweeps(kind, x, y, counts):
         # drum body tucked INSIDE its gear roots, and RECESSED into the
         # mainplate (real-watch move) so its body clears plane B above
         "barrel": [Sweep("drum", x, y, Zd/2 - 1.5, 2.2, 11.0),
-                   Sweep("drum_gear", x, y, Zd/2 + 1, *PLANES["A"])],
+                   Sweep("drum_gear", x, y, Zd/2 + 1, *PLANES["A"]),
+                   Sweep("b_arbor", x, y, 2.85, 11.0, BRIDGE[1])],
         "minute": [Sweep("min_p", x, y, pm/2 + 1, *PLANES["A"]),
                    Sweep("min_w", x, y, Zm/2 + 1, *PLANES["B"])],
         "third": [Sweep("third_p", x, y, p3/2 + 1, *PLANES["B"]),
@@ -141,11 +142,14 @@ def solve_layout(step=12):
     from math import radians
     menu = [
         # (Zd, pm, Zm, p3, Z3, p4, Z4, pe): (Zm/p3)*(Z3/p4) == 60 exact;
-        # Z4/pe == 2 (30s escape). Fourth/escape enlarged to 36/18 so the
-        # plane-A escape wheel clears the fourth arbor (mesh d 27 > 23).
-        (56, 14, 80, 8, 48, 8, 36, 18),
-        (72, 12, 80, 8, 48, 8, 36, 18),
-        (56, 14, 90, 9, 48, 8, 36, 18),
+        # Z4/pe == 2 (30s escape). Minute wheel CAPPED at 56t so its tip
+        # (r29) clears the barrel center (mesh d 35) by the arbor column
+        # + air — Jon's NH35 catch: the ratchet belongs on the MOVEMENT
+        # side, so the barrel arbor must rise to the bridge.
+        # 60/10 drum = 6h/rev (MORE spring room: ~17h runtime); minute
+        # pinion r6 clears the coplanar third wheel; minute wheel r29
+        # clears the barrel arbor column. (56/7)(45/6) = 60.000 exact.
+        (60, 10, 56, 7, 45, 6, 36, 18),
     ]
     best = None
     for counts in menu:
@@ -160,7 +164,10 @@ def solve_layout(step=12):
                        cy + d * sin(radians(az)))
 
         b_max = int(RIM - 1 - (Zd + 6) / 2)
-        for b_r in range(b_max, b_max - 13, -4):
+        # dial-side reservation: the drum recess plan edge must stay
+        # >= 10.7 from the ORIGIN (the moon pinion's pocket lives there)
+        b_min = int(Zd / 2 - 1 + 10.7) + 1
+        for b_r in range(b_max, b_min - 1, -4):
           bx, by = 0.0, float(b_r)
           base = _station_sweeps("barrel", bx, by, counts)
           for mx, my in ring_pts(bx, by, d_bm):
@@ -203,20 +210,21 @@ def solve_layout(step=12):
 
 # --- THE REV C LAYOUT (solver output, frozen; Jon's massing gate next) -------
 REVC_LAYOUT = {
-    # Zd, pm, Zm, p3, Z3, p4, Z4, pe — fourth/escape enlarged (36/18)
-    # so the plate-level escape wheel clears the fourth arbor
-    "counts": (56, 14, 80, 8, 48, 8, 36, 18),
-    "barrel": (0.0, 39.0),                   # drum recessed z2.2-11.0
-    "minute": (-22.5, 12.2),                 # 80t on plane B (indirect
-    "third": (-22.5, -31.8),                 #  center display: 1:1 dial-
-    "fourth": (-1.0, -49.8),                 #  side transfer to cannon)
-    "escape": (24.4, -40.6),                 # snapped +0.1x: fourth-escape
-    "balance": (44.3, -5.9),                 #  mesh distance exact (27.0)
+    # Zd, pm, Zm, p3, Z3, p4, Z4, pe: 60/10 drum (6h/rev), 56t minute
+    # (clears the barrel ARBOR COLUMN - Jon's NH35 catch: the ratchet
+    # lives on the MOVEMENT side, recessed flush in the bridge top),
+    # 45/6 third, 36/18 fourth/escape. (56/7)(45/6) = 60.000 exact.
+    "counts": (60, 10, 56, 7, 45, 6, 36, 18),
+    "barrel": (0.0, 41.0),                   # drum recessed z2.2-11.0;
+    "minute": (-30.3, 23.5),                 #  y>=40: dial reservation
+    "third": (-46.1, -3.8),
+    "fourth": (-41.6, -28.9),
+    "escape": (-14.6, -28.9),
+    "balance": (25.4, -28.9),
     "lever_span": 40.0,
-    "drum_ratio": 4.0,                       # 4 h/rev; spring_model says
-                                             # ~2.4 turns -> ~10 h (bench!)
-    # v3: escapement bay recessed 2.5 into the plate, clearance 2.0
-    # everywhere (Jon: use the rim room), stack tops at COCK z1 = 17.7
+    "drum_ratio": 6.0,                       # 6 h/rev x ~2.8 turns = ~17 h
+    # v4: movement-side ratchet architecture; bay recessed; clearance
+    # 2.0 everywhere; stack still tops at COCK z1 = 17.7
 }
 
 
@@ -327,15 +335,15 @@ def cock_layout_c():
     from math import atan2, cos, sin, radians
     B = REVC_LAYOUT["balance"]
     az = atan2(B[1], B[0])                       # toward the rim
-    feet = [(B[0] + 33 * cos(az + radians(s)), B[1] + 33 * sin(az + radians(s)))
-            for s in (26, -26)]
+    feet = [(B[0] + 33.5 * cos(az + radians(s)),
+             B[1] + 33.5 * sin(az + radians(s))) for s in (26, -26)]
     stud_az = az                                 # centered between the arms,
     stud = (B[0] + 27.2 * cos(stud_az),          # on its own finger off the
             B[1] + 27.2 * sin(stud_az))          # boss (clear of the columns)
     return {"B": B, "feet": feet, "stud": stud, "az": az, "stud_az": stud_az}
 
 
-BRIDGE_PILLARS = [(55, 74.0), (145, 74.0), (215, 74.0), (300, 74.0)]
+BRIDGE_PILLARS = [(55, 74.0), (145, 74.0), (200, 74.0), (285, 74.0)]
 
 
 def bridge_pillar_xy():

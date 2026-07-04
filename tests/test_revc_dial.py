@@ -113,3 +113,24 @@ def test_dial_assembled_face_no_interference():
     # setting slip): bounded press interference, not zero
     inter = get("minute arbor") & get("transfer pinion")
     assert 0.01 < (inter.volume if inter else 0) < 1.0
+
+
+def test_dial_platform_covers_every_pocket():
+    """Retention: every dial part's plan circle lies inside the platform
+    outline (cover circles), and every post tip locates in a platform
+    hole — nothing can lift before the platform is off."""
+    from caliber_k1.revc_dial import post_specs
+    from caliber_k1.revc_dial_parts import PLATFORM_SCREWS, TIP as T2
+    L = DIAL_LAYOUT
+    covers = [((0, 0), 23.0),
+              (L["motion"], T2["motion_w"] + 4.0), (L["w1"], T2["w1_w"] + 2.0),
+              (L["w2"], T2["w2_w"] + 2.0), (L["disc"], T2["disc"] + 2.0),
+              (L["i1"], T2["idler"] + 2.0), (L["i2"], T2["idler"] + 2.0),
+              (REVC_LAYOUT["minute"], T2["transfer"] + 2.0)]
+    for (name, x, y, tip_r, band) in dial_parts_list():
+        ok = any(hypot(x - cx, y - cy) + tip_r <= cr + 6.0
+                 for (cx, cy), cr in covers)
+        assert ok, f"{name} not covered by the platform"
+    for name, px, py, tip, top in post_specs():
+        assert any(hypot(px - cx, py - cy) <= cr for (cx, cy), cr in covers), \
+            f"post {name} tip outside the platform"

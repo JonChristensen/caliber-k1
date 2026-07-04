@@ -23,7 +23,7 @@ motion wheel's band (they otherwise fight for the same SW plate):
 THE TRANSFER CHAIN (why 3 meshes, not 1): a direct 1:1 pair needs two
 r13+ wheels; the one on the cannon would overhang the drum recess plan
 where only 1.6 of depth exists — impossible at any band. A 16/24-24-24/16
-chain keeps every member under r10.4 (deep-band legal) and its ODD mesh
+chain (10-24-24-10) keeps every member deep-band legal and its ODD mesh
 count preserves hand direction.
 
 CHIRALITY CHAIN (documented, bench-verified at M-next): club tooth lock
@@ -63,19 +63,19 @@ DIAL_TRAIN = dict(
     cannon=(12, 1.0), motion_w=(36, 1.0), motion_p=(10, 0.96),
     hour=(40, 0.96), moon_p=(24, 0.75), w1_w=(36, 0.75), w1_p=(12, 0.6),
     w2_w=(54, 0.6), w2_p=(8, 0.6), disc=(70, 0.6),
-    transfer=(16, 0.8), idler=(24, 0.8),
+    transfer=(10, 0.8), idler=(24, 0.8),
 )
 
 D_MOTION = 24.0            # cannon-motion AND motion-hour (the module trick)
 D_MOON1 = (24 + 36) / 2 * 0.75     # 22.5 moon pinion -> w1
 D_MOON2 = (12 + 54) / 2 * 0.6      # 19.8 w1 pinion -> w2
 D_MOON3 = (8 + 70) / 2 * 0.6       # 23.4 w2 pinion -> disc
-D_XFER_END = (16 + 24) / 2 * 0.8   # 16.0 chain end meshes
+D_XFER_END = (10 + 24) / 2 * 0.8   # 13.6 chain end meshes
 D_XFER_MID = (24 + 24) / 2 * 0.8   # 19.2 idler-idler
 
 TIP = dict(hour=20.1, motion_p=5.8, cannon=7.0, motion_w=19.0,
            moon_p=9.7, w1_w=14.2, w1_p=4.1, w2_w=16.8, w2_p=3.0,
-           disc=21.6, transfer=7.2, idler=10.4)
+           disc=21.6, transfer=4.7, idler=10.4)
 
 DIAL_MESHES = {frozenset(p) for p in [
     ("hour", "motion_p"), ("cannon", "motion_w"), ("moon_p", "w1_w"),
@@ -89,7 +89,9 @@ def _features():
     floor_z). floor_z <= WEB means 'never overlap'."""
     L = REVC_LAYOUT
     lv = lever_layout_c()
-    f = [(L["barrel"][0], L["barrel"][1], 27.0, 2.2)]          # drum recess
+    Zd = L["counts"][0]
+    f = [(L["barrel"][0], L["barrel"][1], Zd / 2 - 1.0, 2.2),  # drum recess
+         (L["barrel"][0], L["barrel"][1], 3.5, 0.7)]           # arbor cup
     for (cx, cy), wall_r in bay_stations():
         f.append((cx, cy, wall_r, BAY_FLOOR))                  # bay recess
     (e, p), bhw = bay_band()
@@ -107,9 +109,6 @@ def _features():
     for az in (30, 150, 270):
         f.append((78 * cos(radians(az)), 78 * sin(radians(az)),
                   4.0, 0.0))                                   # stand feet
-    from .revc_parts import click_pegs_global
-    for px, py in click_pegs_global():
-        f.append((px, py, 3.0, 0.0))                           # click pegs
     return f
 
 
@@ -202,7 +201,11 @@ def solve_dial(step_deg=15):
                     continue
                 if not _shaft_ok(mo[0], mo[1], "B2", so_far):
                     continue                       # motion shaft crosses B2
-                for ti in angles:
+                # the i2 ring's legal windows can be <10 deg wide
+                # (squeezed between the drum plan, the bay and a strap
+                # pilot) — walk it finer than the outer stages
+                for ti2 in range(0, 360 * 3, step_deg):
+                    ti = radians(ti2 / 3)
                     i2 = (D_XFER_END * cos(ti), D_XFER_END * sin(ti))
                     # i1 = circle(i2, 19.2) x circle(minute arbor, 16.0)
                     ddx, ddy = mx - i2[0], my - i2[1]
@@ -245,12 +248,12 @@ def solve_dial(step_deg=15):
 
 # --- THE DIAL LAYOUT (solver output, frozen; reach 64.3 of 83) ----------------
 DIAL_LAYOUT = {
-    "w1": (-22.5, 0.0),        # moon stage 1 (B2 wheel / B3 pinion)
-    "w2": (-42.3, 0.0),        # moon stage 2 (B3 wheel / B1 pinion)
-    "disc": (-36.24, 22.6),    # 70t moon disc, B1 — window lands NW
-    "motion": (-6.21, -23.18), # motion arbor (B1 pinion / B3 wheel)
-    "i1": (-31.69, -0.9),      # transfer idlers, B4
-    "i2": (-13.86, -8.0),
+    "w1": (21.73, -5.82),      # moon stage 1 (B2 wheel / B3 pinion)
+    "w2": (40.86, -10.95),     # moon stage 2 (B3 wheel / B1 pinion)
+    "disc": (29.16, -31.21),   # 70t moon disc, B1 — window ~6 o'clock
+    "motion": (-23.18, -6.21), # motion arbor (B1 pinion / B3 wheel)
+    "i1": (-31.04, 9.92),      # transfer idlers, B4
+    "i2": (-13.39, 2.36),
 }
 
 
@@ -276,6 +279,32 @@ def dial_parts_list(layout=None):
     ]
 
 
+DIAL_SHEET = (-1.9, -0.9)   # reserved: the dial sheet rides the platform;
+                            # hour hand seat -2.4, minute -3.4 clear it
+
+POST_ARBORS = {"motion": "B3", "w1": "B3", "w2": "B3",
+               "disc": "B1", "i1": "B4", "i2": "B4"}
+
+
+def post_specs(layout=None):
+    """(name, x, y, tip_z, bore_top): each Ø2 register post runs from
+    z-0.7 (a platform support/locating pin, the dial-feet analog) up
+    into a press bore whose depth respects the SAME feature rules as
+    the pockets (the disc post caps at the bay floor - 0.6)."""
+    L = layout or DIAL_LAYOUT
+    feats = _features()
+    out = []
+    for name, band in POST_ARBORS.items():
+        x, y = L[name]
+        top = 5.9
+        for fx, fy, fr, floor in feats:
+            if hypot(x - fx, y - fy) < 1.0 + 1.0 + fr:
+                top = min(top, floor - WEB)
+        assert top >= DIAL_BANDS[band][1] + 0.5, f"post {name} can't anchor"
+        out.append((name, x, y, -0.7, top))
+    return out
+
+
 def check_dial(layout=None):
     """THE dial gate: every part depth-legal and pairwise clear."""
     feats = _features()
@@ -288,6 +317,8 @@ def check_dial(layout=None):
         for b in parts[i + 1:]:
             if not _pair_ok(a, b):
                 bad.append(f"{a[0]} x {b[0]}: same-band clash")
+    for name, x, y, tip, top in post_specs(layout):
+        pass                    # post_specs asserts its own feasibility
     mo = layout or DIAL_LAYOUT
     for shaft_of in ("motion", "w2"):
         sx, sy = mo[shaft_of]

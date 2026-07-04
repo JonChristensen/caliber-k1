@@ -80,18 +80,13 @@ def mainplate_c():
     Zd = _counts()[0]
     part = Cylinder(85, PLATE_T, align=BOTTOM)
 
-    # barrel recess + hanging-barrel arbor bore (journal boss dial-side)
+    # barrel recess + BLIND arbor cup in its floor: the arbor rises to
+    # a real bridge bearing (Jon's NH35 catch) and the dial face under
+    # the barrel stays untouched
     bx, by = REVC_LAYOUT["barrel"]
     part -= Pos(bx, by, 2.2) * Cylinder(Zd / 2 - 1.0, 10, align=BOTTOM)
-    part -= Pos(bx, by, -1) * Cylinder(2.85 + v.pivot_clearance, 5,
-                                       align=BOTTOM)
-    part += Pos(bx, by, -2.5) * Cylinder(5.0, 2.5, align=BOTTOM) \
-        - Pos(bx, by, -2.6) * Cylinder(2.85 + v.pivot_clearance, 3,
-                                       align=BOTTOM)
-    # dial-side click pegs (the click holds the ratchet on the winding
-    # square — the barrel can hold wind from the first bench test)
-    for px, py in click_pegs_global():
-        part -= Pos(px, py, -0.01) * Cylinder(1.05, 1.6, align=BOTTOM)
+    part -= Pos(bx, by, 0.7) * Cylinder(2.85 + v.pivot_clearance, 2,
+                                        align=BOTTOM)
 
     # escapement bay: union of resident circles + the E-P band (no cusp
     # wedge for the lever arm to hit), floor at BAY_FLOOR
@@ -135,9 +130,10 @@ def mainplate_c():
     cuts, posts = dial_pockets_and_bores()
     for cx, cy, pr, depth in cuts:
         part -= Pos(cx, cy, -0.01) * Cylinder(pr, depth + 0.01, align=BOTTOM)
-    for px, py in posts:
-        part -= Pos(px, py, -0.01) * Cylinder(0.95, 5.31, align=BOTTOM)
-    part -= Pos(0, 0, -0.01) * Cylinder(1.45, 5.21, align=BOTTOM)
+    for name, px, py, tip, top in posts:
+        part -= Pos(px, py, -0.01) * Cylinder(1.0 - v.press_r, top + 0.01,
+                                              align=BOTTOM)
+    part -= Pos(0, 0, -0.01) * Cylinder(1.5 - v.press_r, 5.91, align=BOTTOM)
     for sx, sy in PLATFORM_SCREWS:
         part -= Pos(sx, sy, -0.01) * Cylinder(0.8, 2.0, align=BOTTOM)
     return part
@@ -172,14 +168,16 @@ def drum_c():
 
 
 def barrel_arbor_c():
-    """Hanging-barrel arbor: dial-side winding SQUARE, plate journal,
-    spring hub with the inner hook, cover stub. Tops out at z10.9 —
-    the minute wheel overhangs above (that's the whole point)."""
-    part = _stack(0.2, [(2.7, 3.35),             # journal; 0.15 endshake
+    """Two-bearing barrel arbor (Jon's NH35 catch): plate cup below,
+    bridge-web bearing above, ratchet square flush in the bridge pocket,
+    FEMALE key socket in the top face — nothing pokes past z17.6."""
+    part = _stack(0.8, [(2.7, 2.75),             # plate cup to drum floor
                         (5.5, 5.9),              # spring hub 3.55-9.45
-                        (2.7, 1.4)])             # cover journal to 10.85
-    sq = extrude(Rectangle(4.0, 4.0), 4.5)
-    part += Pos(0, 0, -4.3) * sq                 # winding square, dial side
+                        (2.7, 1.4),              # cover journal to 10.85
+                        (2.85, 5.15)])           # column to the bridge web
+    sq = extrude(Rectangle(4.0, 4.0), 1.6)
+    part += Pos(0, 0, 16.0) * sq                 # ratchet seat, in-pocket
+    part -= Pos(0, 0, 15.6) * extrude(Rectangle(2.6, 2.6), 5)  # key socket
     part += Pos(5.5, 0, 3.4) * Box(2.4, 2.4, 6.2, align=BOTTOM)  # inner hook
     return part
 
@@ -443,8 +441,8 @@ def balance_cock_c():
 
 def click_geometry_c():
     """Click in the RATCHET frame (origin = ratchet center): block +
-    tangential arm + wedge tip 0.9 into the 24t/O26 teeth. Mounted
-    rotated -30 deg about the barrel, on the DIAL side."""
+    tangential arm + wedge tip 0.9 into the 24t/O26 teeth. Lives WITH
+    the ratchet, flush in the bridge-top pocket (the NH35 way)."""
     outline = [(16.9, -1.3), (22.1, -1.3), (22.1, 5.2), (16.9, 5.2),
                (16.9, 4.2), (4.0, 13.5), (2.9, 11.8), (5.1, 13.0),
                (16.9, 3.2)]
@@ -461,20 +459,20 @@ def click_pegs_global():
 
 
 def ratchet_c():
-    """24t ratchet pressed on the winding square, dial side (z -2.1..-0.5):
-    winds by key, holds via the click, and RETAINS the hanging arbor
-    (its face stops 0.5 under the plate)."""
+    """24t ratchet on the arbor square, FLUSH in the bridge-top pocket
+    (z16.05-17.65): winds by key from above, holds via the click."""
     face = gears.wheel_face(24, 24)
     face -= Rectangle(4.0 + 0.3, 4.0 + 0.3)               # square bore
-    return Pos(0, 0, -4.0) * extrude(face, 1.3)
+    return Pos(0, 0, 16.05) * extrude(face, 1.6)
 
 
 def click_c():
-    """Flexure click, dial side, pegs UP into the plate face."""
+    """Flexure click beside the ratchet in the bridge pocket, pegs DOWN
+    into the bridge web."""
     g = click_geometry_c()
-    part = Pos(0, 0, -4.0) * extrude(_ccw_polygon(g["outline"]), 1.3)
+    part = Pos(0, 0, 16.05) * extrude(_ccw_polygon(g["outline"]), 1.6)
     for x, y in g["pegs"]:
-        part += Pos(x, y, -2.7) * Cylinder(1.0, 4.2, align=BOTTOM)
+        part += Pos(x, y, 14.95) * Cylinder(1.0, 1.1, align=BOTTOM)
     return part
 
 
@@ -521,4 +519,21 @@ def bridge_c():
                                                              align=BOTTOM)
         part -= Pos(x, y, ZC["bridge"][0] - 0.01) * Cone(
             2.3, 1.35, 1.2, align=BOTTOM)                 # lead-in cone
+    # the winding station (Jon's NH35 catch): arbor bearing through the
+    # web, ratchet + click recessed FLUSH in the bridge top
+    bx, by = L["barrel"]
+    g = click_geometry_c()
+    from math import cos as c_, sin as s_
+    a = radians(g["angle_deg"])
+    pocket = Pos(bx, by) * Circle(13.8)
+    lobe = [(bx + x * c_(a) - y * s_(a), by + x * s_(a) + y * c_(a))
+            for x, y in g["outline"]]
+    pocket += _ccw_polygon(lobe)
+    from build123d import offset as _off
+    part -= Pos(0, 0, 16.0) * extrude(_off(pocket, 0.6), 2.0)
+    part -= Pos(bx, by, ZC["bridge"][0] - 0.01) * Cylinder(
+        2.85 + _clr(), 4, align=BOTTOM)                   # arbor bearing
+    for x, y in g["pegs"]:
+        part -= Pos(bx + x * c_(a) - y * s_(a), by + x * s_(a) + y * c_(a),
+                    14.69) * Cylinder(1.05, 1.4, align=BOTTOM)  # through-web
     return part
