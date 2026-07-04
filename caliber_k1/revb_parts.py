@@ -49,6 +49,13 @@ def mainplate():
     # platform screw holes (2x M3 into pocket-floor bosses)
     for px, py in ((30, 14), (-20, 30)):
         part -= Pos(px, py, -1) * Cylinder(1.25, 5, align=BOTTOM)
+    # pallet-bridge screws (2x M3, dial-side nut pockets) — removable
+    # escapement service, per the NH35 lesson
+    from .revb import lever_layout_b
+    from build123d import RegularPolygon
+    for fx, fy in lever_layout_b()["bridge_feet"]:
+        part -= Pos(fx, fy, 0) * Cylinder(1.7, 20)
+        part -= Pos(fx, fy, 0) * extrude(RegularPolygon(5.7 / 3**0.5, 6), 2.4)
     # three mounting feet holes at the rim (M3, for the display stand)
     from math import cos, sin, radians
     for az in (30, 150, 270):
@@ -560,5 +567,39 @@ def swiss_lever_b():
     face += _ccw_polygon(_polyline_band([(0, 0), (fl + 4.5, 0)], 2.4))
     face -= P_(fl + 2.5, 0) * Rectangle(7.0, 3.1)         # slot (horns 4.5)
     part = extrude(face, 3.0)
-    part -= Cyl(1.5 + TOL.pivot_clearance, 10)            # arbor bore
+    # SHORT integral arbor (Jon's catch: no stilts) — pivots 1.4 up/down
+    # into the removable pallet bridge's bearings
+    part += P_(0, 0, -1.4) * Cyl(1.5, 1.4,
+                                 align=(Align.CENTER, Align.CENTER, Align.MIN))
+    part += P_(0, 0, 3.0) * Cyl(1.5, 1.4,
+                                align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return part
+
+
+def pallet_bridge_b():
+    """The removable pallet bridge (Jon's serviceability requirement):
+    a U-cassette bearing the fork's short arbor above AND below, standing
+    on two columns screwed to the mainplate (2x M3). Remove two screws,
+    lift the fork out, service the balance. Modeled at the movement's
+    XY; local z0 = mainplate top (6.5 abs)."""
+    from build123d import Cylinder as Cyl, Pos as P_
+    from .revb import lever_layout_b, PLATE_T
+    L = lever_layout_b()
+    P, feet = L["P"], L["bridge_feet"]
+    lever_lo, lever_hi = 19.0 - PLATE_T, 22.0 - PLATE_T   # local 12.5/15.5
+    face = _ccw_band([feet[0], P, feet[1]], 4.0)
+    # lower seat: strap under the lever (bearing floor)
+    part = P_(0, 0, lever_lo - 1.8) * extrude(face, 1.8)
+    # upper strap over the lever
+    part += P_(0, 0, lever_hi + 0.2) * extrude(face, 1.8)
+    # columns joining the straps at the feet, continuing down to the plate
+    for f in feet:
+        part += P_(f[0], f[1], 0) * Cyl(4.0, lever_hi + 2.0,
+                    align=(Align.CENTER, Align.CENTER, Align.MIN))
+        part -= P_(f[0], f[1], 0) * Cyl(1.7, 40)          # M3 through
+    # arbor bearings: blind cups facing the lever, both straps
+    part -= P_(P[0], P[1], lever_lo - 1.6) * Cyl(1.5 + TOL.pivot_clearance,
+                1.7, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    part -= P_(P[0], P[1], lever_hi + 0.1) * Cyl(1.5 + TOL.pivot_clearance,
+                1.7, align=(Align.CENTER, Align.CENTER, Align.MIN))
     return part

@@ -342,6 +342,10 @@ def lever_layout_b(variant: Variant = None) -> dict:
     for s in (+1, -1):                        # circle by the lock depth
         th = ang + s * span
         contacts.append((E[0] + r_eng * cos(th), E[1] + r_eng * sin(th)))
+    perp = (-sin(ang), cos(ang))
+    feet = [(P[0] + 9 * perp[0], P[1] + 9 * perp[1]),
+            (P[0] - 9 * perp[0], P[1] - 9 * perp[1])]
     return {"E": E, "P": P, "B": B, "ang": ang, "a": a, "r_esc": r_esc,
             "contacts": contacts, "span_deg": 39.0, "lock_deg": v.lock_deg,
-            "draw_deg": v.draw_deg, "fork_len": (34.5 - a)}
+            "draw_deg": v.draw_deg, "fork_len": (34.5 - a),
+            "bridge_feet": feet}

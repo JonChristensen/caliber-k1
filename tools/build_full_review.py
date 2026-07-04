@@ -8,7 +8,7 @@ from caliber_k1 import barrel as m1
 from caliber_k1.revb import (revb_layout, keyless_layout_b, motion_layout_b,
                              M2E, PLATE_T, active_variant, bridge_z,
                              winding_wheels_z, stem_line_z)
-from caliber_k1.revb_parts import (mainplate, broad_wave_bridge, pallet_cock,
+from caliber_k1.revb_parts import (mainplate, broad_wave_bridge, pallet_bridge_b,
                                    balance_cock_b, ratchet_b, crown_wheel_b,
                                    stem_crown, click_b, cannon_pinion_b,
                                    minute_wheel_b, hour_wheel_dial_b,
@@ -43,7 +43,6 @@ kids = [
     L("barrel_cover", Pos(bx, by, drum_z + 19.4) * m1.cover()),
     # bridge side
     L("wave_bridge (broad)", Pos(0, 0, 21 + zo) * broad_wave_bridge()),
-    L("pallet_cock", Pos(0, 0, 16.5 + zo) * pallet_cock()),
     L("balance_cock", Pos(0, 0, 29 + zo) * balance_cock_b()),
     L("ratchet_wheel (recessed)", Pos(bx, by, WZ) * ratchet_b()),
     L("crown_wheel (recessed)", Pos(cwx, cwy, WZ) * crown_wheel_b()),
@@ -66,11 +65,12 @@ LL = lever_layout_b()
 kids.append(L("escape_wheel (30t club-tooth)", Pos(m["escape"][0], m["escape"][1], 19.0) * club_escape_wheel_b()))
 kids.append(L("swiss_lever (pallet fork)", Pos(LL["P"][0], LL["P"][1], 19.0) * Rot(0, 0, degrees(LL["ang"])) * swiss_lever_b()))
 kids.append(L("roller (impulse pin)", Pos(m["balance"][0], m["balance"][1], 19.0) * esc_a.roller()))
+kids.append(L("pallet_bridge (removable, 2x M3)", Pos(0, 0, PLATE_T) * pallet_bridge_b()))
 kids.append(L("balance_staff", Pos(m["balance"][0], m["balance"][1], 3.5) * balance_staff_rev_b()))
 kids.append(L("balance_wheel (in the well)", Pos(m["balance"][0], m["balance"][1], BZ - 2.5) * esc_a.balance_wheel()))
 kids.append(L("hairspring", Pos(m["balance"][0], m["balance"][1], BZ + 3.2) * esc_a.hairspring()))
 asm = Compound(label="k1_revb_full_r5", children=kids)
-export_step(asm, "exports/revb/review_full_movement_r7.step")
+export_step(asm, "exports/revb/review_full_movement_r8.step")
 export_stl(asm, "/tmp/full.stl")
 bb = asm.bounding_box()
 print(f"full movement r2: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm, "

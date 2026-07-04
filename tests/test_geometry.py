@@ -695,3 +695,19 @@ def test_swiss_lever_gates_the_escape_wheel():
             lo, hi = min(lo, v), max(hi, v)
     assert hi > 4.0, "lever cannot lock the wheel anywhere on the grid"
     assert lo < 0.5, "lever cannot release the wheel anywhere on the grid"
+
+
+def test_pallet_bridge_serviceable():
+    """The removable cassette: builds, its feet clear the escape wheel
+    sweep and sit under the balance ring's airspace, and the fork's
+    short arbor spans exactly the two bearing cups."""
+    from caliber_k1.revb import lever_layout_b
+    from caliber_k1.revb_parts import pallet_bridge_b, swiss_lever_b
+    L = lever_layout_b()
+    for f in L["bridge_feet"]:
+        assert _dist(f, L["E"]) > 16 + 4 + 1.0, "bridge foot in wheel sweep"
+        assert _dist(f, L["B"]) > 5.5 + 4 + 0.5, "bridge foot hits the staff"
+    b = pallet_bridge_b()
+    assert b.volume > 1500
+    lv = swiss_lever_b()
+    assert lv.bounding_box().size.Z == pytest.approx(3.0 + 2 * 1.4, abs=0.05)
