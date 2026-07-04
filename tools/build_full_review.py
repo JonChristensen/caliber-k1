@@ -50,19 +50,21 @@ kids = [
     L("stem_and_crown", Pos(sp[0], sp[1], stem_line_z(V)) * Rot(0, 0, 285) * stem_crown()),
     L("click", Pos(bx, by, WZ + 0.7) * Rot(0, 0, -30) * click_b()),
 ]
-# labeled placeholders: stations awaiting the 2e-half part ports
-PH = [("center", 33, 0.5, 5.5), ("center", 7, 6.5, 11.5),
-      ("third", 31, 0.5, 5.5), ("third", 5, 6.5, 11.5),
-      ("fourth", 13, 6.5, 11.5), ("fourth", 5, 0.5, 5.5),
-      ("escape", 16, 12.5, 15.5), ("balance", 25, 18.5 + zo, 23.5 + zo)]
-for key, r, z0, z1 in PH:
-    x, y = m[key]
-    ph = (Pos(x, y, PLATE_T + z0) * Cylinder(r, z1 - z0, align=B)
-          if key != "balance" else
-          Pos(x, y, z0) * Cylinder(r, z1 - z0, align=B))
-    kids.append(L(f"PLACEHOLDER_{key} (2e-half pending)", ph))
-asm = Compound(label="k1_revb_full_r4", children=kids)
-export_step(asm, "exports/revb/review_full_movement_r4.step")
+# 2e-half: the REAL train (placeholders retired)
+from caliber_k1.revb_parts import (center_arbor_b, third_arbor_b,
+                                   fourth_arbor_b, escape_arbor_b,
+                                   balance_staff_rev_b)
+from caliber_k1 import escapement as esc_a
+kids.append(L("center_arbor (80t/12t, high wheel)", Pos(m["center"][0], m["center"][1], 1.2) * center_arbor_b()))
+kids.append(L("third_arbor (48t/8t)", Pos(m["third"][0], m["third"][1], 3.5) * third_arbor_b()))
+kids.append(L("fourth_arbor (24t/8t, seconds)", Pos(m["fourth"][0], m["fourth"][1], 3.5) * fourth_arbor_b()))
+kids.append(L("escape_arbor (12t + D-seat)", Pos(m["escape"][0], m["escape"][1], 3.5) * escape_arbor_b()))
+kids.append(L("escape_wheel (30t)", Pos(m["escape"][0], m["escape"][1], 19.0) * esc_a.escape_wheel()))
+kids.append(L("balance_staff", Pos(m["balance"][0], m["balance"][1], 3.5) * balance_staff_rev_b()))
+kids.append(L("balance_wheel (in the well)", Pos(m["balance"][0], m["balance"][1], BZ - 2.5) * esc_a.balance_wheel()))
+kids.append(L("hairspring", Pos(m["balance"][0], m["balance"][1], BZ + 3.2) * esc_a.hairspring()))
+asm = Compound(label="k1_revb_full_r5", children=kids)
+export_step(asm, "exports/revb/review_full_movement_r6.step")
 export_stl(asm, "/tmp/full.stl")
 bb = asm.bounding_box()
 print(f"full movement r2: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm, "

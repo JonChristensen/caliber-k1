@@ -593,3 +593,65 @@ def test_plate_bushings_open_from_the_top():
             Align.CENTER, Align.CENTER, Align.MIN))
         inter = p & probe
         assert (inter.volume if inter else 0) < 0.5, f"{k} bushing sealed"
+
+
+# --- 2e-half: the real train --------------------------------------------------
+
+def test_train_arbors_span_plate_to_bridge_boss():
+    from caliber_k1 import revb_parts as rp
+    from caliber_k1.revb import active_variant, train_upper_bearing_z
+    boss = train_upper_bearing_z(active_variant())
+    from caliber_k1.revb import bridge_z
+    bz = bridge_z(active_variant())
+    spans = {rp.center_arbor_b: (1.2, bz + 2.5), rp.third_arbor_b: (3.5, bz + 2.5),
+             rp.fourth_arbor_b: (3.5, boss + 4.0), rp.escape_arbor_b: (3.5, boss + 4.0)}
+    for mk, (z0, ztop) in spans.items():
+        bb = mk().bounding_box()
+        assert bb.size.Z == pytest.approx(ztop - z0, abs=0.05), \
+            f"{mk.__name__} does not span its bearings"
+
+
+def test_escape_wheel_clears_bridge_bosses():
+    from caliber_k1.revb import GEAR_PLANES, active_variant, train_upper_bearing_z
+    assert GEAR_PLANES["ESC"][1] + 1.0 <= train_upper_bearing_z(active_variant())
+
+
+def test_balance_staff_reaches_cock():
+    from caliber_k1.revb_parts import balance_staff_rev_b
+    from caliber_k1.revb import active_variant, bridge_z
+    bb = balance_staff_rev_b().bounding_box()
+    assert bb.max.Z == pytest.approx(bridge_z(active_variant()) + 10.0, abs=0.05)
+
+
+def test_train_meshes_phase_aligned():
+    """The definitive train check: every mesh pair, phase-rotated so a
+    tooth faces a gap (as running gears do), must show ZERO interference
+    at true centers AND real tooth engagement when pushed 1mm closer.
+    (First probe version skipped phasing — two pairs passed by luck.)"""
+    from math import hypot, atan2, degrees
+    from build123d import Pos, Rot
+    from caliber_k1 import barrel as m1
+    from caliber_k1.revb import revb_layout, PLATE_T
+    from caliber_k1 import revb_parts as rp
+    m = revb_layout()
+    parts = {"drum": (m1.drum(), PLATE_T + 0.5, m["barrel"]),
+             "center": (rp.center_arbor_b(), 1.2, m["center"]),
+             "third": (rp.third_arbor_b(), 3.5, m["third"]),
+             "fourth": (rp.fourth_arbor_b(), 3.5, m["fourth"]),
+             "escape": (rp.escape_arbor_b(), 3.5, m["escape"])}
+    for a, b, za, zb in [("drum","center",72,12), ("center","third",80,8),
+                         ("third","fourth",48,8), ("fourth","escape",24,12)]:
+        A0, azz, (ax, ay) = parts[a]
+        B0, bzz, (bx, by) = parts[b]
+        th = degrees(atan2(by - ay, bx - ax))
+        rot_a = th - round(th / (360/za)) * (360/za)
+        th_b = th + 180
+        rot_b = (th_b - round(th_b / (360/zb)) * (360/zb)) + 180/zb
+        A = Pos(ax, ay, azz) * Rot(0, 0, rot_a) * A0
+        B = Pos(bx, by, bzz) * Rot(0, 0, rot_b) * B0
+        inter = A & B
+        assert (inter.volume if inter else 0) < 0.5, f"{a}->{b} interferes"
+        d = hypot(bx-ax, by-ay)
+        B2 = Pos((ax-bx)/d, (ay-by)/d, 0) * B
+        inter2 = A & B2
+        assert (inter2.volume if inter2 else 0) > 1.0, f"{a}->{b} teeth don't reach"

@@ -368,3 +368,118 @@ def dial_platform():
     part -= P_(dx + 18 * cos(a), dy + 18 * sin(a), 0) * Cyl(5.75, 4)
     part -= P_(dx, dy, 0) * Cyl(0.5, 4)             # disc arbor relief
     return part
+
+
+def _train_arbor(sections):
+    from .train_parts import _arbor_stack
+    return _arbor_stack(sections)
+
+
+def _revb_arbor_ends():
+    from .revb import active_variant, train_upper_bearing_z
+    return 3.5, train_upper_bearing_z(active_variant())
+
+
+def _p1h():
+    from .revb import active_variant, p1_high
+    return p1_high(active_variant())
+
+
+def _bz():
+    from .revb import active_variant, bridge_z
+    return bridge_z(active_variant())
+
+
+from .revb import REVB_BACKLASH
+
+
+def _T():
+    from .revb import TRAINS
+    return TRAINS["metal"]
+
+
+def center_arbor_b():
+    """Center arbor: dial-side pipe .. 12t pinion (P0, drum band) .. long
+    climb OVER the drum .. center wheel (p1_high) .. pivot into the
+    bridge plate (no boss — the high wheel owns that airspace)."""
+    from . import gears
+    from .revb import REVB_BACKLASH, active_variant, bridge_z, p1_high
+    hi = p1_high(active_variant())
+    bz = bridge_z(active_variant())
+    z0 = 1.2
+    return _train_arbor([
+        (1.5, 7.0 - z0),
+        (gears.pinion_face(12, backlash=REVB_BACKLASH), 5.0),   # 7-12
+        (1.75, hi[0] - 12.0),                 # the climb over the drum
+        (gears.wheel_face(_T()["center"], _T()["t_pin"],
+                          backlash=REVB_BACKLASH, addendum=0.85), 5.0),
+        (1.75, 0.5),
+        (1.5, (bz + 2.5) - (hi[1] + 0.5)),    # pivot into the bridge plate
+    ])
+
+
+def third_arbor_b():
+    from . import gears
+    lo, boss = _revb_arbor_ends()
+    return _train_arbor([
+        (1.5, 3.0),                           # plate bushing 3.5-6.5
+        (1.75, 0.5),
+        (gears.wheel_face(_T()["third"], _T()["f_pin"], backlash=REVB_BACKLASH, addendum=0.85), 5.0),
+        (1.75, _p1h()[0] - 12.0),             # climb: pinion meets the
+        (gears.pinion_face(_T()["t_pin"], backlash=REVB_BACKLASH), 5.0),
+        (1.75, 0.5),
+        (1.5, (_bz() + 2.5) - (_p1h()[1] + 0.5)),
+    ])
+
+
+def fourth_arbor_b():
+    from . import gears
+    lo, boss = _revb_arbor_ends()
+    return _train_arbor([
+        (1.5, 3.0),
+        (1.75, 0.5),
+        (gears.pinion_face(8, backlash=REVB_BACKLASH), 5.0),   # P0 7-12
+        (2.0, 1.0),
+        (gears.wheel_face(24, 12, backlash=REVB_BACKLASH, addendum=0.85), 5.0),
+        (1.75, boss - 18.0),
+        (1.5, 4.0),
+    ])
+
+
+def escape_arbor_b():
+    """Pinion arbor with a D-seat; the escape wheel is its own part."""
+    from build123d import Box, Pos as P_
+    from . import gears
+    lo, boss = _revb_arbor_ends()
+    part = _train_arbor([
+        (1.5, 3.0),
+        (1.75, 6.5),                          # up to P1
+        (gears.pinion_face(12, backlash=REVB_BACKLASH), 5.0),  # 13-18
+        (1.5, 1.0),                           # 18-19
+        (1.5, 3.0),                           # D-seat zone 19-22 (wheel)
+        (1.5, boss - 22.0),
+        (1.5, 4.0),
+    ])
+    part -= P_(1.1 + 15, 0, 3.0 + 16.0) * Box(30, 30, 3.0,
+        align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return part
+
+
+def balance_staff_rev_b():
+    """Staff for the well-swimming balance: plate bushing .. roller seat
+    (lever plane) .. ring hub .. collet .. pivot into the cock arm."""
+    from build123d import Cylinder as Cyl, Pos as P_, Rectangle
+    from .revb import active_variant, bridge_z
+    v = active_variant()
+    bz = bridge_z(v)
+    ring_lo, arm_lo = bz - 2.5, bz + 8.0
+    top = arm_lo + 2.0
+    part = Cyl(1.25, 3.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    shaft_len = (top - 4.5) - 3.0
+    shaft = P_(0, 0, 3.0) * Cyl(2.5, shaft_len,
+                                align=(Align.CENTER, Align.CENTER, Align.MIN))
+    shaft -= P_(1.3 + 15, 0, 3.0) * extrude(Rectangle(30, 30), shaft_len)
+    part += shaft
+    part += P_(0, 0, 3.0 + shaft_len) * Cyl(1.25, top - (3.0 + shaft_len),
+                align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return part

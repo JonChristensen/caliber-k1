@@ -17,14 +17,14 @@ TRAINS = {
     #  fourth_pinion, fourth_z, esc_pinion) at module 1.0
     # metal: barrel 96/12 -> center 60min; center 64/8 -> third 7.5min;
     #        third 60/8 -> fourth 60s; fourth 24/12 -> escape 30s (30t, 1Hz)
-    "metal": dict(barrel=72, c_pin=12, center=64, t_pin=8, third=60,
+    "metal": dict(barrel=72, c_pin=12, center=80, t_pin=8, third=48,
                   f_pin=8, fourth=24, e_pin=12,
                   barrel_hours=6.0, usable_turns=7.0),   # steel spring
     # print: barrel 72/16 -> center: 72/16=4.5 -> center 26.667min?? NO —
     # print keeps center at 60 min too, via barrel 96/12 but accepts the
     # torque tax with a HIGHER-torque spring (thicker strip, fewer turns):
     # runtime = turns x 8h; even 1.5 turns = 12h. Same wheels as metal.
-    "print": dict(barrel=72, c_pin=12, center=64, t_pin=8, third=60,
+    "print": dict(barrel=72, c_pin=12, center=80, t_pin=8, third=48,
                   f_pin=8, fourth=24, e_pin=12,
                   barrel_hours=6.0, usable_turns=1.5),   # thick PETG spring
 }
@@ -48,11 +48,16 @@ def revb_layout() -> dict:
     escapement z14-17, balance over the bridge z18-24. Total 24mm.
     Wave-bridge crest/tube lands on the balance center (0003 contract)."""
     from math import cos, sin, radians
+    t = TRAINS["metal"]
+    d1 = (t["barrel"] + t["c_pin"]) / 2
+    d2 = (t["center"] + t["t_pin"]) / 2
+    d3 = (t["third"] + t["f_pin"]) / 2
+    d4 = (t["fourth"] + t["e_pin"]) / 2
     C = (0.0, 0.0)
-    B = (42 * cos(radians(105)), 42 * sin(radians(105)))      # barrel
-    T3 = (36 * cos(radians(-30)), 36 * sin(radians(-30)))     # third
-    F = (T3[0] + 34 * cos(radians(-100)), T3[1] + 34 * sin(radians(-100)))
-    E = (F[0] + 18 * cos(radians(-170)), F[1] + 18 * sin(radians(-170)))
+    B = (d1 * cos(radians(105)), d1 * sin(radians(105)))      # barrel
+    T3 = (d2 * cos(radians(-30)), d2 * sin(radians(-30)))     # third
+    F = (T3[0] + d3 * cos(radians(-100)), T3[1] + d3 * sin(radians(-100)))
+    E = (F[0] + d4 * cos(radians(-170)), F[1] + d4 * sin(radians(-170)))
     BAL = (E[0] + 34.5 * cos(radians(160)), E[1] + 34.5 * sin(radians(160)))
     return {"barrel": B, "center": C, "third": T3, "fourth": F,
             "escape": E, "balance": BAL}
@@ -185,10 +190,9 @@ def drum_top_z(variant: Variant = None) -> float:
 
 
 def bridge_z(variant: Variant = None) -> float:
-    """Broad bridge underside: 0.5 over the real drum top. The 5.3mm
-    drum/bridge interpenetration Jon caught side-on came from hardcoding
-    this; now it reflows with the variant's drum."""
-    return drum_top_z(variant) + 0.5
+    """Broad bridge underside: 0.5 over the tallest resident — which is
+    now the high center wheel, itself 0.5 over the drum top."""
+    return p1_high(variant)[1] + 0.5
 
 
 def winding_wheels_z(variant: Variant = None) -> float:
@@ -262,10 +266,9 @@ def drum_top_z(variant: Variant = None) -> float:
 
 
 def bridge_z(variant: Variant = None) -> float:
-    """Broad bridge underside: 0.5 over the real drum top. The 5.3mm
-    drum/bridge interpenetration Jon caught side-on came from hardcoding
-    this; now it reflows with the variant's drum."""
-    return drum_top_z(variant) + 0.5
+    """Broad bridge underside: 0.5 over the tallest resident — which is
+    now the high center wheel, itself 0.5 over the drum top."""
+    return p1_high(variant)[1] + 0.5
 
 
 def winding_wheels_z(variant: Variant = None) -> float:
@@ -291,3 +294,24 @@ def motion_layout_b() -> dict:
     d = (8 + 105) / 2 * m_moon
     disc = (s1[0] + d * cos(radians(170)), s1[1] + d * sin(radians(170)))
     return {"minute": minute, "s1": s1, "disc": disc}
+
+
+# --- 2e-half: gear planes (ABSOLUTE z over the plate) -------------------------
+# Mesh chain: drum band(P0)->center pinion(P0); center wheel(P1)->third
+# pinion(P1); third wheel(P0)->fourth pinion(P0); fourth wheel(P1)->escape
+# pinion(P1); escape wheel up in its own plane under the bridge bosses.
+GEAR_PLANES = {"P0": (7.0, 12.0), "P1": (13.0, 18.0), "ESC": (19.0, 22.0)}
+REVB_BACKLASH = 0.30      # print-train mesh backlash (probe-tuned)
+
+
+def p1_high(variant: Variant = None) -> tuple:
+    """The center wheel's plane: ABOVE the drum top (the Ø66 wheel sits
+    only 9mm from the barrel axis — inside the drum body's shadow at any
+    lower plane; the 862mm3 probe hit). Third pinion climbs to meet it."""
+    lo = drum_top_z(variant) + 0.5
+    return (lo, lo + 5.0)
+
+
+def train_upper_bearing_z(variant: Variant = None) -> float:
+    """Bridge bosses hang 5 under the bridge; pivots seat from there."""
+    return bridge_z(variant) - 5.0
