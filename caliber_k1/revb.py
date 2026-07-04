@@ -178,13 +178,27 @@ def active_variant() -> Variant:
     return VARIANTS[_os.environ.get("K1_VARIANT", "print")]
 
 
-def stem_line_z(variant: Variant = None) -> float:
-    """The stem axis height, DERIVED: it overflies the drum by pinion
-    radius + running clearance. Print: ~29.5 (tall PETG drum). Metal:
-    drops toward plate level as the drum shrinks — no fork, one formula."""
+def drum_top_z(variant: Variant = None) -> float:
+    """Real drum top: plate + endshake + floor + spring space + cover."""
     v = variant or active_variant()
-    drum_top = 3.5 + v.drum_h                 # drum sits 3.5 over the plate
-    return drum_top + 5.0 + 2.0 * v.endshake + 3.0
+    return PLATE_T + 0.5 + (2.4 + v.drum_h + 2.4)
+
+
+def bridge_z(variant: Variant = None) -> float:
+    """Broad bridge underside: 0.5 over the real drum top. The 5.3mm
+    drum/bridge interpenetration Jon caught side-on came from hardcoding
+    this; now it reflows with the variant's drum."""
+    return drum_top_z(variant) + 0.5
+
+
+def winding_wheels_z(variant: Variant = None) -> float:
+    """Ratchet + crown wheel seat: recessed 1.0 into the bridge top."""
+    return bridge_z(variant) + 3.0 - 1.0 + 0.5
+
+
+def stem_line_z(variant: Variant = None) -> float:
+    """Stem axis: face-slot mesh height above the winding wheels."""
+    return winding_wheels_z(variant) + 3.5 + 2.5
 
 
 # --- 2e-r: dial side, pocketed into the plate (log 0013) ---------------------
@@ -241,13 +255,27 @@ def active_variant() -> Variant:
     return VARIANTS[_os.environ.get("K1_VARIANT", "print")]
 
 
-def stem_line_z(variant: Variant = None) -> float:
-    """The stem axis height, DERIVED: it overflies the drum by pinion
-    radius + running clearance. Print: ~29.5 (tall PETG drum). Metal:
-    drops toward plate level as the drum shrinks — no fork, one formula."""
+def drum_top_z(variant: Variant = None) -> float:
+    """Real drum top: plate + endshake + floor + spring space + cover."""
     v = variant or active_variant()
-    drum_top = 3.5 + v.drum_h                 # drum sits 3.5 over the plate
-    return drum_top + 5.0 + 2.0 * v.endshake + 3.0
+    return PLATE_T + 0.5 + (2.4 + v.drum_h + 2.4)
+
+
+def bridge_z(variant: Variant = None) -> float:
+    """Broad bridge underside: 0.5 over the real drum top. The 5.3mm
+    drum/bridge interpenetration Jon caught side-on came from hardcoding
+    this; now it reflows with the variant's drum."""
+    return drum_top_z(variant) + 0.5
+
+
+def winding_wheels_z(variant: Variant = None) -> float:
+    """Ratchet + crown wheel seat: recessed 1.0 into the bridge top."""
+    return bridge_z(variant) + 3.0 - 1.0 + 0.5
+
+
+def stem_line_z(variant: Variant = None) -> float:
+    """Stem axis: face-slot mesh height above the winding wheels."""
+    return winding_wheels_z(variant) + 3.5 + 2.5
 
 
 def motion_layout_b() -> dict:

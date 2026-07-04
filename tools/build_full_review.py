@@ -6,7 +6,8 @@ from math import cos, sin, radians
 from build123d import Align, Compound, Cylinder, Pos, Rot, export_step, export_stl
 from caliber_k1 import barrel as m1
 from caliber_k1.revb import (revb_layout, keyless_layout_b, motion_layout_b,
-                             M2E, PLATE_T)
+                             M2E, PLATE_T, active_variant, bridge_z,
+                             winding_wheels_z, stem_line_z)
 from caliber_k1.revb_parts import (mainplate, broad_wave_bridge, pallet_cock,
                                    balance_cock_b, ratchet_b, crown_wheel_b,
                                    stem_crown, click_b, cannon_pinion_b,
@@ -14,7 +15,10 @@ from caliber_k1.revb_parts import (mainplate, broad_wave_bridge, pallet_cock,
                                    moon_s1_b, moon_disc_b, dial_platform)
 
 B = (Align.CENTER, Align.CENTER, Align.MIN)
-zo = PLATE_T - 4.0          # bridge-side stack offset vs the old 4mm plate
+V = active_variant()
+BZ = bridge_z(V)            # bridge underside, DERIVED from the drum
+WZ = winding_wheels_z(V)
+zo = BZ - 21.0              # legacy-relative offset for bridge-side parts
 m, k, ml = revb_layout(), keyless_layout_b(), motion_layout_b()
 bx, by = m["barrel"]; cwx, cwy = k["crown_wheel"]
 az = radians(105); sp = (88 * cos(az), 88 * sin(az))
@@ -41,10 +45,10 @@ kids = [
     L("wave_bridge (broad)", Pos(0, 0, 21 + zo) * broad_wave_bridge()),
     L("pallet_cock", Pos(0, 0, 16.5 + zo) * pallet_cock()),
     L("balance_cock", Pos(0, 0, 29 + zo) * balance_cock_b()),
-    L("ratchet_wheel (recessed)", Pos(bx, by, 23.5 + zo) * ratchet_b()),
-    L("crown_wheel (recessed)", Pos(cwx, cwy, 23.5 + zo) * crown_wheel_b()),
-    L("stem_and_crown", Pos(sp[0], sp[1], 29.5 + zo) * Rot(0, 0, 285) * stem_crown()),
-    L("click", Pos(bx, by, 24.2 + zo) * Rot(0, 0, -30) * click_b()),
+    L("ratchet_wheel (recessed)", Pos(bx, by, WZ) * ratchet_b()),
+    L("crown_wheel (recessed)", Pos(cwx, cwy, WZ) * crown_wheel_b()),
+    L("stem_and_crown", Pos(sp[0], sp[1], stem_line_z(V)) * Rot(0, 0, 285) * stem_crown()),
+    L("click", Pos(bx, by, WZ + 0.7) * Rot(0, 0, -30) * click_b()),
 ]
 # labeled placeholders: stations awaiting the 2e-half part ports
 PH = [("center", 33, 0.5, 5.5), ("center", 7, 6.5, 11.5),
@@ -57,8 +61,8 @@ for key, r, z0, z1 in PH:
           if key != "balance" else
           Pos(x, y, z0) * Cylinder(r, z1 - z0, align=B))
     kids.append(L(f"PLACEHOLDER_{key} (2e-half pending)", ph))
-asm = Compound(label="k1_revb_full_r3", children=kids)
-export_step(asm, "exports/revb/review_full_movement_r3.step")
+asm = Compound(label="k1_revb_full_r4", children=kids)
+export_step(asm, "exports/revb/review_full_movement_r4.step")
 export_stl(asm, "/tmp/full.stl")
 bb = asm.bounding_box()
 print(f"full movement r2: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm, "

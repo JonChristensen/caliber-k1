@@ -505,12 +505,12 @@ def test_crown_knob_clears_the_bridge():
 # --- The variant switch -------------------------------------------------------
 
 def test_variant_switch_reflows_the_stem():
-    from caliber_k1.revb import VARIANTS, stem_line_z
-    zp = stem_line_z(VARIANTS["print"])
-    zm = stem_line_z(VARIANTS["metal"])
-    assert zp == pytest.approx(29.5, abs=0.1), "print stem must match built geometry"
-    assert zm < 17.0, "metal stem must drop toward plate level"
-    assert zm == pytest.approx(3.5 + 4.5 + 5.0 + 0.2 + 3.0, abs=0.01)
+    from caliber_k1.revb import VARIANTS, stem_line_z, bridge_z, drum_top_z
+    zp, zm = stem_line_z(VARIANTS["print"]), stem_line_z(VARIANTS["metal"])
+    assert zp > zm + 10, "metal stem must drop with its slim barrel"
+    for v in VARIANTS.values():
+        assert bridge_z(v) >= drum_top_z(v) + 0.5 - 1e-9, \
+            f"{v.name}: drum buried in the bridge (Jon's side-view catch)"
 
 
 def test_variants_share_the_layout():
