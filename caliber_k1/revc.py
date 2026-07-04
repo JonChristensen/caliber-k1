@@ -26,12 +26,17 @@ class Sweep:
 
 MESH_PAIRS = {frozenset(p) for p in [
     ("drum_gear", "min_p"), ("drum", "min_p"), ("min_w", "third_p"), ("third_w", "fourth_p"),
-    ("fourth_w", "esc_p"), ("esc_w", "lever"), ("lever", "ring"),
-    ("lever", "spring"), ("lever", "roller"),
+    ("fourth_w", "esc_p"), ("esc_w", "lever_hub"), ("esc_w", "lever_fork"),
+    ("lever_fork", "roller"), ("lever_fork", "ring"), ("lever_hub", "ring"),
+    ("lever_fork", "spring"), ("lever_hub", "spring"),
+    # intra-escapement: hub/fork are ONE part, and hub-to-roller spacing
+    # is a constant of the mechanism (all on the escape->balance line) —
+    # enforced by the escapement probe at part level, not the layout
+    ("lever_hub", "lever_fork"), ("lever_hub", "roller"),
 ]}
 
 
-def check_all(sweeps, clearance=1.0):
+def check_all(sweeps, clearance=2.0):
     """THE global test: every pair involving a rotating part must clear
     radially (if z-bands overlap) and stay inside the rim — EXCEPT
     meshing pairs, whose intentional engagement is verified by the
@@ -90,11 +95,14 @@ PLANES = {"A": (7.0, 10.5), "B": (11.0, 14.5)}
 # Jon's massing note, watch-true: the balance lives ON THE PLATE in its
 # own bay — lowest resident, everything steps over it. Escape wheel
 # drops to plane A on an extended arbor to meet the lever down there.
-ROLLER_Z = (7.0, 9.5)        # roller + lever + escape wheel, plate level
-RING = (10.0, 14.0)          # ring right above, in the bay
-SPRING_Z = (14.5, 17.0)
-BRIDGE = (17.5, 20.5)        # ONE bridge, well over the bay
-COCK = (17.5, 20.5)          # coplanar with the bridge (Jon's arrangement)
+# Escapement bay RECESSED 2.5 into the plate (Jon's note; real watches
+# do this). Constraint carried to the dial-side solve: no dial pocket
+# may share plan-area with this recess (web >= 1.2).
+ROLLER_Z = (4.2, 6.7)        # roller + lever + escape wheel, IN the recess
+RING = (7.2, 11.0)           # ring literally on the plate
+SPRING_Z = (11.7, 14.2)
+BRIDGE = (14.7, 17.7)        # ONE bridge, well over the bay
+COCK = (14.7, 17.7)          # coplanar cock — nothing higher
 
 
 def _station_sweeps(kind, x, y, counts):
@@ -171,8 +179,11 @@ def solve_layout(step=12):
                               continue
                           for Bx, By in ring_pts(ex, ey, 40.0):
                               s5 = s4 + _station_sweeps("balance", Bx, By, counts)
-                              s5.append(Sweep("lever", (ex+Bx)/2, (ey+By)/2,
-                                              19, *ROLLER_Z))
+                              ux, uy = (Bx - ex) / 40.0, (By - ey) / 40.0
+                              s5.append(Sweep("lever_hub", ex + 20.6*ux,
+                                              ey + 20.6*uy, 13, *ROLLER_Z))
+                              s5.append(Sweep("lever_fork", ex + 34.0*ux,
+                                              ey + 34.0*uy, 5, *ROLLER_Z))
                               if check_all(s5):
                                   continue
                               reach = max(hypot(s.x, s.y) + s.r for s in s5)
@@ -195,12 +206,14 @@ REVC_LAYOUT = {
     "counts": (56, 14, 80, 8, 48, 8, 36, 18),
     "barrel": (0.0, 39.0),                   # drum recessed z2.2-11.0
     "minute": (-22.5, 12.2),                 # 80t on plane B (indirect
-    "third": (-30.1, -31.1),                 #  center display: 1:1 dial-
-    "fourth": (-8.7, -49.1),                 #  side transfer to cannon)
-    "escape": (16.7, -39.9),
-    "balance": (42.4, -9.3),                 # ON THE PLATE (Jon's note)
+    "third": (-22.5, -31.8),                 #  center display: 1:1 dial-
+    "fourth": (-1.0, -49.8),                 #  side transfer to cannon)
+    "escape": (24.3, -40.6),
+    "balance": (44.3, -5.9),                 # ON THE PLATE (Jon's note)
     "lever_span": 40.0,
     "drum_ratio": 4.0,                       # 4 h/rev -> ~18 h runtime
+    # v3: escapement bay recessed 2.5 into the plate, clearance 2.0
+    # everywhere (Jon: use the rim room), stack tops at COCK z1 = 17.7
 }
 
 
@@ -214,5 +227,7 @@ def revc_sweeps():
         s += _station_sweeps(kind, *L[k], counts)
     ex, ey = L["escape"]
     Bx, By = L["balance"]
-    s.append(Sweep("lever", (ex + Bx) / 2, (ey + By) / 2, 22, *ROLLER_Z))
+    ux, uy = (Bx - ex) / 40.0, (By - ey) / 40.0
+    s.append(Sweep("lever_hub", ex + 20.6*ux, ey + 20.6*uy, 13, *ROLLER_Z))
+    s.append(Sweep("lever_fork", ex + 34.0*ux, ey + 34.0*uy, 5, *ROLLER_Z))
     return s

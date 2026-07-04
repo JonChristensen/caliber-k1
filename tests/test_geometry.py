@@ -776,8 +776,12 @@ def test_revc_layout_globally_clean():
     from caliber_k1.revc import revc_sweeps, check_all, REVC_LAYOUT
     violations = check_all(revc_sweeps())
     assert violations == [], f"global collisions: {violations[:5]}"
-    # stack: cock top at 20.5 — balance ON the plate (Jon's massing note)
-    from caliber_k1.revc import COCK
-    assert COCK[1] <= 20.5 + 1e-9
+    # stack: cock top at 17.7, escapement bay recessed into the plate,
+    # cock coplanar with the bridge — nothing stands above them (Jon's
+    # massing r2 notes), and 2.0mm clearance everywhere (rim-room note)
+    from caliber_k1.revc import COCK, BRIDGE, ROLLER_Z, PLATE_T
+    assert COCK[1] <= 17.7 + 1e-9
+    assert COCK == BRIDGE                    # coplanar, nothing higher
+    assert ROLLER_Z[0] < PLATE_T - 2.0       # bay truly inside the plate
     Zd, pm, Zm, p3, Z3, p4, Z4, pe = REVC_LAYOUT["counts"]
     assert (Zm / p3) * (Z3 / p4) == 60.0 and Z4 == 2 * pe
