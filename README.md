@@ -27,15 +27,20 @@ watch construction (see [log 0009](docs/log/0009-rev-b-architecture.md)).
 Rev A remains fully documented below as the proving ground for every
 library rev B is built from.
 
-| Milestone | What | Status |
+| Rev B step | What | Status |
 |---|---|---|
-| 1 | **Going barrel** — printed mainspring, drum, arbor, ratchet & click, test stand | 🟢 frame printed & verified; spring/click await PETG |
-| 2 | **Going train** — cycloidal wheels, whirlpool spokes, the wave bridge | 🟡 designed, print pending |
-| 3 | **Escapement + balance** — pin-pallet lever, printed hairspring, the jewel in the wave | 🟡 designed, print pending |
-| 4 | Motion works, hands, dial + published complication-module interface | ⚪ |
-| 5 | First complication module: moon phase (Oechslin-style epicyclic) | ⚪ |
-| 6 | The haptic metronome | ⚪ |
-| 7 | The tide complication | ⚪ |
+| Frame | Mainplate (pocketed dial face), broad bridge, removable pallet bridge | 🟢 designed, inspection-passed |
+| Dial side | Motion works + moon train in-pocket, guard platform, moon window | 🟢 designed, inspection-passed |
+| Winding | Crown/stem/face-gear crown wheel, celebrated ratchet, click | 🟢 designed, inspection-passed |
+| Train | 6h barrel -> exactly 60min center -> 60s fourth -> 30s escape, phase-aligned mesh proofs | 🟢 designed, probe-proven |
+| Escapement | Swiss lever (variant angles), club wheel, banking/guard/crescent, steel staff, slit collet | 🟢 designed, lock+release probed |
+| 2f: the wave | Bridge outline + Cotes de Geneve over the packed movement | 🔜 next |
+| M5-M7 | Moon display, haptic metronome, tide | ⚪ after 2f |
+
+Milestone 1's barrel frame is PRINTED and bench-verified; rev A remains
+in-tree as the proving ground. Full review assembly:
+`exports/revb/review_full_movement_r10.step` (versioned; always grab
+the highest r-number).
 
 Scale: this is a desk-scale movement (Ø150 mm plate) — watch architecture at a
 size FDM printing genuinely masters. Proven precedent: [Christoph Laimer's
