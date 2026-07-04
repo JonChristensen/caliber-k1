@@ -200,10 +200,10 @@ def balance_cock_b():
     face = _ccw_band([feet[0], B, feet[1]], 5.5)
     face += P_(*B) * Circle(7.0)
     part = extrude(face, 3.0)                      # arm plate (local z0=29)
-    for f in feet:                                 # short risers to bridge top
-        part += P_(f[0], f[1], -6.4) * Cyl(5.0, 6.4,
+    for f in feet:                                 # near-coplanar: 1.3 riser
+        part += P_(f[0], f[1], -1.3) * Cyl(5.0, 1.3,
                                            align=(Align.CENTER, Align.CENTER, Align.MIN))
-        part -= P_(f[0], f[1], -7.4) * Cyl(1.7, 14,
+        part -= P_(f[0], f[1], -2.3) * Cyl(1.7, 8,
                                            align=(Align.CENTER, Align.CENTER, Align.MIN))
     part -= P_(B[0], B[1], -1) * Cyl(1.5 + TOL.pivot_clearance, 2.5,
                                      align=(Align.CENTER, Align.CENTER, Align.MIN))

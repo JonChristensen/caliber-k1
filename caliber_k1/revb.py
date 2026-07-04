@@ -327,9 +327,12 @@ def osc_stack(variant: Variant = None) -> dict:
     top 23.7 and the high center wheel), hairspring + cock above."""
     v = variant or active_variant()
     bz = bridge_z(v)
+    # Jon's low-profile arrangement: hairspring NESTED IN THE WELL
+    # (inside the bridge's thickness, clear of the center wheel band
+    # below), cock arm nearly coplanar with the bridge (1.3 riser)
     return {"ring_lo": 24.3, "ring_hi": 29.3,
-            "hs_lo": bz + 3.7 + 0.5, "arm_lo": bz + 9.4,
-            "staff_top": bz + 9.4 + 2.0}
+            "hs_lo": bz + 0.2, "arm_lo": bz + 4.3,
+            "staff_top": bz + 4.3 + 2.0}
 
 
 def lever_layout_b(variant: Variant = None) -> dict:

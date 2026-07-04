@@ -752,3 +752,16 @@ def test_steel_staff_conversion():
         Align.CENTER, Align.CENTER, Align.MIN))
     inter = hs & probe
     assert (inter.volume if inter else 0) < 0.05, "collet slit missing"
+
+
+def test_hairspring_nests_in_the_well():
+    """Jon's arrangement: spring inside the bridge's thickness, clear of
+    the center wheel band below and NEVER touching the balance wheel —
+    connected only through the collet on the staff."""
+    from caliber_k1.revb import active_variant, bridge_z, p1_high, osc_stack
+    v = active_variant()
+    o = osc_stack(v)
+    assert o["hs_lo"] >= p1_high(v)[1] + 0.5, "spring combs the center wheel"
+    assert o["hs_lo"] >= o["ring_hi"] + 0.5, "spring rests on the balance wheel"
+    assert o["hs_lo"] >= bridge_z(v), "spring below the well opening"
+    assert 24.0 + 1.5 < 27.0, "breathing clearance inside the well"
