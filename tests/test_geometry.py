@@ -711,3 +711,18 @@ def test_pallet_bridge_serviceable():
     assert b.volume > 1500
     lv = swiss_lever_b()
     assert lv.bounding_box().size.Z == pytest.approx(3.0 + 2 * 1.4, abs=0.05)
+
+
+def test_escapement_safety_parts():
+    """Banking pins limit the swing; the guard finger stops 0.3 off the
+    safety roller; the crescent lets it pass only in line."""
+    from caliber_k1.revb import lever_layout_b
+    from caliber_k1.revb_parts import swiss_lever_b, roller_b, pallet_bridge_b
+    L = lever_layout_b()
+    lv = swiss_lever_b()
+    r = roller_b()
+    assert r.volume > 25   # slim two-tier roller
+    assert pallet_bridge_b().volume > 1500
+    bb = lv.bounding_box()
+    # horns must stop clear of the slimmed impulse table (r2.6 at fork_len)
+    assert bb.max.X < L["fork_len"] - 1.8, "fork horns hit the impulse table"

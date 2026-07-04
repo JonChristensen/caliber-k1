@@ -564,9 +564,14 @@ def swiss_lever_b():
     face += C_(3.2)                                       # arbor hub
     # fork toward the balance: slot for the impulse pin + LONG horns
     fl = L["fork_len"] - 5.5                              # to roller orbit
-    face += _ccw_polygon(_polyline_band([(0, 0), (fl + 4.5, 0)], 2.4))
-    face -= P_(fl + 2.5, 0) * Rectangle(7.0, 3.1)         # slot (horns 4.5)
+    face += _ccw_polygon(_polyline_band([(0, 0), (fl + 3.5, 0)], 2.4))
     part = extrude(face, 3.0)
+    # fork slot: upper 1.7 only — the floor below is the GUARD level
+    part -= P_(fl + 2.5, 0, 1.3) * extrude(Rectangle(7.0, 3.1), 3)
+    # guard finger on the floor, tip 0.3 off the safety roller
+    guard_tip = L["fork_len"] - 3.2 - 0.3
+    part += P_((fl + 1.0 + guard_tip) / 2, 0, 0) * extrude(
+        Rectangle(guard_tip - (fl + 1.0), 1.2), 1.3)
     # SHORT integral arbor (Jon's catch: no stilts) — pivots 1.4 up/down
     # into the removable pallet bridge's bearings
     part += P_(0, 0, -1.4) * Cyl(1.5, 1.4,
@@ -597,9 +602,37 @@ def pallet_bridge_b():
         part += P_(f[0], f[1], 0) * Cyl(4.0, lever_hi + 2.0,
                     align=(Align.CENTER, Align.CENTER, Align.MIN))
         part -= P_(f[0], f[1], 0) * Cyl(1.7, 40)          # M3 through
+    # banking pins: rise through the lever plane, flanking the fork neck
+    # at 8mm from the arbor — limit swing to ~+-8 deg (print variant)
+    from math import atan2, cos as c_, sin as s_
+    ang = atan2(L["B"][1] - P[1], L["B"][0] - P[0])
+    u = (c_(ang), s_(ang))
+    pv = (-u[1], u[0])
+    for sgn in (+1, -1):
+        qx = P[0] + 8 * u[0] + sgn * 3.3 * pv[0]
+        qy = P[1] + 8 * u[1] + sgn * 3.3 * pv[1]
+        part += P_(qx, qy, lever_lo - 0.1) * Cyl(1.0, (lever_hi - lever_lo) + 0.2,
+                    align=(Align.CENTER, Align.CENTER, Align.MIN))
     # arbor bearings: blind cups facing the lever, both straps
     part -= P_(P[0], P[1], lever_lo - 1.6) * Cyl(1.5 + TOL.pivot_clearance,
                 1.7, align=(Align.CENTER, Align.CENTER, Align.MIN))
     part -= P_(P[0], P[1], lever_hi + 0.1) * Cyl(1.5 + TOL.pivot_clearance,
                 1.7, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return part
+
+
+def roller_b():
+    """Two-tier roller (Ciechanowski anatomy): impulse tier with the
+    pin at r5.5 (upper 1.6), safety tier below (r3.2) with the crescent
+    cut at the impulse azimuth so the guard finger passes only in line."""
+    from build123d import Cylinder as Cyl, Pos as P_, Rectangle
+    from .revb import active_variant
+    imp = Circle(2.6)                                     # slim table
+    imp += P_(5.5, 0) * Circle(1.25)
+    imp += P_(4.05, 0) * Rectangle(2.9, 1.6)
+    part = P_(0, 0, 1.4) * extrude(imp, 1.6)              # impulse tier
+    saf = Circle(3.2) - P_(3.2, 0) * Circle(1.5)          # crescent
+    part += extrude(saf, 1.4)                             # safety tier
+    bore = Circle(2.5 + active_variant().drive_clearance if False else 2.6)         - P_(1.3 + 15, 0) * Rectangle(30, 30)
+    part -= extrude(bore, 10)
     return part
