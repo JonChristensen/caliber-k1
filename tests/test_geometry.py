@@ -620,7 +620,17 @@ def test_balance_staff_reaches_cock():
     from caliber_k1.revb_parts import balance_staff_rev_b
     from caliber_k1.revb import active_variant, bridge_z
     bb = balance_staff_rev_b().bounding_box()
-    assert bb.max.Z == pytest.approx(bridge_z(active_variant()) + 10.0, abs=0.05)
+    assert bb.max.Z == pytest.approx(bridge_z(active_variant()) + 15.7, abs=0.05)
+
+
+def test_balance_ring_clears_high_center_wheel():
+    """Jon's screenshot catch: the ring and the hoisted 80t wheel shared
+    a z-band. The ring now rides above the bridge — enforce the z gap."""
+    from caliber_k1.revb import active_variant, bridge_z, p1_high
+    v = active_variant()
+    ring_lo = bridge_z(v) + 3.5
+    assert ring_lo >= p1_high(v)[1] + 0.5 + 3.0 + 0.5, \
+        "ring z-band reaches the center wheel/bridge zone"
 
 
 def test_train_meshes_phase_aligned():

@@ -200,11 +200,11 @@ def balance_cock_b():
     face = _ccw_band([feet[0], B, feet[1]], 5.5)
     face += P_(*B) * Circle(7.0)
     part = extrude(face, 3.0)                      # arm plate (local z0=29)
-    for f in feet:                                 # risers down to bridge top
-        part += P_(f[0], f[1], -5.0) * Cyl(5.0, 5.0,
-                                           align=(Align.CENTER, Align.CENTER, Align.MIN))
-        part -= P_(f[0], f[1], -6.0) * Cyl(1.7, 12,
-                                           align=(Align.CENTER, Align.CENTER, Align.MIN))
+    for f in feet:                                 # tall risers to bridge top
+        part += P_(f[0], f[1], -10.7) * Cyl(5.0, 10.7,
+                                            align=(Align.CENTER, Align.CENTER, Align.MIN))
+        part -= P_(f[0], f[1], -11.7) * Cyl(1.7, 18,
+                                            align=(Align.CENTER, Align.CENTER, Align.MIN))
     part -= P_(B[0], B[1], -1) * Cyl(1.5 + TOL.pivot_clearance, 2.5,
                                      align=(Align.CENTER, Align.CENTER, Align.MIN))
     part -= P_(B[0], B[1], 1.5) * Cyl(2.1, 5,
@@ -479,7 +479,9 @@ def balance_staff_rev_b():
     from .revb import active_variant, bridge_z
     v = active_variant()
     bz = bridge_z(v)
-    ring_lo, arm_lo = bz - 2.5, bz + 8.0
+    # Jon's lift: the ring rides ABOVE the broad bridge (it collided with
+    # the high center wheel in the well) — jewel back on display
+    ring_lo, arm_lo = bz + 3.5, bz + 13.7
     top = arm_lo + 2.0
     part = Cyl(1.25, 3.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
     shaft_len = (top - 4.5) - 3.0
