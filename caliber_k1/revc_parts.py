@@ -129,6 +129,17 @@ def mainplate_c():
     for az in (30, 150, 270):
         part -= Pos(78 * cos(radians(az)), 78 * sin(radians(az)), -1) * \
             Cylinder(1.7, 12, align=BOTTOM)
+    # dial side: stepped pockets for the solved face (revc_dial), Ø2
+    # register-post bores, the Ø3 center-post bore, platform M2 screws
+    from .revc_dial_parts import PLATFORM_SCREWS, dial_pockets_and_bores
+    cuts, posts = dial_pockets_and_bores()
+    for cx, cy, pr, depth in cuts:
+        part -= Pos(cx, cy, -0.01) * Cylinder(pr, depth + 0.01, align=BOTTOM)
+    for px, py in posts:
+        part -= Pos(px, py, -0.01) * Cylinder(0.95, 5.31, align=BOTTOM)
+    part -= Pos(0, 0, -0.01) * Cylinder(1.45, 5.21, align=BOTTOM)
+    for sx, sy in PLATFORM_SCREWS:
+        part -= Pos(sx, sy, -0.01) * Cylinder(0.8, 2.0, align=BOTTOM)
     return part
 
 
@@ -197,7 +208,9 @@ def minute_arbor_c():
                         (gears.wheel_face(_counts()[2], _counts()[3],
                                           backlash=_bl(), addendum=0.85), 3.0),
                         (1.25, 1.95)])                     # top pivot to 16.2
-    part -= Pos(1.05 + 15, 0, 1.6) * Box(30, 30, 1.6, align=BOTTOM)  # D-flat
+    # dial stub stays ROUND: the transfer pinion grips it by friction
+    # (slit collet) — that joint is how hands get SET without fighting
+    # the whole train (the classic cannon-pinion slip, relocated)
     return part
 
 

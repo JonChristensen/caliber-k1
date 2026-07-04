@@ -7,7 +7,9 @@ from math import atan2, degrees
 from build123d import Compound, Pos, Rot, export_step
 
 from caliber_k1.revc import REVC_LAYOUT, cock_layout_c, lever_layout_c
+from caliber_k1.revc_dial import DIAL_LAYOUT, DIAL_TRAIN
 from caliber_k1 import revc_parts as rp
+from caliber_k1 import revc_dial_parts as dp
 
 
 def L(name, part):
@@ -78,8 +80,55 @@ kids = [
     L("train bridge (plain; wave pass later)", rp.bridge_c()),
 ]
 
-asm = Compound(label="revc_movement_r1", children=kids)
-export_step(asm, "exports/revc/movement_r1.step")
+# --- the dial side: phase the 8-mesh chain off the minute arbor ---------------
+DL = DIAL_LAYOUT
+mxy = lay["minute"]
+
+
+def chained(a_xy, b_xy, za, zb, R_a):
+    """b's rotation meshing a, given a's already-fixed rotation R_a."""
+    ra, rb = mesh_rots(a_xy, b_xy, za, zb)
+    return rb + (ra - R_a) * za / zb
+
+
+Zt, Zi = DIAL_TRAIN["transfer"][0], DIAL_TRAIN["idler"][0]
+R_i1 = chained(mxy, DL["i1"], Zt, Zi, R_minute)
+R_i2 = chained(DL["i1"], DL["i2"], Zi, Zi, R_i1)
+R_cannon = chained(DL["i2"], (0, 0), Zi, Zt, R_i2)
+R_motion = chained((0, 0), DL["motion"], DIAL_TRAIN["cannon"][0],
+                   DIAL_TRAIN["motion_w"][0], R_cannon)
+R_hour = chained(DL["motion"], (0, 0), DIAL_TRAIN["motion_p"][0],
+                 DIAL_TRAIN["hour"][0], R_motion)
+R_w1 = chained((0, 0), DL["w1"], DIAL_TRAIN["moon_p"][0],
+               DIAL_TRAIN["w1_w"][0], R_hour)
+R_w2 = chained(DL["w1"], DL["w2"], DIAL_TRAIN["w1_p"][0],
+               DIAL_TRAIN["w2_w"][0], R_w1)
+R_disc = chained(DL["w2"], DL["disc"], DIAL_TRAIN["w2_p"][0],
+                 DIAL_TRAIN["disc"][0], R_w2)
+
+kids += [
+    L("center post (O3 register pin)", dp.center_post_d()),
+    L("cannon (pinion + transfer wheel)", Rot(0, 0, R_cannon) * dp.cannon_d()),
+    L("hour wheel + moon pinion (short pipe)", Rot(0, 0, R_hour) * dp.hour_wheel_d()),
+    L("motion arbor (10t + 36t)",
+      Pos(*DL["motion"], 0) * Rot(0, 0, R_motion) * dp.motion_arbor_d()),
+    L("moon w1 (36t + 12t)", Pos(*DL["w1"], 0) * Rot(0, 0, R_w1) * dp.w1_d()),
+    L("moon w2 (54t + 8t)", Pos(*DL["w2"], 0) * Rot(0, 0, R_w2) * dp.w2_d()),
+    L("moon disc (70t, 29.53125d)",
+      Pos(*DL["disc"], 0) * Rot(0, 0, R_disc) * dp.moon_disc_d()),
+    L("transfer pinion (on the minute stub)",
+      Pos(*mxy, 0) * Rot(0, 0, R_minute) * dp.xfer_pinion_d()),
+    L("transfer idler 1", Pos(*DL["i1"], 0) * Rot(0, 0, R_i1) * dp.idler_d()),
+    L("transfer idler 2", Pos(*DL["i2"], 0) * Rot(0, 0, R_i2) * dp.idler_d()),
+    L("dial platform (moon window NW)", dp.dial_platform_d()),
+]
+for k, (px, py) in enumerate([DL[n] for n in
+                              ("motion", "w1", "w2", "disc", "i1", "i2")]):
+    kids.append(L(f"arbor post {k+1} (O2 register pin)",
+                  Pos(px, py, 0.3) * dp.arbor_post_d()))
+
+asm = Compound(label="revc_movement_r2", children=kids)
+export_step(asm, "exports/revc/movement_r2.step")
 bb = asm.bounding_box()
 print(f"rev C movement r1: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
       f"(z {bb.min.Z:.1f}..{bb.max.Z:.1f}), {len(kids)} components")
