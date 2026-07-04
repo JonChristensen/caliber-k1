@@ -46,3 +46,15 @@ stand plates remain only as the historical barrel test rig.
 3. Escapement generator (lever variant) + balance over the wave.
 4. Motion works + hands + moon module in-plane.
 5. Renders reviewed in Fusion BEFORE each milestone freezes.
+
+## Status correction (Jon's catch, post-2e-half)
+
+r6 has NO pallet lever — "mechanically complete" was an overclaim. Built
+and verified: full going train (phase-aligned mesh proofs), pallet cock,
+pallet arbor layout + pins, balance staff/ring/hairspring seats. Missing:
+the lever itself (rev A's is welded to tower geometry) and the roller's
+rev B seat. Escapement remains variant-triggered per the plan:
+print=pin_pallet (tolerance-tolerant, proves the runner), metal=
+swiss_lever club-tooth (DFM pass, machining tolerances) — including the
+matching escape-wheel pair (pointed vs club teeth). Next mechanical work:
+port the pin-pallet lever + roller onto escapement_layout_b.
