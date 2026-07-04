@@ -312,13 +312,24 @@ def p1_high(variant: Variant = None) -> tuple:
     """The center wheel's plane: ABOVE the drum top (the Ø66 wheel sits
     only 9mm from the barrel axis — inside the drum body's shadow at any
     lower plane; the 862mm3 probe hit). Third pinion climbs to meet it."""
-    lo = drum_top_z(variant) + 0.5
+    lo = drum_top_z(variant) + 1.2      # +0.7 so the ring clears below
     return (lo, lo + 5.0)
 
 
 def train_upper_bearing_z(variant: Variant = None) -> float:
     """Bridge bosses hang 5 under the bridge; pivots seat from there."""
     return bridge_z(variant) - 5.0
+
+
+def osc_stack(variant: Variant = None) -> dict:
+    """The oscillator's homes (print variant; metal re-derives at DFM):
+    ring UNDER the bridge in the well (Jon's placement — between strap
+    top 23.7 and the high center wheel), hairspring + cock above."""
+    v = variant or active_variant()
+    bz = bridge_z(v)
+    return {"ring_lo": 24.3, "ring_hi": 29.3,
+            "hs_lo": bz + 3.7 + 0.5, "arm_lo": bz + 9.4,
+            "staff_top": bz + 9.4 + 2.0}
 
 
 def lever_layout_b(variant: Variant = None) -> dict:

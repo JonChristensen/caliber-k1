@@ -618,19 +618,20 @@ def test_escape_wheel_clears_bridge_bosses():
 
 def test_balance_staff_reaches_cock():
     from caliber_k1.revb_parts import balance_staff_rev_b
-    from caliber_k1.revb import active_variant, bridge_z
+    from caliber_k1.revb import active_variant, osc_stack
     bb = balance_staff_rev_b().bounding_box()
-    assert bb.max.Z == pytest.approx(bridge_z(active_variant()) + 15.7, abs=0.05)
+    assert bb.max.Z == pytest.approx(osc_stack(active_variant())["staff_top"], abs=0.05)
 
 
-def test_balance_ring_clears_high_center_wheel():
-    """Jon's screenshot catch: the ring and the hoisted 80t wheel shared
-    a z-band. The ring now rides above the bridge — enforce the z gap."""
-    from caliber_k1.revb import active_variant, bridge_z, p1_high
+def test_balance_ring_sits_between_strap_and_center_wheel():
+    """Jon's placement: ring UNDER the bridge, in the well — above the
+    pallet bridge's thin upper strap, below the high center wheel."""
+    from caliber_k1.revb import active_variant, p1_high, osc_stack
     v = active_variant()
-    ring_lo = bridge_z(v) + 3.5
-    assert ring_lo >= p1_high(v)[1] + 0.5 + 3.0 + 0.5, \
-        "ring z-band reaches the center wheel/bridge zone"
+    o = osc_stack(v)
+    strap_top = 22.0 + 0.2 + 1.5
+    assert o["ring_lo"] >= strap_top + 0.5, "ring rubs the pallet strap"
+    assert o["ring_hi"] <= p1_high(v)[0] - 0.5, "ring reaches the center wheel"
 
 
 def test_train_meshes_phase_aligned():

@@ -200,11 +200,11 @@ def balance_cock_b():
     face = _ccw_band([feet[0], B, feet[1]], 5.5)
     face += P_(*B) * Circle(7.0)
     part = extrude(face, 3.0)                      # arm plate (local z0=29)
-    for f in feet:                                 # tall risers to bridge top
-        part += P_(f[0], f[1], -10.7) * Cyl(5.0, 10.7,
-                                            align=(Align.CENTER, Align.CENTER, Align.MIN))
-        part -= P_(f[0], f[1], -11.7) * Cyl(1.7, 18,
-                                            align=(Align.CENTER, Align.CENTER, Align.MIN))
+    for f in feet:                                 # short risers to bridge top
+        part += P_(f[0], f[1], -6.4) * Cyl(5.0, 6.4,
+                                           align=(Align.CENTER, Align.CENTER, Align.MIN))
+        part -= P_(f[0], f[1], -7.4) * Cyl(1.7, 14,
+                                           align=(Align.CENTER, Align.CENTER, Align.MIN))
     part -= P_(B[0], B[1], -1) * Cyl(1.5 + TOL.pivot_clearance, 2.5,
                                      align=(Align.CENTER, Align.CENTER, Align.MIN))
     part -= P_(B[0], B[1], 1.5) * Cyl(2.1, 5,
@@ -477,11 +477,9 @@ def balance_staff_rev_b():
     (lever plane) .. ring hub .. collet .. pivot into the cock arm."""
     from build123d import Cylinder as Cyl, Pos as P_, Rectangle
     from .revb import active_variant, bridge_z
-    v = active_variant()
-    bz = bridge_z(v)
-    # Jon's lift: the ring rides ABOVE the broad bridge (it collided with
-    # the high center wheel in the well) — jewel back on display
-    ring_lo, arm_lo = bz + 3.5, bz + 13.7
+    from .revb import osc_stack
+    o = osc_stack()
+    ring_lo, arm_lo = o["ring_lo"], o["arm_lo"]
     top = arm_lo + 2.0
     part = Cyl(1.25, 3.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
     shaft_len = (top - 4.5) - 3.0
@@ -596,9 +594,9 @@ def pallet_bridge_b():
     lever_lo, lever_hi = 19.0 - PLATE_T, 22.0 - PLATE_T   # local 12.5/15.5
     face = _ccw_band([feet[0], P, feet[1]], 4.0)
     # lower seat: strap under the lever (bearing floor)
-    part = P_(0, 0, lever_lo - 1.8) * extrude(face, 1.8)
-    # upper strap over the lever
-    part += P_(0, 0, lever_hi + 0.2) * extrude(face, 1.8)
+    part = P_(0, 0, lever_lo - 1.5) * extrude(face, 1.5)
+    # upper strap over the lever — thin, so the ring clears above
+    part += P_(0, 0, lever_hi + 0.2) * extrude(face, 1.5)
     # columns joining the straps at the feet, continuing down to the plate
     for f in feet:
         part += P_(f[0], f[1], 0) * Cyl(4.0, lever_hi + 2.0,

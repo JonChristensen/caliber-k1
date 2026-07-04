@@ -19,6 +19,8 @@ V = active_variant()
 BZ = bridge_z(V)            # bridge underside, DERIVED from the drum
 WZ = winding_wheels_z(V)
 zo = BZ - 21.0              # legacy-relative offset for bridge-side parts
+from caliber_k1.revb import osc_stack
+OS = osc_stack(V)
 m, k, ml = revb_layout(), keyless_layout_b(), motion_layout_b()
 bx, by = m["barrel"]; cwx, cwy = k["crown_wheel"]
 az = radians(105); sp = (88 * cos(az), 88 * sin(az))
@@ -67,12 +69,12 @@ kids.append(L("swiss_lever (pallet fork)", Pos(LL["P"][0], LL["P"][1], 19.0) * R
 from caliber_k1.revb_parts import roller_b
 kids.append(L("roller (two-tier + crescent)", Pos(m["balance"][0], m["balance"][1], 19.0) * roller_b()))
 kids.append(L("pallet_bridge (removable, 2x M3)", Pos(0, 0, PLATE_T) * pallet_bridge_b()))
-kids.append(L("balance_staff (O3 steel rod - BOM)", Pos(m["balance"][0], m["balance"][1], 3.5) * Cylinder(1.5, 50, align=B)))
+kids.append(L("balance_staff (O3 steel rod - BOM)", Pos(m["balance"][0], m["balance"][1], 3.5) * Cylinder(1.5, OS["staff_top"] - 3.5, align=B)))
 from caliber_k1.revb_parts import balance_wheel_b, hairspring_b
-kids.append(L("balance_wheel (over the wave)", Pos(m["balance"][0], m["balance"][1], BZ + 3.5) * balance_wheel_b()))
-kids.append(L("hairspring (slit collet)", Pos(m["balance"][0], m["balance"][1], BZ + 9.0) * hairspring_b()))
+kids.append(L("balance_wheel (in the well, under the bridge)", Pos(m["balance"][0], m["balance"][1], OS["ring_lo"]) * balance_wheel_b()))
+kids.append(L("hairspring (slit collet, over the well)", Pos(m["balance"][0], m["balance"][1], OS["hs_lo"]) * hairspring_b()))
 asm = Compound(label="k1_revb_full_r5", children=kids)
-export_step(asm, "exports/revb/review_full_movement_r11.step")
+export_step(asm, "exports/revb/review_full_movement_r12.step")
 export_stl(asm, "/tmp/full.stl")
 bb = asm.bounding_box()
 print(f"full movement r2: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm, "
