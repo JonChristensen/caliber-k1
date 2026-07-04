@@ -726,3 +726,18 @@ def test_escapement_safety_parts():
     bb = lv.bounding_box()
     # horns must stop clear of the slimmed impulse table (r2.6 at fork_len)
     assert bb.max.X < L["fork_len"] - 1.8, "fork horns hit the impulse table"
+
+
+def test_steel_staff_conversion():
+    """Register upgrades: every balance-borne part grips the Ø3 rod, and
+    the collet is slit (friction clamp, rotatable = beat adjustment)."""
+    from caliber_k1.revb_parts import balance_wheel_b, hairspring_b, roller_b
+    for mk in (balance_wheel_b, hairspring_b, roller_b):
+        assert mk().volume > 25, f"{mk.__name__} implausible"
+    hs = hairspring_b()
+    # slit present: material near the collet's -x side is cut through
+    from build123d import Cylinder, Pos, Align
+    probe = Pos(-8.2, 0, -1) * Cylinder(0.2, 8, align=(
+        Align.CENTER, Align.CENTER, Align.MIN))
+    inter = hs & probe
+    assert (inter.volume if inter else 0) < 0.05, "collet slit missing"

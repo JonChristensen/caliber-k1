@@ -28,8 +28,8 @@ def mainplate():
         part -= Pos(x, y, PLATE_T - 3.0) * Cylinder(1.5 + TOL.pivot_clearance,
                                                     4, align=BOTTOM)
     x, y = m["balance"]
-    part -= Pos(x, y, PLATE_T - 3.0) * Cylinder(1.25 + TOL.pivot_clearance,
-                                                4, align=BOTTOM)
+    part -= Pos(x, y, PLATE_T - 3.0) * Cylinder(1.5 + TOL.pivot_clearance,
+                                                4, align=BOTTOM)  # Ø3 rod
     # 2e-r: center arbor passes through; dial-face POCKET hosts motion +
     # moon works (log 0013); stub bushings live in the pocket floor
     part -= Cylinder(_dial_bore(1.5), 20)
@@ -205,7 +205,7 @@ def balance_cock_b():
                                            align=(Align.CENTER, Align.CENTER, Align.MIN))
         part -= P_(f[0], f[1], -6.0) * Cyl(1.7, 12,
                                            align=(Align.CENTER, Align.CENTER, Align.MIN))
-    part -= P_(B[0], B[1], -1) * Cyl(1.25 + TOL.pivot_clearance, 2.5,
+    part -= P_(B[0], B[1], -1) * Cyl(1.5 + TOL.pivot_clearance, 2.5,
                                      align=(Align.CENTER, Align.CENTER, Align.MIN))
     part -= P_(B[0], B[1], 1.5) * Cyl(2.1, 5,
                                       align=(Align.CENTER, Align.CENTER, Align.MIN))
@@ -635,4 +635,50 @@ def roller_b():
     part += extrude(saf, 1.4)                             # safety tier
     bore = Circle(2.5 + active_variant().drive_clearance if False else 2.6)         - P_(1.3 + 15, 0) * Rectangle(30, 30)
     part -= extrude(bore, 10)
+    return part
+
+
+def balance_wheel_b():
+    """Ø50 ring, whirlpool spokes, 6 timing-nut holes — rebored for the
+    Ø3 steel staff (press fit, ream to seat)."""
+    from math import cos, pi, sin
+    from build123d import Cylinder as Cyl, Pos as P_
+    from .decor import swirl_windows
+    face = Circle(25.0)
+    for w in swirl_windows(5.5, 19.5, spokes=3, spoke_w=5.0):
+        face -= w
+    part = extrude(face, 5.0)
+    for k in range(6):
+        a = 2 * pi * k / 6
+        part -= P_(22.5 * cos(a), 22.5 * sin(a), 0) * Cyl(1.45, 20)
+    part -= Cyl(1.45, 20)
+    return part
+
+
+def hairspring_b():
+    """Printed hairspring with a SLIT COLLET (register): the split inner
+    ring friction-grips the Ø3 staff and can be rotated to set the BEAT —
+    audible symmetry, non-negotiable for a metronome."""
+    from math import cos, sin, tau
+    from build123d import Polygon, Pos as P_, Rectangle
+    t, h, r0, r1, coils = 0.45, 4.0, 8.0, 24.0, 11
+    theta_end = coils * tau
+    b = (r1 - r0) / theta_end
+    outer, inner = [], []
+    n = coils * 40
+    for i in range(n + 1):
+        th = theta_end * i / n
+        r = r0 + b * th
+        outer.append(((r + t / 2) * cos(th), (r + t / 2) * sin(th)))
+        inner.append(((r - t / 2) * cos(th), (r - t / 2) * sin(th)))
+    face = Polygon(*(outer + inner[::-1]), align=None)
+    collet = Circle(r0 - t / 2 + 0.6) - Circle(1.42)      # grips Ø3 rod
+    face += collet
+    face += P_(r1 + 3.2, 0) * Circle(2.6)                 # stud tab
+    face += P_(r1 + 1.2, 0) * Rectangle(4.0, 3.4)
+    face -= P_(r1 + 3.2, 0) * Circle(1.75)
+    part = extrude(face, h)
+    # the slit: makes the collet a friction clamp, rotatable for beat
+    part -= P_(-(1.42 + (r0 - t/2 + 0.6)) / 2 - 1.2, 0, 0) * extrude(
+        Rectangle(r0, 0.5), 10)
     return part
