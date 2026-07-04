@@ -483,3 +483,82 @@ def balance_staff_rev_b():
     part += P_(0, 0, 3.0 + shaft_len) * Cyl(1.25, top - (3.0 + shaft_len),
                 align=(Align.CENTER, Align.CENTER, Align.MIN))
     return part
+
+
+def club_escape_wheel_b():
+    """30-tooth club-tooth escape wheel: flat locking corner + flat
+    impulse tip (the 'club'), print-tuned. D-bore Ø3."""
+    from math import cos, pi, sin
+    from build123d import Rectangle, Pos as P_
+    from .decor import _ccw_polygon, swirl_windows
+    r_tip, r_root = 16.0, 13.2
+    pts = []
+    for k in range(30):
+        a = 2 * pi * k / 30
+        w = 2 * pi / 30
+        # locking corner (leads, CCW) -> club flat -> back slope to root
+        pts.append((r_tip * cos(a), r_tip * sin(a)))
+        pts.append((r_tip * 0.985 * cos(a + w * 0.22),
+                    r_tip * 0.985 * sin(a + w * 0.22)))
+        pts.append((r_root * cos(a + w * 0.45), r_root * sin(a + w * 0.45)))
+    face = _ccw_polygon(pts)
+    for wdw in swirl_windows(4.0, 11.0, spokes=4, spoke_w=3.0):
+        face -= wdw
+    part = extrude(face, 3.0)
+    from build123d import Circle as C_
+    bore = C_(1.5 + TOL.drive_clearance) - P_(1.1 + TOL.drive_clearance + 15, 0) * Rectangle(30, 30)
+    part -= extrude(bore, 10)
+    return part
+
+
+def swiss_lever_b():
+    """The pallet fork (log 0015): anchor arms to two flat-faced pallet
+    stones (draw-angled locks, chamfered impulse faces), fork with LONG
+    horns (the Mechanica overbanking lesson). Modeled in the PALLET frame
+    (P at origin, +x toward the balance); z0 = body bottom, t=3."""
+    from math import atan2, cos, sin, radians
+    from build123d import Cylinder as Cyl, Pos as P_, Rot, Rectangle
+    from .decor import _ccw_polygon, _polyline_band
+    from .revb import lever_layout_b
+    L = lever_layout_b()
+    ang = L["ang"]
+
+    def loc(pt):  # movement coords -> pallet frame (rotate so B is +x)
+        dx, dy = pt[0] - L["P"][0], pt[1] - L["P"][1]
+        c, s = cos(-ang), sin(-ang)
+        return (dx * c - dy * s, dx * s + dy * c)
+
+    E_l = loc(L["E"])                          # (-a, 0)
+    face = None
+    for i, C in enumerate(L["contacts"]):
+        Cl = loc(C)
+        rad = ((Cl[0] - E_l[0]), (Cl[1] - E_l[1]))
+        rl = (rad[0] ** 2 + rad[1] ** 2) ** 0.5
+        n = (rad[0] / rl, rad[1] / rl)          # outward radial at contact
+        dth = radians(90 - L["draw_deg"])
+        t = (n[0] * cos(dth) - n[1] * sin(dth),
+             n[0] * sin(dth) + n[1] * cos(dth))  # lock-face direction
+        ith = radians(-38)
+        m_ = (n[0] * cos(ith) - n[1] * sin(ith),
+              n[0] * sin(ith) + n[1] * cos(ith))  # impulse chamfer dir
+        p_in = (Cl[0] - 1.0 * t[0], Cl[1] - 1.0 * t[1])
+        p_tip = (Cl[0] + 1.2 * t[0], Cl[1] + 1.2 * t[1])
+        p_imp = (p_tip[0] + 2.0 * m_[0], p_tip[1] + 2.0 * m_[1])
+        p_back = (p_in[0] + 2.6 * n[0], p_in[1] + 2.6 * n[1])
+        stone = _ccw_polygon([p_in, p_tip, p_imp, p_back])
+        # banana arm: arcs AROUND the wheel rim (midpoint pushed 3 out)
+        half = ((E_l[0] + Cl[0]) / 2, (E_l[1] + Cl[1]) / 2)
+        hr = ((half[0] - E_l[0]) ** 2 + (half[1] - E_l[1]) ** 2) ** 0.5
+        mid = (E_l[0] + (half[0] - E_l[0]) / hr * 19.0,
+               E_l[1] + (half[1] - E_l[1]) / hr * 19.0)
+        arm = _ccw_polygon(_polyline_band([(0, 0), mid, p_back], 1.6))
+        face = stone + arm if face is None else face + stone + arm
+    from build123d import Circle as C_
+    face += C_(3.2)                                       # arbor hub
+    # fork toward the balance: slot for the impulse pin + LONG horns
+    fl = L["fork_len"] - 5.5                              # to roller orbit
+    face += _ccw_polygon(_polyline_band([(0, 0), (fl + 4.5, 0)], 2.4))
+    face -= P_(fl + 2.5, 0) * Rectangle(7.0, 3.1)         # slot (horns 4.5)
+    part = extrude(face, 3.0)
+    part -= Cyl(1.5 + TOL.pivot_clearance, 10)            # arbor bore
+    return part

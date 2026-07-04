@@ -655,3 +655,43 @@ def test_train_meshes_phase_aligned():
         B2 = Pos((ax-bx)/d, (ay-by)/d, 0) * B
         inter2 = A & B2
         assert (inter2.volume if inter2 else 0) > 1.0, f"{a}->{b} teeth don't reach"
+
+
+# --- 2f-pre: the Swiss lever gates the wheel ----------------------------------
+
+def test_swiss_lever_gates_the_escape_wheel():
+    """First-cut escapement probe: with the lever centered, the club wheel
+    must NOT be able to rotate freely (pallets gate most phases), and
+    swinging the lever must change the engagement — proof the fork
+    commands the wheel. Dynamic behavior is the bench's job."""
+    from math import degrees
+    from build123d import Pos, Rot
+    from caliber_k1.revb import lever_layout_b
+    from caliber_k1.revb_parts import club_escape_wheel_b, swiss_lever_b
+    L = lever_layout_b()
+    wheel0 = club_escape_wheel_b()
+    lever0 = swiss_lever_b()
+    lever = Pos(L["P"][0], L["P"][1], 0) * Rot(0, 0, degrees(L["ang"])) * lever0
+    gated = 0
+    vols = []
+    for k in range(13):
+        w = Pos(L["E"][0], L["E"][1], 0) * Rot(0, 0, k) * wheel0
+        inter = w & lever
+        v = inter.volume if inter else 0.0
+        vols.append(v)
+        if v > 0.5:
+            gated += 1
+    assert gated >= 6, f"pallets barely touch the wheel ({gated}/13 phases)"
+    # the decisive property: somewhere on the (wheel phase x lever angle)
+    # grid the wheel is deeply LOCKED, somewhere it runs FREE. The release
+    # window is ~2 deg wide and drifts with phase — so probe the joint grid.
+    lo, hi = 1e9, 0.0
+    for k in range(0, 13, 3):
+        w_k = Pos(L["E"][0], L["E"][1], 0) * Rot(0, 0, k) * wheel0
+        for sw in range(-8, 9, 2):
+            lv = Pos(L["P"][0], L["P"][1], 0) * Rot(0, 0, degrees(L["ang"]) + sw) * lever0
+            i2 = w_k & lv
+            v = i2.volume if i2 else 0.0
+            lo, hi = min(lo, v), max(hi, v)
+    assert hi > 4.0, "lever cannot lock the wheel anywhere on the grid"
+    assert lo < 0.5, "lever cannot release the wheel anywhere on the grid"

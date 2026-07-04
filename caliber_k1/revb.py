@@ -319,3 +319,29 @@ def p1_high(variant: Variant = None) -> tuple:
 def train_upper_bearing_z(variant: Variant = None) -> float:
     """Bridge bosses hang 5 under the bridge; pivots seat from there."""
     return bridge_z(variant) - 5.0
+
+
+def lever_layout_b(variant: Variant = None) -> dict:
+    """Swiss lever geometry (log 0015): E, P, B COLINEAR (classic straight
+    lever). Pallets embrace 2.5 tooth-spaces (+-15 deg of the 30t wheel);
+    lock/draw angles come from the variant. All in movement coords."""
+    from math import atan2, cos, sin, radians
+    v = variant or active_variant()
+    m = revb_layout()
+    E, B = m["escape"], m["balance"]
+    ang = atan2(B[1] - E[1], B[0] - E[0])
+    r_esc = 16.0
+    # pallets embrace 6.5 tooth-spaces (+-39 deg): CLOCK-scale span, so
+    # the pallet arbor clears the wheel rim (2.5-space watch span put the
+    # hub 0.56mm from the rim — the gating probe caught it colliding)
+    span = radians(39)
+    a = r_esc / cos(span)                     # 20.6
+    P = (E[0] + a * cos(ang), E[1] + a * sin(ang))
+    contacts = []
+    r_eng = r_esc - 1.2                       # stones DIP inside the tip
+    for s in (+1, -1):                        # circle by the lock depth
+        th = ang + s * span
+        contacts.append((E[0] + r_eng * cos(th), E[1] + r_eng * sin(th)))
+    return {"E": E, "P": P, "B": B, "ang": ang, "a": a, "r_esc": r_esc,
+            "contacts": contacts, "span_deg": 39.0, "lock_deg": v.lock_deg,
+            "draw_deg": v.draw_deg, "fork_len": (34.5 - a)}

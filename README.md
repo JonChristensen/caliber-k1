@@ -71,9 +71,25 @@ Print settings and the metal-parts shopping list are in
 
 ## Licensing
 
-- **Hardware designs** (everything under `caliber_k1/`, plus generated geometry):
-  [CERN-OHL-S v2](LICENSE) — strongly reciprocal open hardware license.
+Two permissive licenses, chosen so anyone can build a business on this movement
+without asking us or paying us.
+
+- **Hardware designs** (everything under `caliber_k1/`, plus the generated
+  STEP/STL geometry): [CERN-OHL-P v2](LICENSE), the permissive variant of CERN's
+  open hardware license. You can manufacture the movement, sell it, modify it,
+  and keep your modifications closed. It carries an explicit patent grant, which
+  a copyright-only license like CC0 or CC BY does not, and that grant is what
+  protects a functional mechanical design. No reciprocity, no share-alike, no
+  obligation to credit us on the movement.
 - **Tooling** (`tools/`, CI): [MIT](LICENSE-MIT).
+
+This is a deliberately more open position than the current open watch movement,
+[openmovement's OM10](https://openmovement.org/project/om10/). The OM10 is
+copyleft (CC BY-SA 3.0): it requires you to engrave its calibre number on the
+movement, requires your derivatives to carry the same license, and reserves the
+production 2D/3D data for sale under its own purchase terms. Caliber K1 asks for
+none of that. Take the geometry, put it in a product, sell the product, and you
+owe us nothing.
 
 ## Follow along
 
