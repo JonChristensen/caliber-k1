@@ -168,14 +168,16 @@ class Variant:
     pivot_clearance: float  # running fits
     endshake: float
     spring: str             # mainspring spec
-    escapement: str         # pin_pallet (proven print) | swiss_lever (metal)
+    escapement: str         # swiss_lever both worlds (log 0015); pin_pallet = fallback
+    lock_deg: float         # pallet lock: deep for print error, fine for metal
+    draw_deg: float
 
 
 VARIANTS = {
     "print": Variant("print", 17.0, 1.5, 0.20, 0.50,
-                     "PETG strip 1.6x16", "pin_pallet"),
+                     "PETG strip 1.6x16", "swiss_lever", 3.0, 15.0),
     "metal": Variant("metal", 4.5, 7.0, 0.04, 0.10,
-                     "steel 0.30x14 (spec at DFM pass)", "swiss_lever"),
+                     "steel 0.30x14 (spec at DFM pass)", "swiss_lever", 1.5, 13.0),
 }
 
 
@@ -244,14 +246,16 @@ class Variant:
     pivot_clearance: float  # running fits
     endshake: float
     spring: str             # mainspring spec
-    escapement: str         # pin_pallet (proven print) | swiss_lever (metal)
+    escapement: str         # swiss_lever both worlds (log 0015); pin_pallet = fallback
+    lock_deg: float         # pallet lock: deep for print error, fine for metal
+    draw_deg: float
 
 
 VARIANTS = {
     "print": Variant("print", 17.0, 1.5, 0.20, 0.50,
-                     "PETG strip 1.6x16", "pin_pallet"),
+                     "PETG strip 1.6x16", "swiss_lever", 3.0, 15.0),
     "metal": Variant("metal", 4.5, 7.0, 0.04, 0.10,
-                     "steel 0.30x14 (spec at DFM pass)", "swiss_lever"),
+                     "steel 0.30x14 (spec at DFM pass)", "swiss_lever", 1.5, 13.0),
 }
 
 
