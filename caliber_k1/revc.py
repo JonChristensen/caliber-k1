@@ -295,7 +295,7 @@ INVENTORY = [
     ("lever_hub", "sweep"), ("lever_fork", "sweep"), ("roller", "sweep"),
     ("ring", "sweep"), ("spring", "sweep"),
     ("ratchet", "sweep"), ("crown_w", "sweep"), ("click_zone", "sweep"),
-    ("stem", "sweep"), ("module_bay", "sweep"),
+    ("stem", "sweep"),
     ("dial works", "dial"), ("dial platform", "dial"),
 ]
 
