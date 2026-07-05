@@ -613,50 +613,27 @@ def _wave_keepouts():
     return keep
 
 
-def _wave_cuts():
-    from .decor import _chaikin
-    from math import exp
-    cuts = []
-    bands = [
-        # the southern swells, west -> east under the train
-        ([(-66, -6), (-42, -14), (-6, -12), (28, -20), (56, -16)], 3.2),
-        ([(-58, -28), (-28, -36), (4, -40), (34, -43), (54, -50)], 3.8),
-        ([(-44, -50), (-14, -58), (14, -61), (38, -60)], 2.8),
-        ([(-64, 6), (-46, 0), (-24, 2)], 2.4),            # a high wisp
-        # NE: spray over the module bay, under the winding station
-        ([(38, 8), (52, 14), (63, 22)], 2.2),
-        ([(44, -4), (58, 2), (66, 8)], 1.7),
-    ]
-    for pts, w in bands:
-        cuts.append(_band(_chaikin(pts), w))
-    # the crest: a logarithmic curl around the minute boss (its eye),
-    # led in by a shoulder from the western rim, breaking WEST
-    mx, my = REVC_LAYOUT["minute"]
-    spiral = []
-    for i in range(46):
-        f = i / 45
-        ang = radians(210 + 300 * f)
-        r = 18.5 * exp(-0.85 * f) + 7.5
-        spiral.append((mx + r * cos(ang), my + r * sin(ang)))
-    lead = [(-67, 25), (-56, 26.5)]
-    cuts.append(_band(_chaikin(lead + spiral[:2]), 3.4))
-    w0, w1 = 4.4, 2.2                                     # tapering curl
-    for i in range(2, len(spiral) - 6):
-        wseg = w0 + (w1 - w0) * i / (len(spiral) - 7)
-        cuts.append(_band(spiral[i:i + 7], wseg))
-    return cuts
-
-
-def wave_openings():
-    """The final cut faces: art minus structure, clipped inside r69."""
+def traced_wave_faces():
+    """The wave, TRACED from art/wave_reference.png (tools/trace_wave.py):
+    each white gap is a closed shape subtracted as-drawn. Keep-outs
+    (pillar roots, pivot bosses, winding station, tunnel, cock) are
+    removed from every cut BEFORE it touches the bridge, and cuts clip
+    inside r76 so a solid ~3mm rim ring survives (the mockup's gray
+    ring). Structure is safe no matter how wild the art gets."""
+    from art.wave_traced import WAVE_POLYS
     keep = _wave_keepouts()
-    clip = Circle(69.0)
-    out = []
-    for c in _wave_cuts():
-        f = (c & clip) - keep
-        if f.area > 8:
-            out.append(f)
-    return out
+    ring = Circle(76.0)
+    faces = []
+    for poly in WAVE_POLYS:
+        if len(poly) < 4:
+            continue
+        try:
+            f = (_ccw_polygon(poly) & ring) - keep
+        except Exception:
+            continue
+        if f is not None and f.area > 6:
+            faces.append(f)
+    return faces
 
 
 # --- the bridge (broad cover; wave openings live in bridge_c below) ------------
@@ -695,13 +672,7 @@ def bridge_c():
     # boss (Jon's catch: the boss only kissed the r79 edge and floated)
     face += Pos(0, 81.9) * Rectangle(13, 6.2)   # behind the pinion
     part = Pos(0, 0, ZC["bridge"][0]) * extrude(face, 3.0)
-    from .wave_art import SEP1, SEP2, SEP_GAP
-    for sep in (SEP1, SEP2):                              # THREE plates
-        part -= Pos(0, 0, ZC["bridge"][0] - 0.05) * extrude(
-            _band(sep, SEP_GAP / 2), 3.2)
-    part -= Pos(-5, 20.3, ZC["bridge"][0] - 0.05) * Cylinder(
-        3.0, 3.2, align=BOTTOM)                           # gap junction
-    for wf in wave_openings():                            # the WAVE (2f)
+    for wf in traced_wave_faces():                        # the TRACED wave
         part -= Pos(0, 0, ZC["bridge"][0] - 0.05) * extrude(wf, 3.2)
     for px, py in bridge_pillar_xy():
         part += Pos(px, py, PLATE_T) * Cylinder(

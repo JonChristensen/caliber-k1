@@ -78,14 +78,9 @@ kids = [
       * rp.hairspring_c()),
     L("balance cock (cabochon on top)", rp.balance_cock_c()),
 ]
-_names = {"sky": "wave bridge: SKY (crest plate)",
-          "winding": "wave bridge: WINDING corner",
-          "sea": "wave bridge: SEA (train plate)"}
-for s in rp.bridge_c().solids():
-    bb = s.bounding_box()
-    tag = ("winding" if bb.min.X > -25 and bb.max.Y > 40
-           else ("sky" if bb.max.Y > 40 else "sea"))
-    kids.append(L(_names[tag], s))
+_plates = [s for s in rp.bridge_c().solids() if s.volume > 200]
+for i, s in enumerate(sorted(_plates, key=lambda s: -s.volume)):
+    kids.append(L(f"wave bridge (traced){'' if i == 0 else f' piece {i+1}'}", s))
 
 # winding stage: crown wheel phased to the ratchet (which stays square-
 # aligned on the arbor); stem rolled so a tooth centers on a slot
@@ -151,7 +146,7 @@ for k, (name, px, py, tip, top) in enumerate(post_specs()):
                   Pos(px, py, tip) * dp.arbor_post_d(top - 0.1 - tip)))
 
 asm = Compound(label="revc_movement_r5", children=kids)
-export_step(asm, "exports/revc/movement_r8.step")
+export_step(asm, "exports/revc/movement_r9.step")
 bb = asm.bounding_box()
-print(f"rev C movement r8: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
+print(f"rev C movement r9: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
       f"(z {bb.min.Z:.1f}..{bb.max.Z:.1f}), {len(kids)} components")
