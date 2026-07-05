@@ -487,9 +487,9 @@ def click_geometry_c():
 def _click_face():
     from build123d import Rectangle as R_
     face = Pos(19.5, 1.95) * R_(5.2, 6.5)                 # the block
-    face += _band([(17.5, 4.0), (10.5, 10.2), (4.1, 12.6)], 0.65)
+    face += _band([(17.5, 4.0), (10.5, 10.6), (4.35, 13.1)], 0.65)
     face += _ccw_polygon([(4.0, 13.5), (2.9, 11.8), (5.1, 13.0)])
-    face += Pos(4.3, 12.75) * Circle(0.85)                # fuse the wedge
+    face += Pos(4.55, 13.35) * Circle(0.7)                # fuse the wedge
     return face
 
 
