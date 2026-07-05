@@ -26,6 +26,8 @@ class Sweep:
 
 MESH_PAIRS = {frozenset(p) for p in [
     ("drum_gear", "min_p"), ("drum", "min_p"), ("min_w", "third_p"), ("third_w", "fourth_p"),
+    ("ratchet", "crown_w"), ("ratchet", "b_arbor"), ("crown_w", "stem"),
+    ("ratchet", "click_zone"), ("b_arbor", "click_zone"),
     ("fourth_w", "esc_p"), ("esc_w", "lever_hub"), ("esc_w", "lever_fork"),
     ("lever_fork", "roller"), ("lever_fork", "ring"), ("lever_hub", "ring"),
     ("lever_fork", "spring"), ("lever_hub", "spring"),
@@ -43,6 +45,8 @@ def check_all(sweeps, clearance=2.0):
     phase-aligned probes at part level instead."""
     bad = []
     for s in sweeps:
+        if s.name == "stem":
+            continue                    # the stem EXITS the rim (crown)
         if hypot(s.x, s.y) + s.r > RIM:
             bad.append(f"{s.name}: past rim by "
                        f"{hypot(s.x, s.y) + s.r - RIM:.1f}")
@@ -50,6 +54,8 @@ def check_all(sweeps, clearance=2.0):
         for b in sweeps[i + 1:]:
             if not (a.rotating or b.rotating):
                 continue
+            if a.name == b.name:
+                continue                # segments of one part
             if frozenset((a.name, b.name)) in MESH_PAIRS:
                 continue
             if a.z1 <= b.z0 + 1e-9 or b.z1 <= a.z0 + 1e-9:
@@ -228,6 +234,59 @@ REVC_LAYOUT = {
 }
 
 
+# --- the winding station (Jon's NH35 catch, completed): ratchet + click
+# flush in the bridge-top pocket, crown wheel outboard toward 12, stem
+# entering over the rim like a pocket-watch pendant. The stem's pinion
+# must clear the crown wheel's top: the pendant boss stands proud of the
+# bridge at the rim — THE open question for Jon's massing gate.
+WINDING = {
+    "ratchet_r": 13.6, "pocket_z": (16.05, 17.65),
+    "crown_wheel": (0.0, 65.0),              # 24t x 24t m1: exactly 24
+    "stem_z": 20.9,                          # axis; pinion over the slots
+    "stem_y": (56.0, 95.0),                  # tunnel span, az 90
+    "module_bay": (56.0, 18.0, 18.0),        # reserved: metronome barrel
+}
+
+
+def winding_sweeps():
+    """The winding station + reservations as gate-covered volumes."""
+    bx, by = REVC_LAYOUT["barrel"]
+    cw = WINDING["crown_wheel"]
+    z0, z1 = WINDING["pocket_z"]
+    s = [Sweep("ratchet", bx, by, WINDING["ratchet_r"], z0, z1),
+         Sweep("crown_w", cw[0], cw[1], WINDING["ratchet_r"], z0, z1),
+         Sweep("click_zone", bx + 14.3, by - 1.3, 9.5, z0, z1,
+               rotating=False),
+         # the stem: a radial rod, modeled as keep-out cans along its run
+         Sweep("stem", 0.0, 62.0, 4.5, WINDING["stem_z"] - 2.6,
+               WINDING["stem_z"] + 2.6),
+         Sweep("stem", 0.0, 72.0, 4.5, WINDING["stem_z"] - 2.6,
+               WINDING["stem_z"] + 2.6),
+         Sweep("stem", 0.0, 81.0, 4.5, WINDING["stem_z"] - 2.6,
+               WINDING["stem_z"] + 2.6)]
+    mx, my, mr = WINDING["module_bay"]
+    s.append(Sweep("module_bay", mx, my, mr, 7.0, 14.5, rotating=False))
+    return s
+
+
+# --- THE COMPONENT INVENTORY: everything that lives in the movement.
+# The massing BUILDS from this list and a test fails if it forgets one —
+# Jon's rule: no massing without reciting the full cast first.
+INVENTORY = [
+    # (label, source): sweeps come from the gate model; zones are static
+    ("mainplate", "plate"), ("bridge", "zone"), ("balance cock", "zone"),
+    ("pallet strap", "zone"), ("drum", "sweep"), ("drum_gear", "sweep"),
+    ("b_arbor", "sweep"), ("min_p", "sweep"), ("min_w", "sweep"),
+    ("third_p", "sweep"), ("third_w", "sweep"), ("fourth_p", "sweep"),
+    ("fourth_w", "sweep"), ("esc_p", "sweep"), ("esc_w", "sweep"),
+    ("lever_hub", "sweep"), ("lever_fork", "sweep"), ("roller", "sweep"),
+    ("ring", "sweep"), ("spring", "sweep"),
+    ("ratchet", "sweep"), ("crown_w", "sweep"), ("click_zone", "sweep"),
+    ("stem", "sweep"), ("module_bay", "sweep"),
+    ("dial works", "dial"), ("dial platform", "dial"),
+]
+
+
 def revc_sweeps():
     """The frozen layout as swept volumes — THE global gate."""
     L = REVC_LAYOUT
@@ -236,6 +295,7 @@ def revc_sweeps():
     for k in ("barrel", "minute", "third", "fourth", "escape", "balance"):
         kind = "minute" if k == "minute" else k
         s += _station_sweeps(kind, *L[k], counts)
+    s += winding_sweeps()
     ex, ey = L["escape"]
     Bx, By = L["balance"]
     ux, uy = (Bx - ex) / 40.0, (By - ey) / 40.0

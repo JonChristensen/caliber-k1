@@ -127,8 +127,8 @@ for k, (name, px, py, tip, top) in enumerate(post_specs()):
     kids.append(L(f"arbor post {k+1}: {name} (O2 register pin)",
                   Pos(px, py, tip) * dp.arbor_post_d(top - 0.1 - tip)))
 
-asm = Compound(label="revc_movement_r3", children=kids)
-export_step(asm, "exports/revc/movement_r3.step")
+asm = Compound(label="revc_movement_r4", children=kids)
+export_step(asm, "exports/revc/movement_r4.step")
 bb = asm.bounding_box()
-print(f"rev C movement r3: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
+print(f"rev C movement r4: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
       f"(z {bb.min.Z:.1f}..{bb.max.Z:.1f}), {len(kids)} components")

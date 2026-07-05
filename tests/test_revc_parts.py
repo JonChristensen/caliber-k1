@@ -257,3 +257,14 @@ def test_revc_lever_swings_free_of_plate_and_roller():
         ir = lever & roller
         v = ir.volume if ir else 0
         assert v < 0.05, f"lever x roller at swing {sw}, phase {rph} ({v:.2f})"
+
+
+def test_inventory_is_complete_in_the_gate():
+    """Jon's rule: recite the full cast before massing. Every sweep-kind
+    inventory item must appear in revc_sweeps(); the massing tool builds
+    from the same list and asserts its own completeness."""
+    from caliber_k1.revc import INVENTORY, revc_sweeps
+    names = {s.name for s in revc_sweeps()}
+    for item, kind in INVENTORY:
+        if kind == "sweep":
+            assert item in names, f"inventory sweep {item} not in the gate"

@@ -467,12 +467,14 @@ def ratchet_c():
 
 
 def click_c():
-    """Flexure click beside the ratchet in the bridge pocket, pegs DOWN
-    into the bridge web."""
+    """Flexure click beside the ratchet in the bridge pocket: an M2
+    screw through the block does the holding, two O2.4 pegs do the
+    locating (Jon's catch: the peg-only version read as floating)."""
     g = click_geometry_c()
     part = Pos(0, 0, 16.05) * extrude(_ccw_polygon(g["outline"]), 1.6)
     for x, y in g["pegs"]:
-        part += Pos(x, y, 14.95) * Cylinder(1.0, 1.1, align=BOTTOM)
+        part += Pos(x, y, 14.95) * Cylinder(1.2, 1.1, align=BOTTOM)
+    part -= Pos(19.5, 2.0, 0) * Cylinder(1.05, 30, align=BOTTOM)  # M2
     return part
 
 
@@ -535,5 +537,8 @@ def bridge_c():
         2.85 + _clr(), 4, align=BOTTOM)                   # arbor bearing
     for x, y in g["pegs"]:
         part -= Pos(bx + x * c_(a) - y * s_(a), by + x * s_(a) + y * c_(a),
-                    14.69) * Cylinder(1.05, 1.4, align=BOTTOM)  # through-web
+                    14.69) * Cylinder(1.25, 1.4, align=BOTTOM)  # through-web
+    part -= Pos(bx + 19.5 * c_(a) - 2.0 * s_(a),
+                by + 19.5 * s_(a) + 2.0 * c_(a),
+                14.69) * Cylinder(0.9, 1.4, align=BOTTOM)  # click M2 pilot
     return part
