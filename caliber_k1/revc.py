@@ -416,8 +416,13 @@ def cock_layout_c():
     return {"B": B, "feet": feet, "stud": stud, "az": az, "stud_az": stud_az}
 
 
-BRIDGE_PILLARS = [(55, 74.0), (145, 74.0), (200, 74.0), (285, 74.0),
-                  (165.2, 70.3), (37.8, 73.4)]  # sky + winding anchors
+# 4 hold-downs: the minimum that still ENCLOSES every loaded pivot and
+# keeps the max unsupported rim-hoop span at 113 deg (identical to the
+# old 6; the dropped 55/165 were redundant intermediates). 3 can't
+# enclose the pivots with rim-only holes. Azimuths 38/145/200/285
+# bracket the winding (top) + the left-side train cluster; the 113 deg
+# open span is the load-free balance side (its cock self-anchors).
+BRIDGE_PILLARS = [(37.8, 73.4), (145, 74.0), (200, 74.0), (285, 74.0)]
 
 
 def bridge_pillar_xy():
