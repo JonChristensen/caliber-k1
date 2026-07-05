@@ -75,7 +75,7 @@ def arbor_posts():
 rows = []
 for name, fn, qty, mat, note in KIT + arbor_posts():
     part = fn()
-    export_stl(part, f"exports/print/{name}.stl")
+    export_stl(part, f"exports/print/{name}.stl", tolerance=0.02)
     rows.append((name, qty, mat, note))
 with open("exports/print/MANIFEST.md", "w") as f:
     f.write("# Caliber K1 rev C — print kit (movement r6)\n\n"

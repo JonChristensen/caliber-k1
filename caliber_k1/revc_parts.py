@@ -475,14 +475,22 @@ def balance_cock_c():
 # --- dial-side ratchet + click (M1's proven jamming click, ported) -------------
 
 def click_geometry_c():
-    """Click in the RATCHET frame (origin = ratchet center): block +
-    tangential arm + wedge tip 0.9 into the 24t/O26 teeth. Lives WITH
-    the ratchet, flush in the bridge-top pocket (the NH35 way)."""
-    outline = [(16.9, -1.3), (22.1, -1.3), (22.1, 5.2), (16.9, 5.2),
-               (16.9, 4.2), (4.0, 13.5), (2.9, 11.8), (5.1, 13.0),
-               (16.9, 3.2)]
+    """Click in the RATCHET frame (origin = ratchet center): block,
+    flexure arm ARCING OUTSIDE the tooth band, wedge tip 0.9 into the
+    24t/O26 teeth. Flush in the bridge-top pocket (the NH35 way).
+    (The old one-polygon outline self-intersected at the arm — OCCT
+    skipped its faces and the mesh leaked; built from primitives now.)"""
     pegs = [(18.0, 1.5), (21.5, 1.5)]
-    return {"outline": outline, "pegs": pegs, "angle_deg": -30.0}
+    return {"pegs": pegs, "angle_deg": -30.0}
+
+
+def _click_face():
+    from build123d import Rectangle as R_
+    face = Pos(19.5, 1.95) * R_(5.2, 6.5)                 # the block
+    face += _band([(17.5, 4.0), (10.5, 10.2), (4.1, 12.6)], 0.65)
+    face += _ccw_polygon([(4.0, 13.5), (2.9, 11.8), (5.1, 13.0)])
+    face += Pos(4.3, 12.75) * Circle(0.85)                # fuse the wedge
+    return face
 
 
 def click_pegs_global():
@@ -506,7 +514,7 @@ def click_c():
     screw through the block does the holding, two O2.4 pegs do the
     locating (Jon's catch: the peg-only version read as floating)."""
     g = click_geometry_c()
-    part = Pos(0, 0, 16.05) * extrude(_ccw_polygon(g["outline"]), 1.6)
+    part = Pos(0, 0, 16.05) * extrude(_click_face(), 1.6)
     for x, y in g["pegs"]:
         part += Pos(x, y, 14.95) * Cylinder(1.2, 1.1, align=BOTTOM)
     part -= Pos(19.5, 2.0, 0) * Cylinder(1.05, 30, align=BOTTOM)  # M2
@@ -633,10 +641,8 @@ def bridge_c():
     from math import cos as c_, sin as s_
     a = radians(g["angle_deg"])
     pocket = Pos(bx, by) * Circle(13.8)
-    lobe = [(bx + x * c_(a) - y * s_(a), by + x * s_(a) + y * c_(a))
-            for x, y in g["outline"]]
-    pocket += _ccw_polygon(lobe)
-    from build123d import offset as _off
+    from build123d import Rot as R2, offset as _off
+    pocket += Pos(bx, by) * R2(0, 0, g["angle_deg"]) * _click_face()
     part -= Pos(0, 0, 16.0) * extrude(_off(pocket, 0.6), 2.0)
     part -= Pos(bx, by, ZC["bridge"][0] - 0.01) * Cylinder(
         2.85 + _clr(), 4, align=BOTTOM)                   # arbor bearing
