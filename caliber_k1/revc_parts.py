@@ -189,9 +189,44 @@ def drum_cover_c():
     return part
 
 
-SPRING_C = dict(strip_t=2.2, strip_h=6.0, drum_id=50.0, hub_d=12.0,
-                note="PETG, bench-formed; ~2.4 usable turns x 4h = ~10h. "
-                     "TORQUE FLAG: validate at the bench before M5.")
+SPRING_C = dict(strip_t=2.2, strip_h=6.0, drum_id=54.0, hub_d=12.0,
+                note="PETG, printed as a relaxed spiral; ~2.8 usable "
+                     "turns x 6h = ~17h. TORQUE FLAG: bench-validate.")
+
+
+def mainspring_c():
+    """THE mainspring: a PETG spiral strip printed in its relaxed
+    state — inner C-loop grips the arbor hub past its hook rib, outer
+    tab hooks the drum wall rib. PETG ONLY (PLA creeps and snaps)."""
+    from math import tau
+    t, h = SPRING_C["strip_t"], SPRING_C["strip_h"]
+    r0, r1, coils = 6.6, 25.2, 4.25
+    theta_end = coils * tau
+    b = (r1 - r0) / theta_end
+    outer, inner = [], []
+    n = int(coils * 60)
+    for i in range(n + 1):
+        th = theta_end * i / n
+        r = r0 + b * th
+        outer.append(((r + t / 2) * cos(th), (r + t / 2) * sin(th)))
+        inner.append(((r - t / 2) * cos(th), (r - t / 2) * sin(th)))
+    face = Polygon(*(outer + inner[::-1]), align=None)
+    # inner end: C-loop around the arbor hub (r5.5), gap rides the rib
+    face += Circle(6.6 + t / 2) - Circle(6.6 - t / 2)         - Pos(0, -6.6) * Rectangle(4.5, 4.0)
+    # outer end: hook tab, catches the drum wall rib
+    ex, ey = (r1 + t / 2) * cos(theta_end % tau), (r1 + t / 2) * sin(theta_end % tau)
+    face += Pos(ex * 0.92, ey * 0.92) * Circle(2.4)
+    part = Pos(0, 0, 3.5) * extrude(face, h)
+    return part
+
+
+def stand_foot_c():
+    """Desk-stand foot (x3): M3 through, seats against the plate's rim
+    holes from the dial side. Lifts the hands/platform clear of the desk."""
+    part = Cylinder(6.0, 14.0, align=BOTTOM)
+    part -= Cylinder(1.7, 40)
+    part -= Pos(0, 0, -0.01) * extrude(RegularPolygon(5.7 / 3**0.5, 6), 2.6)
+    return part
 
 
 # --- train arbors (wheel + pinion + pivots, one print each) -------------------
