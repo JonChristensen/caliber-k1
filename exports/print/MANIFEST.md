@@ -5,7 +5,7 @@ Hardware (not printed): M3x8 x7 + nuts (pillars, cock, feet), M2 x6 (strap, clic
 | part | qty | material | orientation / notes |
 |---|---|---|---|
 | mainplate | 1 | PLA | dial face DOWN; tree supports in the dial pockets only |
-| bridge_DRAFT | 1 | PLA | top face DOWN; DRAFT for fit-testing — the wave version replaces it |
+| bridge_wave | 1 | PLA (show face — pick a color!) | top face DOWN; supports in the ratchet pocket only; the plain bridge_DRAFT.stl already on disk stays valid for fit-testing |
 | drum | 1 | PLA | gear band DOWN with brim; supports under the band overhang |
 | drum_cover | 1 | PLA | flat, either face |
 | barrel_arbor | 1 | PLA | square end UP (prints vertical); brim |

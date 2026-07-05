@@ -13,8 +13,9 @@ os.makedirs("exports/print", exist_ok=True)
 KIT = [
     ("mainplate", rp.mainplate_c, 1, "PLA",
      "dial face DOWN; tree supports in the dial pockets only"),
-    ("bridge_DRAFT", rp.bridge_c, 1, "PLA",
-     "top face DOWN; DRAFT for fit-testing — the wave version replaces it"),
+    ("bridge_wave", rp.bridge_c, 1, "PLA (show face — pick a color!)",
+     "top face DOWN; supports in the ratchet pocket only; the plain "
+     "bridge_DRAFT.stl already on disk stays valid for fit-testing"),
     ("drum", rp.drum_c, 1, "PLA",
      "gear band DOWN with brim; supports under the band overhang"),
     ("drum_cover", rp.drum_cover_c, 1, "PLA", "flat, either face"),

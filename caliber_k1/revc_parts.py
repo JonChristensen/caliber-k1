@@ -588,7 +588,78 @@ def stem_clip_c():
     return Pos(0, 82.65, z) * R_(-90, 0, 0) * extrude(face, 1.2)
 
 
-# --- the bridge (plain broad cover; the WAVE is sculpted last, 2f) -------------
+# --- the WAVE (2f, Jon's art direction: Hokusai crest + flowing bands,
+# solid rim, skeleton openings revealing the train). Structure is safe
+# BY CONSTRUCTION: every cut has the keep-outs (pillar roots, pivot
+# bosses, winding station, tunnel, rim ring) subtracted before it
+# touches the bridge, and all cuts clip inside r69.
+# The crest curls around the MINUTE boss — the pivot rides in the eye
+# of the wave (the old rev B promise, kept at last). It breaks WESTWARD,
+# away from the balance: serenity around the oscillator.
+
+def _wave_keepouts():
+    from .revc import WINDING as _W
+    L = REVC_LAYOUT
+    keep = Pos(*L["barrel"]) * Circle(16.5)               # winding pocket
+    keep += Pos(*_W["crown_wheel"]) * Circle(16.2)
+    keep += Pos(L["barrel"][0] + 14.3, L["barrel"][1] - 1.3) * Circle(11.5)
+    keep += Pos(0, 80, 0) * Rectangle(15, 14)             # stem tab/tunnel
+    for px, py in bridge_pillar_xy():
+        keep += Pos(px, py) * Circle(7.5)                 # pillar roots
+    for k in ("minute", "third", "fourth", "escape"):
+        keep += Pos(*L[k]) * Circle(6.0)                  # pivot bosses
+    ck = cock_layout_c()
+    keep += _band([ck["feet"][0], ck["B"], ck["feet"][1]], 9.0)
+    return keep
+
+
+def _wave_cuts():
+    from .decor import _chaikin
+    from math import exp
+    cuts = []
+    bands = [
+        # the southern swells, west -> east under the train
+        ([(-66, -6), (-42, -14), (-6, -12), (28, -20), (56, -16)], 3.2),
+        ([(-58, -28), (-28, -36), (4, -40), (34, -43), (54, -50)], 3.8),
+        ([(-44, -50), (-14, -58), (14, -61), (38, -60)], 2.8),
+        ([(-64, 6), (-46, 0), (-24, 2)], 2.4),            # a high wisp
+        # NE: spray over the module bay, under the winding station
+        ([(38, 8), (52, 14), (63, 22)], 2.2),
+        ([(44, -4), (58, 2), (66, 8)], 1.7),
+    ]
+    for pts, w in bands:
+        cuts.append(_band(_chaikin(pts), w))
+    # the crest: a logarithmic curl around the minute boss (its eye),
+    # led in by a shoulder from the western rim, breaking WEST
+    mx, my = REVC_LAYOUT["minute"]
+    spiral = []
+    for i in range(46):
+        f = i / 45
+        ang = radians(210 + 300 * f)
+        r = 18.5 * exp(-0.85 * f) + 7.5
+        spiral.append((mx + r * cos(ang), my + r * sin(ang)))
+    lead = [(-67, 25), (-56, 26.5)]
+    cuts.append(_band(_chaikin(lead + spiral[:2]), 3.4))
+    w0, w1 = 4.4, 2.2                                     # tapering curl
+    for i in range(2, len(spiral) - 6):
+        wseg = w0 + (w1 - w0) * i / (len(spiral) - 7)
+        cuts.append(_band(spiral[i:i + 7], wseg))
+    return cuts
+
+
+def wave_openings():
+    """The final cut faces: art minus structure, clipped inside r69."""
+    keep = _wave_keepouts()
+    clip = Circle(69.0)
+    out = []
+    for c in _wave_cuts():
+        f = (c & clip) - keep
+        if f.area > 8:
+            out.append(f)
+    return out
+
+
+# --- the bridge (broad cover; wave openings live in bridge_c below) ------------
 
 def _cock_cutout_face(gap=1.5):
     ck = cock_layout_c()
@@ -624,6 +695,8 @@ def bridge_c():
     # boss (Jon's catch: the boss only kissed the r79 edge and floated)
     face += Pos(0, 81.9) * Rectangle(13, 6.2)   # behind the pinion
     part = Pos(0, 0, ZC["bridge"][0]) * extrude(face, 3.0)
+    for wf in wave_openings():                            # the WAVE (2f)
+        part -= Pos(0, 0, ZC["bridge"][0] - 0.05) * extrude(wf, 3.2)
     for px, py in bridge_pillar_xy():
         part += Pos(px, py, PLATE_T) * Cylinder(
             4.0, ZC["bridge"][0] - PLATE_T, align=BOTTOM)
