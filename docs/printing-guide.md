@@ -5,6 +5,58 @@ parts: module 0.6–1.0 gears with sub-millimeter teeth and press-fit bores,
 so dimensional accuracy matters more than speed. Read the calibration note
 before the first real run.
 
+## H2C quick-set (Bambu Studio)
+
+**Nozzle: 0.4 mm — install/confirm this and keep it for the whole build.**
+The smallest teeth in the movement are the module-0.6 moon-train gears
+(~0.9 mm thick at the pitch line), which a 0.4 nozzle renders as ~2 clean
+perimeters — proven at this scale. A 0.2 nozzle would sharpen those flanks
+but roughly doubles print time and makes every part more fragile; not worth
+it for a functional first build. A **standard steel** nozzle is fine —
+hardened is only for abrasive (carbon/glass-filled) filament, which we
+don't use. *(Later, if you want jewelry-grade dial gears, re-printing only
+the moon train with a 0.2 nozzle is the upgrade — recalibrate first.)*
+
+**Machine / plate**
+
+| field | value |
+|---|---|
+| Nozzle | **0.4 mm**, standard steel |
+| Build plate | **Textured PEI** — safe for both PLA and PETG (smooth PEI grips PETG hard enough to chip) |
+| Flow dynamics / pressure advance | Auto-calibrate **ON** (leave Bambu's) |
+| Auto bed leveling | **ON** every print — matters for the Ø170 flat parts |
+
+**PLA** — start from the **Bambu PLA Basic** profile, then:
+
+| field | value |
+|---|---|
+| Nozzle temp | 220 °C first layer / 215 °C rest |
+| Bed temp | 55 °C |
+| Layer height | 0.20 mm plates · 0.12 mm gears |
+| Walls / top / bottom | 4 / 4 / 4 |
+| Infill | 20% gyroid (plates) · 100% (gears & small parts) |
+| Outer-wall speed | 50 mm/s (slow flanks = clean teeth) |
+| Brim | 5 mm on the Ø170 parts |
+| Supports | Organic (tree), pockets/overhangs only |
+
+**PETG** — select the **Bambu PETG HF** profile (matches your spool) and
+**leave its temps and fan as tuned by Bambu**; only change:
+
+| field | value |
+|---|---|
+| Layer height | 0.12 mm |
+| Walls | 4 (hairspring/mainspring are intentionally thin — see Class C) |
+| Plate | Textured PEI + a glue-stick release layer |
+
+**Before the real parts:** run Bambu Studio's built-in **flow-rate and
+pressure-advance calibration** once per filament (~10 min). It's what saves
+you the hairspring and gear reprints.
+
+> Confirm the exact profile *names* and any H2C-specific fields (dual-nozzle
+> / AMS options) in your own Bambu Studio — the H2C is new enough that I'd
+> rather you verify the machine profile than take my word for a menu label.
+> The **values** above are the targets regardless of what the profile is called.
+
 ## The one thing that will bite you: clearances are already baked in
 
 The geometry already includes running clearance (0.20 mm on every print
