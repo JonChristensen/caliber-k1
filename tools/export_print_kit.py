@@ -13,9 +13,7 @@ os.makedirs("exports/print", exist_ok=True)
 KIT = [
     ("mainplate", rp.mainplate_c, 1, "PLA",
      "dial face DOWN; tree supports in the dial pockets only"),
-    ("bridge_wave", rp.bridge_c, 1, "PLA (show face — pick a color!)",
-     "top face DOWN; supports in the ratchet pocket only; the plain "
-     "bridge_DRAFT.stl already on disk stays valid for fit-testing"),
+
     ("drum", rp.drum_c, 1, "PLA",
      "gear band DOWN with brim; supports under the band overhang"),
     ("drum_cover", rp.drum_cover_c, 1, "PLA", "flat, either face"),
@@ -72,6 +70,15 @@ def arbor_posts():
              1, "PLA", "vertical; or O2 steel pin (register)")
             for (n, x, y, tip, top) in post_specs()]
 
+
+# the three wave bridges export as separate plates
+for i, s in enumerate(rp.bridge_c().solids()):
+    bb = s.bounding_box()
+    tag = ("winding" if bb.min.X > -25 and bb.max.Y > 40
+           else ("sky" if bb.max.Y > 40 else "sea"))
+    KIT.append((f"bridge_{tag}", (lambda s=s: s), 1,
+                "PLA (show face — pick a color!)",
+                "top face DOWN; supports in pockets only"))
 
 rows = []
 for name, fn, qty, mat, note in KIT + arbor_posts():

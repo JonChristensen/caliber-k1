@@ -695,6 +695,12 @@ def bridge_c():
     # boss (Jon's catch: the boss only kissed the r79 edge and floated)
     face += Pos(0, 81.9) * Rectangle(13, 6.2)   # behind the pinion
     part = Pos(0, 0, ZC["bridge"][0]) * extrude(face, 3.0)
+    from .wave_art import SEP1, SEP2, SEP_GAP
+    for sep in (SEP1, SEP2):                              # THREE plates
+        part -= Pos(0, 0, ZC["bridge"][0] - 0.05) * extrude(
+            _band(sep, SEP_GAP / 2), 3.2)
+    part -= Pos(-5, 20.3, ZC["bridge"][0] - 0.05) * Cylinder(
+        3.0, 3.2, align=BOTTOM)                           # gap junction
     for wf in wave_openings():                            # the WAVE (2f)
         part -= Pos(0, 0, ZC["bridge"][0] - 0.05) * extrude(wf, 3.2)
     for px, py in bridge_pillar_xy():

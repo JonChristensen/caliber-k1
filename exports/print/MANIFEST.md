@@ -5,7 +5,6 @@ Hardware (not printed): M3x8 x7 + nuts (pillars, cock, feet), M2 x6 (strap, clic
 | part | qty | material | orientation / notes |
 |---|---|---|---|
 | mainplate | 1 | PLA | dial face DOWN; tree supports in the dial pockets only |
-| bridge_wave | 1 | PLA (show face — pick a color!) | top face DOWN; supports in the ratchet pocket only; the plain bridge_DRAFT.stl already on disk stays valid for fit-testing |
 | drum | 1 | PLA | gear band DOWN with brim; supports under the band overhang |
 | drum_cover | 1 | PLA | flat, either face |
 | barrel_arbor | 1 | PLA | square end UP (prints vertical); brim |
@@ -39,6 +38,9 @@ Hardware (not printed): M3x8 x7 + nuts (pillars, cock, feet), M2 x6 (strap, clic
 | transfer_pinion | 1 | PETG preferred | flat; slit collet is the hand-setting slip; print 2 |
 | transfer_idler | 2 | PLA | flat |
 | dial_platform | 1 | PLA | flat, proud face down |
+| bridge_winding | 1 | PLA (show face — pick a color!) | top face DOWN; supports in pockets only |
+| bridge_sky | 1 | PLA (show face — pick a color!) | top face DOWN; supports in pockets only |
+| bridge_sea | 1 | PLA (show face — pick a color!) | top face DOWN; supports in pockets only |
 | arbor_post_motion | 1 | PLA | vertical; or O2 steel pin (register) |
 | arbor_post_w1 | 1 | PLA | vertical; or O2 steel pin (register) |
 | arbor_post_w2 | 1 | PLA | vertical; or O2 steel pin (register) |

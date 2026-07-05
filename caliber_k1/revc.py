@@ -416,7 +416,8 @@ def cock_layout_c():
     return {"B": B, "feet": feet, "stud": stud, "az": az, "stud_az": stud_az}
 
 
-BRIDGE_PILLARS = [(55, 74.0), (145, 74.0), (200, 74.0), (285, 74.0)]
+BRIDGE_PILLARS = [(55, 74.0), (145, 74.0), (200, 74.0), (285, 74.0),
+                  (165.2, 70.3), (37.8, 73.4)]  # sky + winding anchors
 
 
 def bridge_pillar_xy():
