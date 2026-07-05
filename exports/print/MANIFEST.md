@@ -38,6 +38,9 @@ Hardware (not printed): M3x8 x7 + nuts (pillars, cock, feet), M2 x6 (strap, clic
 | transfer_pinion | 1 | PETG preferred | flat; slit collet is the hand-setting slip; print 2 |
 | transfer_idler | 2 | PLA | flat |
 | dial_platform | 1 | PLA | flat, proud face down |
+| dial_sheet | 1 | PLA (face color!) | face DOWN; engraved markers paint-fill at the bench |
+| minute_hand | 1 | PLA (hand color) | flat; print 2 |
+| hour_hand | 1 | PLA (hand color) | flat; print 2 |
 | bridge_wave | 1 | PLA (show face — pick a color!) | SHOW FACE DOWN (pillars point up); 100%% infill; supports only in the ratchet pocket + stem tunnel; brim on |
 | arbor_post_motion | 1 | PLA | vertical; or O2 steel pin (register) |
 | arbor_post_w1 | 1 | PLA | vertical; or O2 steel pin (register) |

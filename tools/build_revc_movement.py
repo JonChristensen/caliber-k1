@@ -139,6 +139,9 @@ kids += [
     L("transfer idler 1", Pos(*DL["i1"], 0) * Rot(0, 0, R_i1) * dp.idler_d()),
     L("transfer idler 2", Pos(*DL["i2"], 0) * Rot(0, 0, R_i2) * dp.idler_d()),
     L("dial platform (moon window NW)", dp.dial_platform_d()),
+    L("dial sheet (engraved markers, moon bezel)", dp.dial_sheet_d()),
+    L("minute hand", Rot(0, 0, 90) * dp.minute_hand_d()),
+    L("hour hand", Rot(0, 0, 300) * dp.hour_hand_d()),
 ]
 from caliber_k1.revc_dial import post_specs
 for k, (name, px, py, tip, top) in enumerate(post_specs()):
@@ -146,7 +149,7 @@ for k, (name, px, py, tip, top) in enumerate(post_specs()):
                   Pos(px, py, tip) * dp.arbor_post_d(top - 0.1 - tip)))
 
 asm = Compound(label="revc_movement_r5", children=kids)
-export_step(asm, "exports/revc/movement_r10.step")
+export_step(asm, "exports/revc/movement_r11.step")
 bb = asm.bounding_box()
-print(f"rev C movement r10: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
+print(f"rev C movement r11: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
       f"(z {bb.min.Z:.1f}..{bb.max.Z:.1f}), {len(kids)} components")

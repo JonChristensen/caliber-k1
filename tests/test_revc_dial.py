@@ -134,3 +134,23 @@ def test_dial_platform_covers_every_pocket():
     for name, px, py, tip, top in post_specs():
         assert any(hypot(px - cx, py - cy) <= cr for (cx, cy), cr in covers), \
             f"post {name} tip outside the platform"
+
+
+def test_display_stack_flies_clear():
+    """Hands over dial over platform: each layer 0.1+ air, hands never
+    strike the moon bezel, dial feet land on the post tips."""
+    from caliber_k1.revc_dial import post_specs
+    dial = dp.dial_sheet_d()
+    mh, hh = dp.minute_hand_d(), dp.hour_hand_d()
+    from build123d import Rot
+    for rot in (0, 45, 137, 265):
+        for a, b in ((Rot(0, 0, rot) * hh, dial),
+                     (Rot(0, 0, rot) * mh, dial),
+                     (Rot(0, 0, rot) * mh, Rot(0, 0, rot + 71) * hh)):
+            i = a & b
+            assert (i.volume if i else 0) < 1e-6
+    plat = dp.dial_platform_d()
+    i = dial & plat
+    assert (i.volume if i else 0) < 1e-6
+    for name, px, py, tip, top in post_specs():
+        assert tip <= -0.65            # post tips reach the dial feet

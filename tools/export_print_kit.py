@@ -61,6 +61,10 @@ KIT = [
      "flat; slit collet is the hand-setting slip; print 2"),
     ("transfer_idler", dp.idler_d, 2, "PLA", "flat"),
     ("dial_platform", dp.dial_platform_d, 1, "PLA", "flat, proud face down"),
+    ("dial_sheet", dp.dial_sheet_d, 1, "PLA (face color!)",
+     "face DOWN; engraved markers paint-fill at the bench"),
+    ("minute_hand", dp.minute_hand_d, 1, "PLA (hand color)", "flat; print 2"),
+    ("hour_hand", dp.hour_hand_d, 1, "PLA (hand color)", "flat; print 2"),
 ]
 
 
