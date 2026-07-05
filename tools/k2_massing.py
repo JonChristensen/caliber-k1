@@ -32,8 +32,8 @@ from caliber_k2.movement import K2_PLACEMENT
 ox, oy = K2_PLACEMENT["offset"]
 kids.append(L("metronome bridge zone",
               Pos(ox, oy, MZ["bridge"][0]) * Cylinder(60, 3.0, align=B)))
-asm = Compound(label="k2_massing_r3", children=kids)
-export_step(asm, "exports/k2/massing_r3.step")
+asm = Compound(label="k2_massing_r4", children=kids)
+export_step(asm, "exports/k2/massing_r4.step")
 bb = asm.bounding_box()
-print(f"K2 massing r3: {bb.size.X:.0f} x {bb.size.Y:.0f} x "
+print(f"K2 massing r4: {bb.size.X:.0f} x {bb.size.Y:.0f} x "
       f"{bb.size.Z:.1f} mm, {len(kids)} components")
