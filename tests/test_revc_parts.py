@@ -268,3 +268,41 @@ def test_inventory_is_complete_in_the_gate():
     for item, kind in INVENTORY:
         if kind == "sweep":
             assert item in names, f"inventory sweep {item} not in the gate"
+
+
+def test_winding_station():
+    """The crown path: ratchet x crown wheel phase-aligned; the stem's
+    pinion gates the crown wheel through the underside slots; the
+    pinion's swept cylinder truly clears the drum gear's teeth (the
+    analytic check the drum_gear x stem whitelist relies on); and the
+    ratio winds the ~2.8-turn spring in under 15 crown turns."""
+    from math import atan2, degrees
+    from build123d import Pos, Rot
+    from caliber_k1.revc import REVC_LAYOUT as _L, WINDING
+    _mesh_pair(rp.ratchet_c(), rp.crown_wheel_c(),
+               _L["barrel"], WINDING["crown_wheel"], 24, 24)
+    # slot mesh: clear at pose for SOME stem roll, engaged when the
+    # crown wheel turns half a slot against a held stem
+    cw = WINDING["crown_wheel"]
+    wheel = Pos(*cw, 0) * rp.crown_wheel_c()
+    rolls = []
+    from build123d import Rot as R2
+    for roll in range(0, 52, 4):
+        stem = rp.stem_c().rotate(
+            __import__("build123d").Axis((0, 80, WINDING["stem_z"]),
+                                         (0, 1, 0)), roll)
+        i = stem & wheel
+        rolls.append((i.volume if i else 0, roll))
+    best_v, best_roll = min(rolls)
+    assert best_v < 0.3, f"pinion can't settle into a slot ({best_v:.2f})"
+    stem = rp.stem_c().rotate(
+        __import__("build123d").Axis((0, 80, WINDING["stem_z"]), (0, 1, 0)),
+        best_roll)
+    wheel2 = Pos(*cw, 0) * Rot(0, 0, 360 / 46) * rp.crown_wheel_c()
+    i2 = stem & wheel2
+    assert (i2.volume if i2 else 0) > 0.4, "slots don't gate the pinion"
+    # analytic drum clearance (the whitelist's justification)
+    drum_tip = REVC_LAYOUT["counts"][0] / 2 + 0.85
+    gap = (WINDING["pinion_y"] - 1.8) - REVC_LAYOUT["barrel"][1] - drum_tip
+    assert gap >= 2.0, f"pinion cylinder vs drum teeth: {gap:.2f}"
+    assert 2.78 * WINDING["slots"] / 7 < 15   # crown turns to full wind

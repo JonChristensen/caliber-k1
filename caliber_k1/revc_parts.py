@@ -478,6 +478,73 @@ def click_c():
     return part
 
 
+# --- the winding stage: crown wheel, stud, stem, clip (Jon's gate r6) ----------
+
+def crown_wheel_c():
+    """One flat crown wheel at the ratchet plane: 24t m1 spur rim (meshes
+    the ratchet) with 23 bevel SLOTS in its underside annulus — meshed
+    FROM BELOW by the stem's pinion (the rev B face-slot pair, flipped).
+    Rides the shoulder stud; head counterbore keeps everything flush."""
+    from math import degrees
+    from .revc import WINDING
+    face = gears.wheel_face(24, 24, backlash=_bl())
+    part = Pos(0, 0, 16.05) * extrude(face, 1.6)
+    r0, r1 = WINDING["slot_ring"]
+    n = WINDING["slots"]
+    for k in range(n):
+        a = 360 * k / n
+        part -= Pos(0, 0, 16.04) * (
+            Rot(0, 0, a) * Pos((r0 + r1) / 2, 0, 0) *
+            Box(r1 - r0, 1.7, 1.11, align=BOTTOM))
+    part -= Cylinder(2.55 + _clr(), 40)                   # stud bore
+    part -= Pos(0, 0, 17.05) * Cylinder(3.7, 2, align=BOTTOM)  # head seat
+    return part
+
+
+def crown_stud_c():
+    """Shoulder stud: press tail into the bridge web, Ø5.1 bearing
+    shoulder, mushroom head flush in the wheel's counterbore."""
+    v = active_variant()
+    part = Pos(0, 0, 14.69) * Cylinder(2.35 - v.press_r + 0.35, 1.31,
+                                       align=BOTTOM)     # press tail
+    part += Pos(0, 0, 16.0) * Cylinder(2.55, 1.05, align=BOTTOM)
+    part += Pos(0, 0, 17.05) * Cylinder(3.55, 0.6, align=BOTTOM)
+    return part
+
+
+def stem_c():
+    """The stem, one print: fluted crown OUTSIDE the rim, body through
+    the bridge tunnel (clip groove inside), 7t m1 pinion at the tip
+    meshing the crown wheel's underside slots. Axis y, z12.8."""
+    from build123d import Rot as R_
+    from .revc import WINDING
+    z = WINDING["stem_z"]
+    part = Pos(0, 87.5, z) * R_(-90, 0, 0) * Cylinder(6.8, 7.0, align=BOTTOM)
+    for k in range(16):                                   # crown flutes
+        a = 360 * k / 16
+        part -= Pos(7.1 * cos(radians(a)), 87.5,
+                    z + 7.1 * sin(radians(a))) * R_(-90, 0, 0) *             Cylinder(1.1, 8, align=BOTTOM)
+    part += Pos(0, 74.7, z) * R_(-90, 0, 0) * Cylinder(2.5, 13.3,
+                                                       align=BOTTOM)
+    part += Pos(0, 74.7, z) * R_(-90, 0, 0) * extrude(
+        gears.pinion_face(7, backlash=_bl()), 3.6)
+    # clip groove inside the tunnel: retention against pull
+    part -= (Pos(0, 82.6, z) * R_(-90, 0, 0) *
+             (Cylinder(4.0, 1.3, align=BOTTOM) - Cylinder(1.7, 1.3,
+                                                          align=BOTTOM)))
+    return part
+
+
+def stem_clip_c():
+    """Printed C-clip: snaps into the stem's groove behind the tunnel."""
+    from .revc import WINDING
+    z = WINDING["stem_z"]
+    face = Circle(3.3) - Circle(1.75)
+    face -= Pos(0, -2.5) * Rectangle(2.6, 5)              # the C opening
+    from build123d import Rot as R_
+    return Pos(0, 82.65, z) * R_(-90, 0, 0) * extrude(face, 1.2)
+
+
 # --- the bridge (plain broad cover; the WAVE is sculpted last, 2f) -------------
 
 def _cock_cutout_face(gap=1.5):
@@ -535,6 +602,20 @@ def bridge_c():
     part -= Pos(0, 0, 16.0) * extrude(_off(pocket, 0.6), 2.0)
     part -= Pos(bx, by, ZC["bridge"][0] - 0.01) * Cylinder(
         2.85 + _clr(), 4, align=BOTTOM)                   # arbor bearing
+    # crown wheel: flush pocket + stud press bore in the web
+    from .revc import WINDING
+    cwx, cwy = WINDING["crown_wheel"]
+    part -= Pos(cwx, cwy, 16.0) * Cylinder(14.2, 2.0, align=BOTTOM)
+    part -= Pos(cwx, cwy, 14.69) * Cylinder(2.35, 1.4, align=BOTTOM)
+    # stem tunnel boss under the bridge (the case-tube analog), with the
+    # C-clip slot opening downward inside the run
+    from build123d import Rot as R_
+    zs = WINDING["stem_z"]
+    part += Pos(0, 80.3, zs - 2.5) * Box(11, 5.8, 14.7 - (zs - 2.5),
+                                         align=BOTTOM)
+    part -= Pos(0, 76.0, zs) * R_(-90, 0, 0) * Cylinder(2.7, 20,
+                                                        align=BOTTOM)
+    part -= Pos(0, 82.6, zs - 2.6) * Box(4.4, 1.4, 6, align=BOTTOM)
     for x, y in g["pegs"]:
         part -= Pos(bx + x * c_(a) - y * s_(a), by + x * s_(a) + y * c_(a),
                     14.69) * Cylinder(1.25, 1.4, align=BOTTOM)  # through-web

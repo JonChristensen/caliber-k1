@@ -80,6 +80,22 @@ kids = [
     L("train bridge (plain; wave pass later)", rp.bridge_c()),
 ]
 
+# winding stage: crown wheel phased to the ratchet (which stays square-
+# aligned on the arbor); stem rolled so a tooth centers on a slot
+from caliber_k1.revc import WINDING
+cw = WINDING["crown_wheel"]
+ra, rb = mesh_rots(lay["barrel"], cw, 24, 24)
+R_crown = rb + ra                      # ratchet phase 0 (square-aligned)
+kids += [
+    L("crown wheel (underside slots)", Pos(*cw, 0) * Rot(0, 0, R_crown)
+      * rp.crown_wheel_c()),
+    L("crown wheel stud", Pos(*cw, 0) * rp.crown_stud_c()),
+    L("stem + crown (winds by ~9 turns)",
+      rp.stem_c().rotate(__import__("build123d").Axis(
+          (0, 80, WINDING["stem_z"]), (0, 1, 0)), 48)),
+    L("stem clip", rp.stem_clip_c()),
+]
+
 # --- the dial side: phase the 8-mesh chain off the minute arbor ---------------
 DL = DIAL_LAYOUT
 mxy = lay["minute"]
@@ -127,8 +143,8 @@ for k, (name, px, py, tip, top) in enumerate(post_specs()):
     kids.append(L(f"arbor post {k+1}: {name} (O2 register pin)",
                   Pos(px, py, tip) * dp.arbor_post_d(top - 0.1 - tip)))
 
-asm = Compound(label="revc_movement_r4", children=kids)
-export_step(asm, "exports/revc/movement_r4.step")
+asm = Compound(label="revc_movement_r5", children=kids)
+export_step(asm, "exports/revc/movement_r5.step")
 bb = asm.bounding_box()
-print(f"rev C movement r4: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
+print(f"rev C movement r5: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
       f"(z {bb.min.Z:.1f}..{bb.max.Z:.1f}), {len(kids)} components")

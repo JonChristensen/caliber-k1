@@ -28,6 +28,7 @@ MESH_PAIRS = {frozenset(p) for p in [
     ("drum_gear", "min_p"), ("drum", "min_p"), ("min_w", "third_p"), ("third_w", "fourth_p"),
     ("ratchet", "crown_w"), ("ratchet", "b_arbor"), ("crown_w", "stem"),
     ("ratchet", "click_zone"), ("b_arbor", "click_zone"),
+    ("drum_gear", "stem"),   # real clearance asserted analytically
     ("fourth_w", "esc_p"), ("esc_w", "lever_hub"), ("esc_w", "lever_fork"),
     ("lever_fork", "roller"), ("lever_fork", "ring"), ("lever_hub", "ring"),
     ("lever_fork", "spring"), ("lever_hub", "spring"),
@@ -240,19 +241,19 @@ REVC_LAYOUT = {
 # must clear the crown wheel's top: the pendant boss stands proud of the
 # bridge at the rim — THE open question for Jon's massing gate.
 WINDING = {
-    # The crown wheel is NH35-true: a TALL core in a bridge seat — spur
-    # teeth up top meshing the ratchet, contrate teeth (radial slots,
-    # the printable bevel) down at STEM level. The stem enters at
-    # mid-height (z12.2) through the corridor between plane A's drum
-    # gear (tops at 10.25 out to y72) and the bridge underside (14.7):
-    # Jon's section-view catch — nothing stands above the bridge.
+    # 6498-true: the crown wheel is ONE flat wheel at the ratchet plane
+    # with 23 bevel SLOTS cut into its UNDERSIDE annulus; the winding
+    # pinion meshes it FROM BELOW (rev B's proven face-slot pair,
+    # flipped — the height cost becomes a height savings). Stem axis
+    # z12.8, dead in the corridor; nothing above the bridge (Jon's
+    # section-view catch).
     "ratchet_r": 13.6, "pocket_z": (16.05, 17.65),
     "crown_wheel": (0.0, 65.0),              # 24t x 24t m1: exactly 24
-    "crown_low_z": (12.2, 13.8),             # the contrate tier
-    "stem_z": 13.0,                          # axis: above the drum gear
-                                             # band, tunnel half in the
-                                             # bridge boss (NH35-style)
-    "stem_y": (74.0, 95.0),
+    "slot_ring": (8.5, 13.0),                # spans the pinion tip chord
+    "slots": 23,                             # = m1 pitch at ring r11.5
+    "stem_z": 12.8,                          # pinion tip dips 1.1 into
+    "pinion_y": 76.5,                        #  the slots from below
+    "stem_y": (74.7, 94.5),
     "module_bay": (56.0, 18.0, 18.0),        # reserved: metronome barrel
 }
 
@@ -264,13 +265,17 @@ def winding_sweeps():
     z0, z1 = WINDING["pocket_z"]
     s = [Sweep("ratchet", bx, by, WINDING["ratchet_r"], z0, z1),
          Sweep("crown_w", cw[0], cw[1], WINDING["ratchet_r"], z0, z1),
-         Sweep("crown_w", cw[0], cw[1], 10.5, *WINDING["crown_low_z"]),
          Sweep("click_zone", bx + 14.3, by - 1.3, 9.5, z0, z1,
                rotating=False),
-         # the stem: a radial rod at MID-HEIGHT, keep-out cans on its run
-         Sweep("stem", 0.0, 76.0, 2.7, WINDING["stem_z"] - 2.5,
+         # the winding pinion's swept cylinder + the stem run. Vertical
+         # cans over-approximate a horizontal cylinder, so drum_gear x
+         # stem is whitelisted and the REAL cylinder-to-tip clearance
+         # (>=2.0) is asserted analytically in the test suite.
+         Sweep("stem", 0.0, WINDING["pinion_y"], 4.6,
+               WINDING["stem_z"] - 4.4, WINDING["stem_z"] + 4.4),
+         Sweep("stem", 0.0, 81.0, 2.7, WINDING["stem_z"] - 2.5,
                WINDING["stem_z"] + 2.5),
-         Sweep("stem", 0.0, 82.0, 2.7, WINDING["stem_z"] - 2.5,
+         Sweep("stem", 0.0, 87.0, 2.7, WINDING["stem_z"] - 2.5,
                WINDING["stem_z"] + 2.5)]
     mx, my, mr = WINDING["module_bay"]
     s.append(Sweep("module_bay", mx, my, mr, 7.0, 14.5, rotating=False))
