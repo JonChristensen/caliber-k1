@@ -575,9 +575,12 @@ def bridge_c():
         (B[0] + 95 * cos(a2), B[1] + 95 * sin(a2)),
         (B[0] + 95 * cos(a1), B[1] + 95 * sin(a1)),
         (B[0] + 30.5 * cos(a1), B[1] + 30.5 * sin(a1))])
-    part = Pos(0, 0, ZC["bridge"][0]) * extrude(
-        Circle(79.0) - Pos(*B) * Circle(30.0) - _cock_cutout_face() - wedge,
-        3.0)
+    from .revc import WINDING as _W
+    face = Circle(79.0) - Pos(*B) * Circle(30.0) - _cock_cutout_face() - wedge
+    # the stem-tunnel TAB: the bridge reaches the rim over the tunnel
+    # boss (Jon's catch: the boss only kissed the r79 edge and floated)
+    face += Pos(0, 81.9) * Rectangle(13, 6.2)   # behind the pinion
+    part = Pos(0, 0, ZC["bridge"][0]) * extrude(face, 3.0)
     for px, py in bridge_pillar_xy():
         part += Pos(px, py, PLATE_T) * Cylinder(
             4.0, ZC["bridge"][0] - PLATE_T, align=BOTTOM)
@@ -607,15 +610,19 @@ def bridge_c():
     cwx, cwy = WINDING["crown_wheel"]
     part -= Pos(cwx, cwy, 16.0) * Cylinder(14.2, 2.0, align=BOTTOM)
     part -= Pos(cwx, cwy, 14.69) * Cylinder(2.35, 1.4, align=BOTTOM)
+    # the winding-pinion WINDOW: the pinion reaches through the web to
+    # the crown wheel's underside slots (every real movement has this)
+    part -= Pos(0, WINDING["pinion_y"], 14.69) * Box(9.5, 8.4, 1.4,
+                                                     align=BOTTOM)
     # stem tunnel boss under the bridge (the case-tube analog), with the
     # C-clip slot opening downward inside the run
     from build123d import Rot as R_
     zs = WINDING["stem_z"]
-    part += Pos(0, 80.3, zs - 2.5) * Box(11, 5.8, 14.7 - (zs - 2.5),
-                                         align=BOTTOM)
-    part -= Pos(0, 76.0, zs) * R_(-90, 0, 0) * Cylinder(2.7, 20,
+    part += Pos(0, 81.65, zs - 2.5) * Box(11, 5.7, 14.7 - (zs - 2.5),
+                                         align=BOTTOM)  # behind the pinion
+    part -= Pos(0, 78.7, zs) * R_(-90, 0, 0) * Cylinder(2.7, 20,
                                                         align=BOTTOM)
-    part -= Pos(0, 82.6, zs - 2.6) * Box(4.4, 1.4, 6, align=BOTTOM)
+    part -= Pos(0, 83.25, zs - 2.6) * Box(7.0, 1.6, 6.5, align=BOTTOM)
     for x, y in g["pegs"]:
         part -= Pos(bx + x * c_(a) - y * s_(a), by + x * s_(a) + y * c_(a),
                     14.69) * Cylinder(1.25, 1.4, align=BOTTOM)  # through-web

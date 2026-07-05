@@ -203,7 +203,9 @@ def test_revc_assembled_movement_no_interference():
         inter = get(a) & get(b)
         v = inter.volume if inter else 0
         assert v < 0.5, f"assembled mesh {a} x {b} interferes ({v:.2f})"
-    disjoint = [("pallet fork", "mainplate"), ("pallet fork", "roller"),
+    disjoint = [("stem + crown", "train bridge"), ("stem clip", "train bridge"),
+                ("stem + crown", "crown wheel stud"),
+                ("pallet fork", "mainplate"), ("pallet fork", "roller"),
                 ("pallet fork", "bay strap"), ("bay strap", "mainplate"),
                 ("hairspring", "balance cock"), ("hairspring", "balance wheel"),
                 ("train bridge", "balance cock"), ("ratchet", "train bridge"),
