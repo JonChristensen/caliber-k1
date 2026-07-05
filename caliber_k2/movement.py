@@ -6,11 +6,13 @@ desk thump, chronograph pen-cam pusher, own barrel, >=30 min at 180
 per wind (the wind is a BEAT budget: the same wind lasts ~95 min at
 largo 60). v2 dream: 1-2 h.
 
-THE MOVEMENT: a standalone round caliber. Center stage belongs to the
-VARIABLE-INERTIA BALANCE (the tempo mechanism is the face of this
-instrument); the big barrel sits west; a two-stage train links them;
-the hammer strikes an anvil boss near the south rim; the tempo knob
-crowns the east rim; the pusher enters at the north.
+THE MOVEMENT (Jon's correction, July 5): K2 TELLS TIME TOO — it is a
+TWO-BARREL, TWO-CROWN caliber: K1's proven clock core (hands, motion
+works, indirect minute — minus the moon train) plus the metronome
+cluster as its complication. Different crowns wind different barrels.
+The clock cluster keeps K1's frozen coordinates verbatim; the
+metronome cluster (solved v0) plants east of it; the plate is the
+union of two discs (a capsule outline at parts stage).
 
 ENERGY (sizes everything): drum id66 x strip 2.6x7.0 PETG stores
 ~6.7 J -> ~6700 beats at SAFETY 2.5 = 38 min @180 / 113 min @60 (with
@@ -109,73 +111,25 @@ def k2_check(sweeps, clearance=2.0):
     return bad
 
 
-def solve_k2(step=10):
-    """BALANCE AT CENTER STAGE (the tempo mechanism is the face):
-    balance fixed near the origin, escape at lever-span from it, w1 and
-    the barrel folding west, hammer + anvil trailing the escape."""
-    C = K2_COUNTS
-    d_b1 = (C["barrel"] + C["p1"]) / 2
-    d_1e = (C["w1"] + C["p2"]) / 2
-    best = None
-    bal = (14.0, 0.0)                    # slightly east: knob line short
-    s_bal = k2_station_sweeps("balance", *bal)
-    for a3 in range(90, 271, step):      # escape somewhere west of it
-        e = (bal[0] + LEVER_SPAN * cos(radians(a3)),
-             bal[1] + LEVER_SPAN * sin(radians(a3)))
-        ux, uy = ((bal[0] - e[0]) / LEVER_SPAN, (bal[1] - e[1]) / LEVER_SPAN)
-        s_esc = (k2_station_sweeps("escape", *e) + s_bal +
-                 [Sweep("m_lever_hub", e[0] + 15 * ux, e[1] + 15 * uy,
-                        11, *MZ["esc"]),
-                  Sweep("m_lever_fork", e[0] + 25 * ux, e[1] + 25 * uy,
-                        4.5, *MZ["esc"]),
-                  # the hammer: pivot beside the cam, head arcing to an
-                  # anvil boss toward the rim
-                  Sweep("m_hammer", e[0] - 14 * ux, e[1] - 14 * uy,
-                        9.0, MZ["esc"][1] + 0.1, MZ["esc"][1] + 2.6)])
-        if k2_check(s_esc):
-            continue
-        for a2 in range(0, 360, step):
-            w1 = (e[0] + d_1e * cos(radians(a2)),
-                  e[1] + d_1e * sin(radians(a2)))
-            s_w1 = s_esc + k2_station_sweeps("w1", *w1)
-            if k2_check(s_w1):
-                continue
-            for a1 in range(0, 360, step):
-                b = (w1[0] + d_b1 * cos(radians(a1)),
-                     w1[1] + d_b1 * sin(radians(a1)))
-                s_all = s_w1 + k2_station_sweeps("barrel", *b)
-                if k2_check(s_all):
-                    continue
-                reach = max(hypot(s.x, s.y) + s.r for s in s_all)
-                cand = (reach, dict(balance=bal,
-                                    escape=(round(e[0], 1), round(e[1], 1)),
-                                    w1=(round(w1[0], 1), round(w1[1], 1)),
-                                    barrel=(round(b[0], 1), round(b[1], 1)),
-                                    lever_span=LEVER_SPAN))
-                if best is None or cand[0] < best[0]:
-                    best = cand
-    return best
-
-
-# --- THE K2 LAYOUT (solver output, frozen; Jon's massing gate next) ------------
-K2_LAYOUT = {
-    "balance": (14.0, 0.0),        # center stage: the tempo mechanism
+CLUSTER = {          # the metronome cluster, LOCAL coordinates (v0 solve)
+    "balance": (14.0, 0.0),
     "escape": (-14.2, 10.3),
-    "w1": (21.8, 10.3),            # trainB, z-interleaved under the ring
-    "barrel": (-14.6, -10.7),      # the BASEMENT drum, z7-15.5
+    "w1": (21.8, 10.3),
+    "barrel": (-14.6, -10.7),
     "lever_span": 30.0,
-    # instrument furniture (massing zones; parts stage refines):
-    "knob": (52.0, 0.0),           # tempo knob, east rim, lead screw to
-                                   #  the balance weights
-    "pusher": (0.0, 62.0),         # pen-cam run/stop, north rim
-    "anvil": (-44.0, 28.0),        # hammer strikes here (plate boss)
-    "winding": "key socket in the K2 bridge over the barrel arbor",
 }
+M_CLUSTER_RIM = 60.0        # local reach 57.1 + margin
 
 
-def k2_sweeps():
-    """The frozen K2 layout as swept volumes — the K2 global gate."""
-    L = K2_LAYOUT
+def cluster_sweeps(dx=0.0, dy=0.0, rot_deg=0.0):
+    """The metronome cluster as sweeps, rotated then translated."""
+    from math import cos as c_, sin as s_
+    ca, sa = c_(radians(rot_deg)), s_(radians(rot_deg))
+
+    def T(p):
+        return (p[0] * ca - p[1] * sa + dx, p[0] * sa + p[1] * ca + dy)
+
+    L = {k: (T(v) if isinstance(v, tuple) else v) for k, v in CLUSTER.items()}
     s = []
     for kind, key in (("barrel", "barrel"), ("w1", "w1"),
                       ("escape", "escape"), ("balance", "balance")):
@@ -186,6 +140,82 @@ def k2_sweeps():
           Sweep("m_lever_fork", e[0] + 25 * ux, e[1] + 25 * uy, 4.5, *MZ["esc"]),
           Sweep("m_hammer", e[0] - 14 * ux, e[1] - 14 * uy, 9.0,
                 MZ["esc"][1] + 0.1, MZ["esc"][1] + 2.6),
-          Sweep("m_knob_line", 52.0, 0.0, 5.0, *MZ["bal"]),
-          Sweep("m_pusher", 0.0, 62.0, 4.0, *MZ["bal"], rotating=False)]
+          # instrument furniture, riding the cluster frame:
+          Sweep("m_knob_line", *T((52.0, 0.0)), 5.0, *MZ["bal"]),
+          Sweep("m_pusher", *T((14.0, 48.0)), 4.0, *MZ["bal"], rotating=False),
+          # the metronome's OWN winding station (flush ratchet + crown
+          # wheel over its bridge; its crown exits the east rim)
+          Sweep("m_ratchet", *L["barrel"], 13.6,
+                MZ["bridge"][0] + 1.3, MZ["bridge"][1]),
+          Sweep("m_crown_w", *T((-14.6 + 24.0, -10.7 - 8.0)), 13.6,
+                MZ["bridge"][0] + 1.3, MZ["bridge"][1])]
+    return s, L
+
+
+for p in [("m_ratchet", "m_crown_w"), ("m_ratchet", "m_arbor"),
+          ("m_ratchet", "m_drum_gear"), ("m_crown_w", "m_stem")]:
+    MESH_PAIRS.add(frozenset(p))
+
+
+def clock_neighbors():
+    """K1's clock core as immovable neighbors (moon lives dial-side and
+    doesn't reach the bridge side; statics included)."""
+    from caliber_k1.revc import revc_sweeps, bridge_pillar_xy, cock_layout_c
+    s = list(revc_sweeps())
+    for px, py in bridge_pillar_xy():
+        s.append(Sweep("pillar", px, py, 4.0, 6.5, 14.7, rotating=False))
+    for fx, fy in cock_layout_c()["feet"]:
+        s.append(Sweep("cock_foot", fx, fy, 5.0, 6.5, 14.7, rotating=False))
     return s
+
+
+def k2_combined_check(met_sweeps, met_center, clearance=2.0):
+    """Union-of-discs plate: every sweep inside the clock disc (r83@0,0)
+    OR the metronome disc; pairs by the shared core rules."""
+    all_s = clock_neighbors() + met_sweeps
+    bad = [b for b in _core_check(all_s, clearance) if "past rim" not in b]
+    mx, my = met_center
+    for s in all_s:
+        if s.name == "stem":
+            continue
+        in_clock = hypot(s.x, s.y) + s.r <= 83.0
+        in_met = hypot(s.x - mx, s.y - my) + s.r <= M_CLUSTER_RIM + 6.0
+        if not (in_clock or in_met):
+            bad.append(f"{s.name}: outside both plate discs")
+    return bad
+
+
+def solve_k2_placement(step_d=4, rots=(0, 30, 60, 90, -30, -60, -90, 180)):
+    """Slide + rotate the metronome cluster against the frozen clock."""
+    best = None
+    for rot in rots:
+        for dx in range(84, 121, step_d):
+            for dy in range(-24, 25, 8):
+                s, L = cluster_sweeps(dx, dy, rot)
+                bad = k2_combined_check(s, (dx, dy))
+                if bad:
+                    continue
+                span = dx + M_CLUSTER_RIM       # total east extent
+                cand = (span, dict(offset=(dx, dy), rot_deg=rot))
+                if best is None or cand[0] < best[0]:
+                    best = cand
+    return best
+
+
+# --- THE K2 PLACEMENT (solver output, frozen; Jon's massing gate next) ---------
+K2_PLACEMENT = dict(offset=(88.0, -16.0), rot_deg=90.0)
+K2_PLATE = dict(clock=(0.0, 0.0, 85.0),          # disc center + radius
+                metronome=(88.0, -16.0, 66.0))   # capsule at parts stage
+
+
+def k2_sweeps():
+    """The frozen combined movement (metronome side only — the clock
+    side is K1's own gated model, joined in k2_combined_check)."""
+    s, L = cluster_sweeps(K2_PLACEMENT["offset"][0],
+                          K2_PLACEMENT["offset"][1],
+                          K2_PLACEMENT["rot_deg"])
+    return s
+
+
+def k2_gate():
+    return k2_combined_check(k2_sweeps(), K2_PLACEMENT["offset"])

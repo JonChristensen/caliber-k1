@@ -1,8 +1,10 @@
-"""K2 massing: the metronome's cast as labeled true-size volumes."""
+"""K2 massing r2: the TWO-BARREL caliber — K1's clock core (west disc)
++ the metronome cluster (east disc), every can labeled."""
 from build123d import Align, Compound, Cylinder, Pos, export_step
 
-from caliber_k2.movement import (K2_LAYOUT, K2_RIM, K2_PLATE_T, MZ,
-                                 k2_check, k2_sweeps)
+from caliber_k1.revc import PLATE_T
+from caliber_k2.movement import (K2_PLATE, MZ, clock_neighbors, k2_gate,
+                                 k2_sweeps)
 
 B = (Align.CENTER, Align.CENTER, Align.MIN)
 
@@ -12,24 +14,26 @@ def L(name, part):
     return part
 
 
-bad = k2_check(k2_sweeps())
+bad = k2_gate()
 assert not bad, bad
-kids = [L("K2 mainplate (O140)", Cylinder(70, K2_PLATE_T, align=B))]
+cx, cy, cr = K2_PLATE["clock"]
+mx, my, mr = K2_PLATE["metronome"]
+plate = (Pos(cx, cy, 0) * Cylinder(cr, PLATE_T, align=B)
+         + Pos(mx, my, 0) * Cylinder(mr, PLATE_T, align=B))
+kids = [L("K2 plate (capsule at parts stage)", plate)]
 seen = {}
-for s in k2_sweeps():
+for s in list(clock_neighbors()) + list(k2_sweeps()):
     n = seen.get(s.name, 0)
     seen[s.name] = n + 1
     label = s.name if n == 0 else f"{s.name} ({n + 1})"
     kids.append(L(label, Pos(s.x, s.y, s.z0) * Cylinder(s.r, s.z1 - s.z0,
                                                         align=B)))
-bx, by = K2_LAYOUT["barrel"]
-kids.append(L("K2 bridge (cover zone)",
-              Pos(0, 0, MZ["bridge"][0]) * Cylinder(64, 3.0, align=B)))
-kids.append(L("anvil boss (the thump lands here)",
-              Pos(*K2_LAYOUT["anvil"], K2_PLATE_T) *
-              Cylinder(6.0, MZ["esc"][1] - K2_PLATE_T, align=B)))
-asm = Compound(label="k2_massing_r1", children=kids)
-export_step(asm, "exports/k2/massing_r1.step")
+kids.append(L("clock bridge zone",
+              Pos(-4, 4, 14.7) * Cylinder(62, 3.0, align=B)))
+kids.append(L("metronome bridge zone",
+              Pos(mx, my, MZ["bridge"][0]) * Cylinder(60, 3.0, align=B)))
+asm = Compound(label="k2_massing_r2", children=kids)
+export_step(asm, "exports/k2/massing_r2.step")
 bb = asm.bounding_box()
-print(f"K2 massing r1: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm, "
-      f"{len(kids)} components")
+print(f"K2 massing r2: {bb.size.X:.0f} x {bb.size.Y:.0f} x "
+      f"{bb.size.Z:.1f} mm, {len(kids)} components")
