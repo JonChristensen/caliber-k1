@@ -61,19 +61,16 @@ for (name, x, y, tip_r, band) in dial_parts_list():
         tip_r, hi - lo, align=B)))
 kids.append(L("dial platform", Pos(0, 0, -0.8) * Cylinder(60, 0.8, align=B)))
 
-# --- the stem pendant, honestly PROUD (the r5 gate question) -------------------
-kids.append(L("stem pendant boss (PROUD of the bridge)",
-              Pos(0, 74, 17.7) * Box(10, 30, WINDING["stem_z"] + 2.6 - 17.7,
-                                     align=B)))
-kids.append(L("crown (outside the rim)",
-              Pos(0, 91, WINDING["stem_z"] - 6) * Cylinder(7, 12, align=B)))
+# --- the crown, at STEM level outside the rim (NH35-true, Jon's catch) ---------
+kids.append(L("crown (outside the rim, mid-height)",
+              Pos(0, 91, WINDING["stem_z"] - 6.5) * Cylinder(7, 13, align=B)))
 
-asm = Compound(label="revc_massing_r5", children=kids)
-export_step(asm, "exports/revc/massing_r5.step")
+asm = Compound(label="revc_massing_r6", children=kids)
+export_step(asm, "exports/revc/massing_r6.step")
 bb = asm.bounding_box()
 labels = [k.label for k in kids]
 missing = [n for n, kind in INVENTORY
            if not any(n.split(" ")[0] in lab for lab in labels)]
 assert not missing, f"INVENTORY items missing from the massing: {missing}"
-print(f"rev C massing r5: {bb.size.X:.0f} x {bb.size.Y:.0f} x "
+print(f"rev C massing r6: {bb.size.X:.0f} x {bb.size.Y:.0f} x "
       f"{bb.size.Z:.1f} mm, {len(kids)} components; inventory complete")

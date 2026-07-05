@@ -240,10 +240,19 @@ REVC_LAYOUT = {
 # must clear the crown wheel's top: the pendant boss stands proud of the
 # bridge at the rim — THE open question for Jon's massing gate.
 WINDING = {
+    # The crown wheel is NH35-true: a TALL core in a bridge seat — spur
+    # teeth up top meshing the ratchet, contrate teeth (radial slots,
+    # the printable bevel) down at STEM level. The stem enters at
+    # mid-height (z12.2) through the corridor between plane A's drum
+    # gear (tops at 10.25 out to y72) and the bridge underside (14.7):
+    # Jon's section-view catch — nothing stands above the bridge.
     "ratchet_r": 13.6, "pocket_z": (16.05, 17.65),
     "crown_wheel": (0.0, 65.0),              # 24t x 24t m1: exactly 24
-    "stem_z": 20.9,                          # axis; pinion over the slots
-    "stem_y": (56.0, 95.0),                  # tunnel span, az 90
+    "crown_low_z": (12.2, 13.8),             # the contrate tier
+    "stem_z": 13.0,                          # axis: above the drum gear
+                                             # band, tunnel half in the
+                                             # bridge boss (NH35-style)
+    "stem_y": (74.0, 95.0),
     "module_bay": (56.0, 18.0, 18.0),        # reserved: metronome barrel
 }
 
@@ -255,15 +264,14 @@ def winding_sweeps():
     z0, z1 = WINDING["pocket_z"]
     s = [Sweep("ratchet", bx, by, WINDING["ratchet_r"], z0, z1),
          Sweep("crown_w", cw[0], cw[1], WINDING["ratchet_r"], z0, z1),
+         Sweep("crown_w", cw[0], cw[1], 10.5, *WINDING["crown_low_z"]),
          Sweep("click_zone", bx + 14.3, by - 1.3, 9.5, z0, z1,
                rotating=False),
-         # the stem: a radial rod, modeled as keep-out cans along its run
-         Sweep("stem", 0.0, 62.0, 4.5, WINDING["stem_z"] - 2.6,
-               WINDING["stem_z"] + 2.6),
-         Sweep("stem", 0.0, 72.0, 4.5, WINDING["stem_z"] - 2.6,
-               WINDING["stem_z"] + 2.6),
-         Sweep("stem", 0.0, 81.0, 4.5, WINDING["stem_z"] - 2.6,
-               WINDING["stem_z"] + 2.6)]
+         # the stem: a radial rod at MID-HEIGHT, keep-out cans on its run
+         Sweep("stem", 0.0, 76.0, 2.7, WINDING["stem_z"] - 2.5,
+               WINDING["stem_z"] + 2.5),
+         Sweep("stem", 0.0, 82.0, 2.7, WINDING["stem_z"] - 2.5,
+               WINDING["stem_z"] + 2.5)]
     mx, my, mr = WINDING["module_bay"]
     s.append(Sweep("module_bay", mx, my, mr, 7.0, 14.5, rotating=False))
     return s
