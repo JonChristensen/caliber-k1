@@ -71,14 +71,10 @@ def arbor_posts():
             for (n, x, y, tip, top) in post_specs()]
 
 
-# the three wave bridges export as separate plates
-for i, s in enumerate(rp.bridge_c().solids()):
-    bb = s.bounding_box()
-    tag = ("winding" if bb.min.X > -25 and bb.max.Y > 40
-           else ("sky" if bb.max.Y > 40 else "sea"))
-    KIT.append((f"bridge_{tag}", (lambda s=s: s), 1,
-                "PLA (show face — pick a color!)",
-                "top face DOWN; supports in pockets only"))
+# the wave bridge: one skeleton show plate
+KIT.append(("bridge_wave", rp.bridge_c, 1, "PLA (show face — pick a color!)",
+            "SHOW FACE DOWN (pillars point up); 100%% infill; supports "
+            "only in the ratchet pocket + stem tunnel; brim on"))
 
 rows = []
 for name, fn, qty, mat, note in KIT + arbor_posts():
