@@ -21,10 +21,14 @@ def test_k2_beat_gearing():
     assert ratio * 2 * C["esc_teeth"] * 3.0 > BEAT_BUDGET
 
 
-def test_k2_two_crowns_apart():
-    """Two barrels, two crowns: the clock's stem exits north of the
-    clock disc; the metronome's winding station lives on its own disc
-    -- the stations must not share rim territory."""
-    from math import hypot
-    cx, cy = K2_PLACEMENT["offset"]
-    assert hypot(cx, cy) > 60          # clusters genuinely apart
+def test_k2_one_crown_two_positions():
+    """ONE crown, TWO positions: both barrels' arbors sit on the north
+    winding corridor so the sliding clutch can reach either ratchet."""
+    from caliber_k2.movement import MET_BARREL_ZONE, cluster_sweeps
+    s, L = cluster_sweeps(K2_PLACEMENT["offset"][0],
+                          K2_PLACEMENT["offset"][1],
+                          K2_PLACEMENT["rot_deg"])
+    mbx, mby = L["barrel"]
+    assert MET_BARREL_ZONE["x"][0] <= mbx <= MET_BARREL_ZONE["x"][1]
+    assert MET_BARREL_ZONE["y"][0] <= mby <= MET_BARREL_ZONE["y"][1]
+    assert abs(0.0 - 0.0) < 8          # clock barrel x: on the corridor

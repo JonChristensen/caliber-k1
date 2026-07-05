@@ -58,13 +58,16 @@ K2_COUNTS = dict(barrel=76, p1=8, w1=64, p2=8, esc_teeth=15)
 # 64t wheel on this plate (hub + w1 + clearance > any legal spacing).
 # The escapement gets its own storey; the escape arbor climbs to it
 # (the proven K1 escape-arbor pattern, inverted).
-MZ = dict(drum=(7.0, 15.5),            # tall drum: the energy wants it
-          trainA=(16.0, 17.15),        # drum gear + p1 (K1's plane trick:
-          trainB=(17.35, 18.6),        #  w1 + p2 interleave above)
-          esc=(18.8, 21.4),            # club wheel + lever, own storey
-          bal=(21.6, 25.6),            # the variable-inertia ring
-          spring=(26.1, 28.6),
-          bridge=(29.1, 32.1))         # K2 tops at 32.1
+# The met cluster rides a storey ABOVE the clock's planes (drums are
+# both huge; interleaving is the only coexistence — the K1 theorem at
+# movement scale). Met drum 12-20.5 passes over the clock's plane B.
+MZ = dict(drum=(12.0, 20.5),
+          trainA=(21.0, 22.15),        # drum gear + p1
+          trainB=(22.35, 23.6),        # w1 + p2 interleave above
+          esc=(23.8, 26.4),            # club wheel + lever, own storey
+          bal=(26.6, 30.6),            # the variable-inertia ring
+          spring=(31.1, 33.6),
+          bridge=(34.1, 37.1))         # K2 tops at 37.1
 LEVER_SPAN = 30.0
 
 
@@ -158,10 +161,11 @@ for p in [("m_ratchet", "m_crown_w"), ("m_ratchet", "m_arbor"),
 
 
 def clock_neighbors():
-    """K1's clock core as immovable neighbors (moon lives dial-side and
-    doesn't reach the bridge side; statics included)."""
+    """K1's clock core as immovable neighbors — MINUS its private stem
+    and crown wheel (K2 re-plumbs winding as ONE crown, TWO positions
+    through the shared corridor); its flush ratchet + click stay."""
     from caliber_k1.revc import revc_sweeps, bridge_pillar_xy, cock_layout_c
-    s = list(revc_sweeps())
+    s = [x for x in revc_sweeps() if x.name not in ("stem", "crown_w")]
     for px, py in bridge_pillar_xy():
         s.append(Sweep("pillar", px, py, 4.0, 6.5, 14.7, rotating=False))
     for fx, fy in cock_layout_c()["feet"]:
@@ -169,53 +173,90 @@ def clock_neighbors():
     return s
 
 
-def k2_combined_check(met_sweeps, met_center, clearance=2.0):
-    """Union-of-discs plate: every sweep inside the clock disc (r83@0,0)
-    OR the metronome disc; pairs by the shared core rules."""
+def k2_combined_check(met_sweeps, plate_c, plate_r, clearance=2.0):
+    """ONE round plate (Jon: no frankenplates): every sweep inside the
+    single circle; pairs by the shared core rules."""
     all_s = clock_neighbors() + met_sweeps
     bad = [b for b in _core_check(all_s, clearance) if "past rim" not in b]
-    mx, my = met_center
+    cx, cy = plate_c
     for s in all_s:
-        if s.name == "stem":
+        if s.name in ("stem", "m_stem"):
             continue
-        in_clock = hypot(s.x, s.y) + s.r <= 83.0
-        in_met = hypot(s.x - mx, s.y - my) + s.r <= M_CLUSTER_RIM + 6.0
-        if not (in_clock or in_met):
-            bad.append(f"{s.name}: outside both plate discs")
+        if hypot(s.x - cx, s.y - cy) + s.r > plate_r - 2.0:
+            bad.append(f"{s.name}: past the round plate")
     return bad
 
 
-def solve_k2_placement(step_d=4, rots=(0, 30, 60, 90, -30, -60, -90, 180)):
-    """Slide + rotate the metronome cluster against the frozen clock."""
+# ONE crown, TWO positions: the stem enters at north; the clutch's
+# position 1 winds the clock ratchet (via K1's tall-core crown wheel
+# pattern), position 2 winds the met ratchet above. The met BARREL
+# must therefore sit on the north corridor, outboard of the clock's.
+MET_BARREL_ZONE = dict(x=(-8.0, 8.0), y=(86.0, 108.0))
+
+
+def winding_corridor():
+    """The shared two-position winding works, reserved as zones."""
+    return [Sweep("k2_windzone", 0.0, 64.0, 8.0, 12.0, 18.0, rotating=False),
+            Sweep("k2_windzone", 0.0, 80.0, 8.0, 12.0, 18.0, rotating=False),
+            Sweep("k2_windzone", 0.0, 96.0, 8.0, 12.0, 18.0, rotating=False)]
+
+
+for p in [("k2_windzone", "b_arbor"), ("k2_windzone", "ratchet"),
+          ("k2_windzone", "m_arbor"), ("k2_windzone", "m_ratchet"),
+          ("k2_windzone", "m_drum"), ("k2_windzone", "m_drum_gear"),
+          ("k2_windzone", "drum_gear"), ("k2_windzone", "drum"),
+          ("k2_windzone", "click_zone"), ("k2_windzone", "m_crown_w")]:
+    MESH_PAIRS.add(frozenset(p))
+
+
+def _enclosing_R(sweeps, cx, cy):
+    return max(hypot(s.x - cx, s.y - cy) + s.r for s in sweeps
+               if s.name not in ("stem", "m_stem"))
+
+
+def solve_k2_round(step_d=4, rots=(0, 45, 90, 135, 180, 225, 270, 315)):
+    """One round plate, minimum radius. The met cluster slides under
+    two constraints: the joint gate (with the winding corridor), and
+    its BARREL inside the north corridor zone."""
     best = None
+    clock = clock_neighbors() + winding_corridor()
     for rot in rots:
-        for dx in range(84, 121, step_d):
-            for dy in range(-24, 25, 8):
+        for dx in range(-40, 61, step_d):
+            for dy in range(60, 141, step_d):
                 s, L = cluster_sweeps(dx, dy, rot)
-                bad = k2_combined_check(s, (dx, dy))
-                if bad:
+                mb = L["barrel"]
+                zx, zy = MET_BARREL_ZONE["x"], MET_BARREL_ZONE["y"]
+                if not (zx[0] <= mb[0] <= zx[1] and zy[0] <= mb[1] <= zy[1]):
                     continue
-                span = dx + M_CLUSTER_RIM       # total east extent
-                cand = (span, dict(offset=(dx, dy), rot_deg=rot))
-                if best is None or cand[0] < best[0]:
-                    best = cand
+                # find a near-optimal plate center for THIS placement
+                for pcx in range(-12, 13, 6):
+                    for pcy in range(0, 61, 6):
+                        R = _enclosing_R(clock + s, pcx, pcy)
+                        if best is not None and R >= best[0]:
+                            continue
+                        if k2_combined_check(s, (pcx, pcy), R + 2.0):
+                            continue
+                        best = (R, dict(offset=(dx, dy), rot_deg=rot,
+                                        plate_c=(pcx, pcy),
+                                        plate_r=round(R + 2.0, 1)))
     return best
-
-
 # --- THE K2 PLACEMENT (solver output, frozen; Jon's massing gate next) ---------
-K2_PLACEMENT = dict(offset=(88.0, -16.0), rot_deg=90.0)
-K2_PLATE = dict(clock=(0.0, 0.0, 85.0),          # disc center + radius
-                metronome=(88.0, -16.0, 66.0))   # capsule at parts stage
+# ONE round plate O215: clock south (frozen K1 coordinates), metronome
+# a storey higher in the north, ONE crown / TWO positions down the
+# shared corridor. Plate center (12,30) in clock coordinates.
+K2_PLACEMENT = dict(offset=(-16.0, 84.0), rot_deg=180.0)
+K2_PLATE = dict(center=(12.0, 30.0), radius=108.0)
 
 
 def k2_sweeps():
-    """The frozen combined movement (metronome side only — the clock
-    side is K1's own gated model, joined in k2_combined_check)."""
+    """The frozen metronome side + winding corridor (the clock side is
+    K1's own gated model, joined in k2_combined_check)."""
     s, L = cluster_sweeps(K2_PLACEMENT["offset"][0],
                           K2_PLACEMENT["offset"][1],
                           K2_PLACEMENT["rot_deg"])
-    return s
+    return s + winding_corridor()
 
 
 def k2_gate():
-    return k2_combined_check(k2_sweeps(), K2_PLACEMENT["offset"])
+    return k2_combined_check(k2_sweeps(), K2_PLATE["center"],
+                             K2_PLATE["radius"])

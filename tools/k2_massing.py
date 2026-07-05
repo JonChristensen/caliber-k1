@@ -16,11 +16,9 @@ def L(name, part):
 
 bad = k2_gate()
 assert not bad, bad
-cx, cy, cr = K2_PLATE["clock"]
-mx, my, mr = K2_PLATE["metronome"]
-plate = (Pos(cx, cy, 0) * Cylinder(cr, PLATE_T, align=B)
-         + Pos(mx, my, 0) * Cylinder(mr, PLATE_T, align=B))
-kids = [L("K2 plate (capsule at parts stage)", plate)]
+pcx, pcy = K2_PLATE["center"]
+plate = Pos(pcx, pcy, 0) * Cylinder(K2_PLATE["radius"], PLATE_T, align=B)
+kids = [L(f"K2 plate (ROUND, O{2*K2_PLATE['radius']:.0f})", plate)]
 seen = {}
 for s in list(clock_neighbors()) + list(k2_sweeps()):
     n = seen.get(s.name, 0)
@@ -30,10 +28,12 @@ for s in list(clock_neighbors()) + list(k2_sweeps()):
                                                         align=B)))
 kids.append(L("clock bridge zone",
               Pos(-4, 4, 14.7) * Cylinder(62, 3.0, align=B)))
+from caliber_k2.movement import K2_PLACEMENT
+ox, oy = K2_PLACEMENT["offset"]
 kids.append(L("metronome bridge zone",
-              Pos(mx, my, MZ["bridge"][0]) * Cylinder(60, 3.0, align=B)))
-asm = Compound(label="k2_massing_r2", children=kids)
-export_step(asm, "exports/k2/massing_r2.step")
+              Pos(ox, oy, MZ["bridge"][0]) * Cylinder(60, 3.0, align=B)))
+asm = Compound(label="k2_massing_r3", children=kids)
+export_step(asm, "exports/k2/massing_r3.step")
 bb = asm.bounding_box()
-print(f"K2 massing r2: {bb.size.X:.0f} x {bb.size.Y:.0f} x "
+print(f"K2 massing r3: {bb.size.X:.0f} x {bb.size.Y:.0f} x "
       f"{bb.size.Z:.1f} mm, {len(kids)} components")
