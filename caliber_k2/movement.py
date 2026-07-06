@@ -403,6 +403,151 @@ for p in [("m_cock", "m_ring"), ("m_cock", "m_spring"), ("m_cock", "m_roller"),
           ("m_setting_lever", "m_stem"), ("m_detent", "m_stem")]:
     MESH_PAIRS.add(frozenset(p))
 
+
+
+# =============================================================================
+# TWO-SIDED ARCHITECTURE (Jon's call, July 5): K2 is a base time movement
+# + a metronome MODULE stacked toward the caseback (the chronograph-module
+# pattern). This DISSOLVES the frankenplate/O250 problem: the two movements
+# no longer fight for one plane — each gets its own full-diameter plate.
+#
+#   front  crystal | dial + hands | motion works | BASE PLATE |
+#          base going train + escapement + balance + base bridge |
+#          MODULE PLATE | metronome works + hammer + variable balance |
+#          module bridge | display-back crystal   back
+#
+# BASE = K1's proven time core verbatim (revc), minus the moon train.
+# MODULE = the metronome, ALONE on its own O166 plate (roomy: a single
+# cluster like K1's clock, not an interleave). One crown, two positions:
+# push winds the base barrel, pull winds the module barrel (the stem
+# reaches through to the module ratchet).
+# =============================================================================
+MODULE_R = 83.0                       # module plate = base plate (O166 print)
+BASE_TOP = 17.7                       # base movement tops here (= K1)
+MODULE_GAP = 0.5                      # air over the base bridge
+MODULE_PLATE_Z = BASE_TOP + MODULE_GAP            # 18.2: module plate floor
+# the metronome's own z-grammar (K1's, lifted onto the module plate):
+MMZ = {k: (a + MODULE_PLATE_Z, b + MODULE_PLATE_Z) for k, (a, b) in MZ.items()}
+
+
+def module_station_sweeps(kind, x, y):
+    """Metronome stations on the MODULE plate (K1 z-grammar, lifted)."""
+    C = K2_COUNTS
+    S = {
+        "barrel": [Sweep("m_drum", x, y, C["barrel"]/2 - 1.5, *MMZ["drum"]),
+                   Sweep("m_drum_gear", x, y, C["barrel"]/2 + 1, *MMZ["trainA"]),
+                   Sweep("m_arbor", x, y, 2.85, MMZ["drum"][0], MMZ["bridge"][1])],
+        "w1": [Sweep("m_p1", x, y, C["p1"]/2 + 1, *MMZ["trainA"]),
+               Sweep("m_w1", x, y, C["w1"]/2 + 1, *MMZ["trainB"])],
+        "escape": [Sweep("m_p2", x, y, C["p2"]/2 + 1, *MMZ["trainB"]),
+                   Sweep("m_esc_w", x, y, 12.0, *MMZ["esc"]),
+                   Sweep("m_cam", x, y, 6.0, MMZ["esc"][1]+0.05, MMZ["esc"][1]+1.55)],
+        "balance": [Sweep("m_ring", x, y, 21.0, *MMZ["bal"]),
+                    Sweep("m_spring", x, y, 14.0, *MMZ["spring"])],
+    }
+    return S[kind]
+
+
+def module_free_sweeps(bx, by, w1, e, b):
+    s = module_station_sweeps("barrel", bx, by)
+    s += module_station_sweeps("w1", *w1)
+    s += module_station_sweeps("escape", *e)
+    s += module_station_sweeps("balance", *b)
+    ux, uy = ((b[0]-e[0])/LEVER_SPAN, (b[1]-e[1])/LEVER_SPAN)
+    s += [Sweep("m_lever_hub", e[0]+15*ux, e[1]+15*uy, 11, *MMZ["esc"]),
+          Sweep("m_lever_fork", e[0]+25*ux, e[1]+25*uy, 4.5, *MMZ["esc"]),
+          Sweep("m_hammer", e[0]-14*ux, e[1]-14*uy, 9.0,
+                MMZ["esc"][1]+0.05, MMZ["esc"][1]+3.05),
+          Sweep("m_roller", b[0], b[1], 6.0, *MMZ["esc"]),
+          Sweep("m_ratchet", bx, by, 13.6, MMZ["bridge"][0]+1.35, MMZ["bridge"][1]),
+          Sweep("m_click", bx+13, by-9, 6.5, MMZ["bridge"][0]+1.35, MMZ["bridge"][1])]
+    return s
+
+
+def solve_module_alone(step=12, barrel_step=8):
+    """The metronome ALONE on its O166 module plate — a compact single-
+    cluster solve (no clock to dodge). Minimize reach from plate center."""
+    C = K2_COUNTS
+    d_b1 = (C["barrel"] + C["p1"]) / 2
+    d_1e = (C["w1"] + C["p2"]) / 2
+    best = None
+    for bx in range(-40, 41, barrel_step):
+        for by in range(-40, 41, barrel_step):
+            s0 = module_station_sweeps("barrel", bx, by)
+            if [x for x in _core_check(s0, 2.0) if "past rim" not in x]:
+                continue
+            for a1 in range(0, 360, step):
+                w1 = (bx + d_b1*cos(radians(a1)), by + d_b1*sin(radians(a1)))
+                s1 = s0 + module_station_sweeps("w1", *w1)
+                if [x for x in _core_check(s1, 2.0) if "past rim" not in x]:
+                    continue
+                for a2 in range(0, 360, step):
+                    e = (w1[0] + d_1e*cos(radians(a2)), w1[1] + d_1e*sin(radians(a2)))
+                    s2 = s1 + module_station_sweeps("escape", *e)
+                    if [x for x in _core_check(s2, 2.0) if "past rim" not in x]:
+                        continue
+                    for a3 in range(0, 360, step):
+                        b = (e[0] + LEVER_SPAN*cos(radians(a3)),
+                             e[1] + LEVER_SPAN*sin(radians(a3)))
+                        s3 = module_free_sweeps(bx, by, w1, e, b)
+                        if [x for x in _core_check(s3, 2.0) if "past rim" not in x]:
+                            continue
+                        reach = max(hypot(sx.x, sx.y) + sx.r for sx in s3)
+                        if reach > MODULE_R - 2:
+                            continue
+                        if best is None or reach < best[0]:
+                            best = (reach, dict(
+                                barrel=(bx, by),
+                                w1=(round(w1[0],1), round(w1[1],1)),
+                                escape=(round(e[0],1), round(e[1],1)),
+                                balance=(round(b[0],1), round(b[1],1))))
+    return best
+
+
+# --- THE K2 TWO-SIDED LAYOUT (frozen; Jon's gate next) -------------------------
+# BASE = K1 time core (revc) verbatim, minus moon. MODULE = the metronome
+# ALONE on its own O166 plate, stacked toward the caseback. Plate does NOT
+# grow — same O166 as K1. One crown, two positions winds the two barrels.
+K2_MODULE = dict(barrel=(0.0, -24.0), w1=(-28.1, 7.2),
+                 escape=(-4.0, 34.0), balance=(26.0, 34.0))
+K2_PLATE = dict(radius=MODULE_R)      # O166, both plates same diameter
+
+
+def module_sweeps():
+    M = K2_MODULE
+    s = module_free_sweeps(M["barrel"][0], M["barrel"][1], M["w1"],
+                           M["escape"], M["balance"])
+    # balance cock + its feet-pillars, on the module plate
+    Bd = M["balance"]
+    from math import atan2 as _a
+    rad = _a(Bd[1], Bd[0])            # rim direction through the balance
+    s.append(Sweep("m_cock", Bd[0], Bd[1], 9.0, *MMZ["bridge"]))
+    for sgn in (+1, -1):             # feet straddle the balance on the RIM
+        a = rad + sgn * radians(44)  # side, 30 out (clear the r21 ring)
+        s.append(Sweep("m_pillar", Bd[0]+30*cos(a), Bd[1]+30*sin(a), 5.0,
+                       MODULE_PLATE_Z, MMZ["bridge"][0]))
+    # tempo knob line (variable-inertia lead screw) exits the module rim
+    s.append(Sweep("m_knob_line", Bd[0]+26*cos(rad), Bd[1]+26*sin(rad), 5.0,
+                   *MMZ["bal"], rotating=False))
+    return s
+
+
+for _p in [("m_cock", "m_ring"), ("m_cock", "m_spring"), ("m_cock", "m_roller")]:
+    MESH_PAIRS.add(frozenset(_p))
+
+
+def k2_module_gate():
+    s = module_sweeps()
+    bad = [b for b in _core_check(s, 2.0) if "past rim" not in b]
+    for sw in s:
+        if sw.name in OUTSIDE_OK:
+            continue
+        if hypot(sw.x, sw.y) + sw.r > MODULE_R - 2.0:
+            bad.append(f"{sw.name}: past the module plate")
+    return bad
+
+
+# --- (superseded single-plane frozen block kept for reference below) ----------
 # --- THE K2 LAYOUT (joint free-station solve, frozen; Jon's gate next) --------
 # ONE round plate, FLAT stack (17.7 = K1's): the met stations interleave
 # among the clock's; one crown, two positions down the derived stem line.
