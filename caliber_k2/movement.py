@@ -470,9 +470,11 @@ def solve_module_alone(step=12, barrel_step=8):
     C = K2_COUNTS
     d_b1 = (C["barrel"] + C["p1"]) / 2
     d_1e = (C["w1"] + C["p2"]) / 2
+    from caliber_k1.revc import REVC_LAYOUT
+    cbx, cby = REVC_LAYOUT["barrel"]     # base barrel: one crown winds both
     best = None
-    for bx in range(-40, 41, barrel_step):
-        for by in range(-40, 41, barrel_step):
+    for bx in range(int(cbx)-8, int(cbx)+9, 4):
+        for by in range(int(cby)-8, int(cby)+9, 4):
             s0 = module_station_sweeps("barrel", bx, by)
             if [x for x in _core_check(s0, 2.0) if "past rim" not in x]:
                 continue
@@ -508,8 +510,8 @@ def solve_module_alone(step=12, barrel_step=8):
 # BASE = K1 time core (revc) verbatim, minus moon. MODULE = the metronome
 # ALONE on its own O166 plate, stacked toward the caseback. Plate does NOT
 # grow — same O166 as K1. One crown, two positions winds the two barrels.
-K2_MODULE = dict(barrel=(0.0, -24.0), w1=(-28.1, 7.2),
-                 escape=(-4.0, 34.0), balance=(26.0, 34.0))
+K2_MODULE = dict(barrel=(0.0, 33.0), w1=(-34.0, 8.3),
+                 escape=(-45.1, -25.9), balance=(-20.8, -43.6))
 K2_PLATE = dict(radius=MODULE_R)      # O166, both plates same diameter
 
 
@@ -533,6 +535,36 @@ def module_sweeps():
 
 
 for _p in [("m_cock", "m_ring"), ("m_cock", "m_spring"), ("m_cock", "m_roller")]:
+    MESH_PAIRS.add(frozenset(_p))
+
+
+
+
+# WINDING LINK (one crown, two positions) — OPEN DESIGN PROBLEM, log 0023.
+# The module barrel is big (r38) and central, so its ratchet sits at the
+# module-plate center at bridge z (~34-36). Reaching it from a base-level
+# north crown needs: stem -> a VERTICAL RISER near the rim (clear of both
+# drums, r38) -> a HORIZONTAL transfer wheel at module-bridge level inward
+# to the module crown wheel -> ratchet. That is a real cross-plate keyless
+# works and gets its own solve; it is NOT in the gate yet.
+def winding_link_zone():
+    """Coarse reserved corridor for the yet-to-be-solved winding link:
+    the north sector from the rim in to the barrels, spanning both
+    plates' z. Massing shows the space; geometry comes at the solve."""
+    return [Sweep("wind_corridor", 0.0, 62.0, 10.0, 13.0, MMZ["bridge"][1],
+                  rotating=False)]
+
+
+def base_sweeps():
+    """The base time movement = K1's revc core (its own gate passed)."""
+    from caliber_k1.revc import revc_sweeps
+    return list(revc_sweeps())
+
+
+for _p in [("wind_transfer", "m_ratchet"), ("wind_transfer", "m_arbor"),
+           ("wind_transfer", "cw2_core"), ("cw2_core", "m_clutch"),
+           ("m_setting_lever", "m_clutch"), ("m_detent", "m_setting_lever"),
+           ("wind_transfer", "m_drum"), ("wind_transfer", "m_drum_gear")]:
     MESH_PAIRS.add(frozenset(_p))
 
 
