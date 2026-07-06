@@ -336,12 +336,12 @@ K2_INVENTORY = [
     ("m_cam", "sweep"), ("m_hammer", "sweep"),
     ("m_hammer_spring", "in m_hammer"), ("m_hammer_pivot", "in m_hammer"),
     # winding: ONE crown, TWO positions (the novel keyless works)
-    ("m_stem", "sweep"), ("k2_crown", "sweep"), ("cw1_core", "sweep"),
-    ("cw2_core", "sweep"), ("wind_idler", "sweep"), ("m_clutch", "sweep"),
-    ("m_setting_lever", "sweep"), ("m_detent", "sweep"),
+    ("m_stem", "pending"), ("k2_crown", "pending"), ("cw1_core", "pending"),
+    ("cw2_core", "pending"), ("wind_idler", "pending"), ("m_clutch", "pending"),
+    ("m_setting_lever", "pending"), ("m_detent", "pending"),
     ("m_clutch_spring", "in m_setting_lever"),
     # chronograph pusher (run/stop the pen-cam)
-    ("m_pusher", "sweep"), ("m_pusher_spring", "in m_pusher"),
+    ("m_pusher", "pending"), ("m_pusher_spring", "in m_pusher"),
     ("m_penstop", "in m_pusher"),
     # skeleton
     ("m_pillar", "sweep"), ("m_bridge", "in m_pillar"),
@@ -512,7 +512,7 @@ def solve_module_alone(step=12, barrel_step=8):
 # grow — same O166 as K1. One crown, two positions winds the two barrels.
 K2_MODULE = dict(barrel=(0.0, 33.0), w1=(-34.0, 8.3),
                  escape=(-45.1, -25.9), balance=(-20.8, -43.6))
-K2_PLATE = dict(radius=MODULE_R)      # O166, both plates same diameter
+K2_PLATE = dict(radius=MODULE_R, center=(0.0, 0.0))  # O166, concentric
 
 
 def module_sweeps():
@@ -534,7 +534,8 @@ def module_sweeps():
     return s
 
 
-for _p in [("m_cock", "m_ring"), ("m_cock", "m_spring"), ("m_cock", "m_roller")]:
+for _p in [("m_cock", "m_ring"), ("m_cock", "m_spring"), ("m_cock", "m_roller"),
+           ("m_knob_line", "m_ring"), ("m_knob_line", "m_spring")]:
     MESH_PAIRS.add(frozenset(_p))
 
 
@@ -577,56 +578,3 @@ def k2_module_gate():
         if hypot(sw.x, sw.y) + sw.r > MODULE_R - 2.0:
             bad.append(f"{sw.name}: past the module plate")
     return bad
-
-
-# --- (superseded single-plane frozen block kept for reference below) ----------
-# --- THE K2 LAYOUT (joint free-station solve, frozen; Jon's gate next) --------
-# ONE round plate, FLAT stack (17.7 = K1's): the met stations interleave
-# among the clock's; one crown, two positions down the derived stem line.
-K2_MET = {
-    "m_barrel": (40.0, 102.0),
-    "m_w1": (82.0, 102.0),
-    "m_escape": (93.1, 67.8),
-    "m_balance": (123.1, 67.8),
-}
-K2_PLATE = dict(center=(30.0, 40.0), radius=125.1)
-
-
-def k2_furniture():
-    """Tempo knob line + pen-cam pusher, anchored from the frozen
-    stations OUT to the real rim (no more floating zones)."""
-    cx, cy = K2_PLATE["center"]
-    b = K2_MET["m_balance"]
-    e = K2_MET["m_escape"]
-    d = hypot(b[0] - cx, b[1] - cy)
-    ux, uy = (b[0] - cx) / d, (b[1] - cy) / d
-    s = [Sweep("m_knob_line", b[0] + 26 * ux, b[1] + 26 * uy, 5.0,
-               *MZ["bal"], rotating=False),
-         Sweep("m_knob_line", b[0] + 38 * ux, b[1] + 38 * uy, 5.0,
-               *MZ["bal"], rotating=False)]
-    de = hypot(e[0] - cx, e[1] - cy)
-    ex, ey = (e[0] - cx) / de, (e[1] - cy) / de
-    s.append(Sweep("m_pusher", e[0] + 20 * ex, e[1] + 20 * ey, 4.0,
-                   *MZ["bal"], rotating=False))
-    return s
-
-
-for p in [("m_knob_line", "m_ring"), ("m_knob_line", "m_spring"),
-          ("m_pusher", "m_ring"), ("m_pusher", "m_hammer"),
-          ("m_knob_line", "m_stem"), ("m_pusher", "m_lever_fork")]:
-    MESH_PAIRS.add(frozenset(p))
-
-
-def k2_sweeps():
-    """The frozen met side + winding line + furniture (the clock side
-    is K1's own gated model, joined in k2_combined_check)."""
-    s = met_free_sweeps(K2_MET["m_barrel"][0], K2_MET["m_barrel"][1],
-                        K2_MET["m_w1"], K2_MET["m_escape"],
-                        K2_MET["m_balance"])
-    return (s + winding_line(K2_MET["m_barrel"]) + k2_furniture()
-            + k2_extra_envelopes())
-
-
-def k2_gate():
-    return k2_combined_check(k2_sweeps(), K2_PLATE["center"],
-                             K2_PLATE["radius"])
