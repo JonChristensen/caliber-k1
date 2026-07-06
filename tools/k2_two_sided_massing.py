@@ -1,4 +1,4 @@
-"""K2 two-sided massing r1 — the first real sandwich artifact.
+"""K2 two-sided massing r2 — the first real sandwich artifact.
 
 Front (dial) -> back (caseback):
   base dial/hands · BASE PLATE · base time works + base bridge ·
@@ -63,8 +63,8 @@ for s in winding_link_zone():
 kids.append(L("crown (one, two positions)", Pos(0, R + 6, 12.0) *
              Cylinder(7, 12, align=B)))
 
-asm = Compound(label="k2_two_sided_r1", children=kids)
-export_step(asm, "exports/k2/two_sided_r1.step")
+asm = Compound(label="k2_two_sided_r2", children=kids)
+export_step(asm, "exports/k2/two_sided_r2.step")
 bb = asm.bounding_box()
 sc = 40.0 / (2 * R)
 print(f"K2 two-sided r1: O{2*R:.0f} x {bb.size.Z:.1f} mm print "

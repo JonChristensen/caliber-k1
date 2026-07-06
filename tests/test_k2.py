@@ -9,14 +9,22 @@ def test_k2_inventory_complete():
     """Jon's rule: recite the full cast before massing. Every 'sweep'
     part owns an envelope on the module plate; the 'pending' tier is
     exactly the winding-link + chrono works awaiting their solve (0023)."""
-    from caliber_k2.movement import K2_INVENTORY, module_sweeps
-    have = set(s.name for s in module_sweeps())
+    from caliber_k2.movement import (K2_INVENTORY, module_sweeps,
+                                     winding_link_sweeps)
+    have = set(s.name for s in module_sweeps() + winding_link_sweeps())
     missing = [n for n, k in K2_INVENTORY if k == "sweep" and n not in have]
     assert missing == [], f"placed parts with no envelope: {missing}"
     pending = {n for n, k in K2_INVENTORY if k == "pending"}
-    assert pending == {"m_stem", "k2_crown", "cw1_core", "cw2_core",
-                       "wind_idler", "m_clutch", "m_setting_lever",
-                       "m_detent", "m_pusher"}, "pending tier drifted"
+    assert pending == {"cw1_core", "m_stem", "wind_base", "wind_xfer_base",
+                       "m_pusher"}, "pending tier drifted"
+
+
+def test_k2_winding_position2_clean():
+    """The cross-plate winding (position 2, log 0023): one NE crown ->
+    riser up the drum flank -> transfer -> module crown wheel -> module
+    ratchet, globally clean against both plates."""
+    from caliber_k2.movement import k2_winding_gate
+    assert k2_winding_gate() == []
 
 
 def test_k2_module_on_own_plate():

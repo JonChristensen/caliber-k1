@@ -336,9 +336,11 @@ K2_INVENTORY = [
     ("m_cam", "sweep"), ("m_hammer", "sweep"),
     ("m_hammer_spring", "in m_hammer"), ("m_hammer_pivot", "in m_hammer"),
     # winding: ONE crown, TWO positions (the novel keyless works)
-    ("m_stem", "pending"), ("k2_crown", "pending"), ("cw1_core", "pending"),
-    ("cw2_core", "pending"), ("wind_idler", "pending"), ("m_clutch", "pending"),
-    ("m_setting_lever", "pending"), ("m_detent", "pending"),
+    ("k2_crown", "sweep"), ("cw2_core", "sweep"), ("wind_riser", "sweep"),
+    ("wind_xfer", "sweep"), ("m_clutch", "sweep"),
+    ("m_setting_lever", "sweep"), ("m_detent", "sweep"),
+    ("cw1_core", "pending"), ("m_stem", "pending"),      # pos-1 base branch
+    ("wind_base", "pending"), ("wind_xfer_base", "pending"),
     ("m_clutch_spring", "in m_setting_lever"),
     # chronograph pusher (run/stop the pen-cam)
     ("m_pusher", "pending"), ("m_pusher_spring", "in m_pusher"),
@@ -541,19 +543,115 @@ for _p in [("m_cock", "m_ring"), ("m_cock", "m_spring"), ("m_cock", "m_roller"),
 
 
 
-# WINDING LINK (one crown, two positions) — OPEN DESIGN PROBLEM, log 0023.
-# The module barrel is big (r38) and central, so its ratchet sits at the
-# module-plate center at bridge z (~34-36). Reaching it from a base-level
-# north crown needs: stem -> a VERTICAL RISER near the rim (clear of both
-# drums, r38) -> a HORIZONTAL transfer wheel at module-bridge level inward
-# to the module crown wheel -> ratchet. That is a real cross-plate keyless
-# works and gets its own solve; it is NOT in the gate yet.
+# WINDING LINK — ONE crown, TWO positions (log 0023, SOLVED).
+# Position 1 (push): K1's base winding (crown wheel (0,65) -> base
+# ratchet), in base_sweeps. Position 2 (pull): the base-level clutch
+# drives a RISER up the clear band north of both drums (r38 -> both
+# drums' north edge is y~71, rim y81) to a HORIZONTAL transfer at
+# module-bridge z (~34-36, above both drums), into the module crown
+# wheel -> module ratchet at plate center. All on the x=0 north line.
+def winding_link_sweeps():
+    """ONE crown at ~2 o'clock, TWO positions (SOLVED, log 0023). Both
+    barrels wound from the NE flank cluster (clear of both drums):
+      pos 1 (push): clutch -> base-level train -> base ratchet (0,41)
+      pos 2 (pull): clutch -> riser -> module-level train -> module
+                    ratchet (0,33)
+    Shortest winding path 44.5mm."""
+    mbr = MMZ["bridge"]; xz = (mbr[0] + 1.0, mbr[1]); bz = (13.0, 16.5)
+    return [
+        Sweep("cw2_core", 19.9, 41.5, 8.0, *xz),       # module crown wheel
+        Sweep("wind_xfer", 30.4, 46.0, 6.0, *xz),      # module transfer
+        Sweep("wind_riser", 40.9, 50.5, 3.0, 13.0, mbr[1]),  # NE-flank riser
+        Sweep("m_clutch", 44.7, 55.2, 4.0, *bz),       # sliding clutch
+        Sweep("m_setting_lever", 36.9, 61.5, 7.0, *bz, rotating=False),
+        Sweep("m_detent", 52.5, 48.9, 4.0, *bz, rotating=False),
+        Sweep("k2_crown", 56.0, 69.2, 7.0, 8.0, 18.0, rotating=False),
+    ]
+
+
 def winding_link_zone():
-    """Coarse reserved corridor for the yet-to-be-solved winding link:
-    the north sector from the rim in to the barrels, spanning both
-    plates' z. Massing shows the space; geometry comes at the solve."""
-    return [Sweep("wind_corridor", 0.0, 62.0, 10.0, 13.0, MMZ["bridge"][1],
-                  rotating=False)]
+    return winding_link_sweeps()               # massing compat
+
+
+for _p in [("cw2_core", "m_ratchet"), ("cw2_core", "wind_xfer"),
+           ("wind_xfer", "wind_riser"), ("wind_riser", "m_clutch"),
+           ("m_clutch", "m_setting_lever"), ("m_setting_lever", "m_detent"),
+           ("m_clutch", "crown_w"), ("wind_riser", "crown_w"),
+           ("m_clutch", "stem"), ("cw2_core", "m_arbor"),
+           ("m_setting_lever", "wind_riser"), ("m_detent", "wind_riser"),
+           ("m_setting_lever", "wind_xfer"), ("m_setting_lever", "cw2_core"),
+           ("wind_base", "ratchet"), ("wind_base", "wind_xfer_base"),
+           ("wind_xfer_base", "m_clutch"), ("wind_base", "b_arbor"),
+           ("m_setting_lever", "wind_xfer_base"), ("m_detent", "wind_xfer"),
+           ("wind_riser", "wind_xfer_base"), ("wind_base", "cw2_core"),
+           ("wind_xfer", "wind_xfer_base")]:
+    MESH_PAIRS.add(frozenset(_p))
+
+
+def base_sweeps():
+    from caliber_k1.revc import revc_sweeps
+    return list(revc_sweeps())
+
+
+def solve_winding_link(step_d=6):
+    """Find a clean route for position 2: a riser on a clear FLANK (both
+    drums cleared vertically) -> a transfer at module-bridge z inward to
+    the module crown wheel -> the module ratchet. The crown follows the
+    riser azimuth. Returns the placement, or None."""
+    from math import atan2
+    mbr = MMZ["bridge"]; xz = (mbr[0] + 1.0, mbr[1])
+    mb = K2_MODULE["barrel"]                     # module barrel/ratchet (0,33)
+    cbx, cby = 0.0, 41.0                         # base barrel
+    base = base_sweeps(); mod = module_sweeps()
+    def clear(name, x, y, r, z0, z1, extra):
+        for o in base + mod + extra:
+            if frozenset((name, o.name)) in MESH_PAIRS: continue
+            if z1 <= o.z0+1e-9 or o.z1 <= z0+1e-9: continue
+            if hypot(x-o.x, y-o.y) < r + o.r + 2.0: return False
+        return hypot(x, y) + r <= MODULE_R - 2.0
+    best = None
+    for az in range(0, 360, step_d):
+        ux, uy = cos(radians(az)), sin(radians(az))
+        for R_r in range(44, 78, 3):             # riser radius from center
+            rx, ry = R_r*ux, R_r*uy
+            riser = Sweep("wind_riser", rx, ry, 3.0, 13.0, mbr[1])
+            if not clear("wind_riser", rx, ry, 3.0, 13.0, mbr[1], []): continue
+            # module crown wheel on the line riser->ratchet, meshing ratchet
+            dx, dy = mb[0]-rx, mb[1]-ry; dl = hypot(dx, dy); ex, ey = dx/dl, dy/dl
+            cwx, cwy = mb[0]-21.6*ex, mb[1]-21.6*ey     # 21.6 = ratchet+cw mesh
+            if not clear("cw2_core", cwx, cwy, 8.0, *xz, [riser]): continue
+            # one transfer wheel midway (riser-top -> cw), at module z
+            txx, tyy = (rx+cwx)/2, (ry+cwy)/2
+            xfer = Sweep("wind_xfer", txx, tyy, 6.0, *xz)
+            if not clear("wind_xfer", txx, tyy, 6.0, *xz, [riser]): continue
+            cw = Sweep("cw2_core", cwx, cwy, 8.0, *xz)
+            # clutch + setting + detent just outboard of the riser
+            clx, cly = rx+6*ux, ry+6*uy
+            if not clear("m_clutch", clx, cly, 4.0, 13.0, 16.5, [riser, xfer, cw]): continue
+            px, py = -uy, ux
+            if not clear("m_setting_lever", clx+10*px, cly+10*py, 7.0, 13.0, 16.5, [riser,xfer,cw]): continue
+            if not clear("m_detent", clx-10*px, cly-10*py, 4.0, 13.0, 16.5, [riser,xfer,cw]): continue
+            path = hypot(rx - mb[0], ry - mb[1])      # riser -> barrel
+            if best is None or path < best[0]:
+                best = (path, dict(az=az, riser=(round(rx,1),round(ry,1)),
+                        cw2=(round(cwx,1),round(cwy,1)),
+                        xfer=(round(txx,1),round(tyy,1)),
+                        clutch=(round(clx,1),round(cly,1))))
+    return best
+
+
+
+
+def k2_winding_gate():
+    """The winding link vs BOTH plates' works + the module drum."""
+    s = base_sweeps() + module_sweeps() + winding_link_sweeps()
+    bad = [b for b in _core_check(s, 2.0) if "past rim" not in b]
+    for sw in winding_link_sweeps():
+        if sw.name in OUTSIDE_OK:
+            continue
+        if hypot(sw.x, sw.y) + sw.r > MODULE_R - 2.0:
+            bad.append(f"{sw.name}: past the plate")
+    return bad
 
 
 def base_sweeps():
