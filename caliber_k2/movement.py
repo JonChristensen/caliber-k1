@@ -30,6 +30,35 @@ from math import cos, sin, pi, hypot, radians
 from caliber_k1.revc import Sweep, MESH_PAIRS, check_all as _core_check
 from caliber_k1.revc import spring_model
 
+# --- THE METAL TARGET (Jon, July 5): the real destination -----------------------
+# K2 in metal must drop into a ~44 x 15 mm wristwatch case (47 max, be
+# careful with lugs). Budget: 44 - case walls -> Ø40 movement; 15 -
+# sapphire top (1) - dial/hands (2) - sapphire back + structure (2) ->
+# ~10 mm movement. The PRINT and METAL are ONE topology at two scales:
+# the diameter fit is scale-invariant (packs the print circle => packs
+# Ø40), so GROWING THE PRINT PLATE IS FREE w.r.t. the metal. Metal is
+# ~4x chunkier in ratio (3.7:1 vs the print's ~14:1) -> vertical room to
+# spare; the metal z-table is TALL where the print is flat.
+K2_METAL = dict(
+    case_d=44.0, case_d_max=47.0, case_t=15.0,
+    movement_d=40.0, movement_t=10.0,        # the envelope to hit
+    module=None,                             # = 40 / (2 * print_reach): set
+                                             # after the full-cast re-solve
+    note="two barrels + metronome at Ø40x10 is grand-complication scale; "
+         "the DFM pass decides if the met barrel wants the caseback side.",
+)
+
+
+def metal_scale():
+    """Print reach -> metal module. The topology packs Ø40 by scale-
+    invariance; this just reports the resulting metal tooth module."""
+    from math import hypot
+    cx, cy = K2_PLATE["center"]
+    reach = max(hypot(s.x - cx, s.y - cy) + s.r for s in k2_sweeps()
+                if s.name not in OUTSIDE_OK)
+    return (K2_METAL["movement_d"] / 2) / reach       # x mm(metal)/mm(print)
+
+
 # --- the K2 plate --------------------------------------------------------------
 K2_RIM = 68.0                  # plate Ø140; sweeps stay 2 inside
 K2_PLATE_T = 6.5               # same stock as K1: shared print settings
