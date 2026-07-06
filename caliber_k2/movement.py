@@ -281,6 +281,99 @@ def solve_k2_round(step=12, barrel_step=6):
     return best
 
 
+
+
+# --- THE COMPONENT INVENTORY (Jon's rule: recite the full cast BEFORE
+# massing; a test fails if a "sweep" part is missing from k2_sweeps).
+# kind: "sweep" = owns a gate envelope; "in <parent>" = built at parts
+# stage inside the parent's footprint (listed so it's never forgotten).
+K2_INVENTORY = [
+    # power
+    ("m_drum", "sweep"), ("m_drum_gear", "sweep"), ("m_arbor", "sweep"),
+    ("m_ratchet", "sweep"), ("m_click", "sweep"),
+    ("m_mainspring", "in m_drum"), ("m_drum_cover", "in m_drum"),
+    # train
+    ("m_p1", "sweep"), ("m_w1", "sweep"), ("m_p2", "sweep"),
+    # escapement
+    ("m_esc_w", "sweep"), ("m_lever_hub", "sweep"), ("m_lever_fork", "sweep"),
+    ("m_roller", "sweep"),
+    ("m_staff", "in m_ring"), ("m_banking", "in m_lever_hub"),
+    ("m_pallet_strap", "in m_lever_hub"),
+    # oscillator + the variable-inertia tempo works
+    ("m_ring", "sweep"), ("m_spring", "sweep"), ("m_cock", "sweep"),
+    ("m_weights", "in m_ring"), ("m_leadscrew", "in m_knob_line"),
+    ("m_tempo_knob", "in m_knob_line"), ("m_knob_line", "sweep"),
+    # haptic
+    ("m_cam", "sweep"), ("m_hammer", "sweep"),
+    ("m_hammer_spring", "in m_hammer"), ("m_hammer_pivot", "in m_hammer"),
+    # winding: ONE crown, TWO positions (the novel keyless works)
+    ("m_stem", "sweep"), ("k2_crown", "sweep"), ("cw1_core", "sweep"),
+    ("cw2_core", "sweep"), ("wind_idler", "sweep"), ("m_clutch", "sweep"),
+    ("m_setting_lever", "sweep"), ("m_detent", "sweep"),
+    ("m_clutch_spring", "in m_setting_lever"),
+    # chronograph pusher (run/stop the pen-cam)
+    ("m_pusher", "sweep"), ("m_pusher_spring", "in m_pusher"),
+    ("m_penstop", "in m_pusher"),
+    # skeleton
+    ("m_pillar", "sweep"), ("m_bridge", "in m_pillar"),
+    ("m_train_cock", "in m_pillar"),
+]
+
+
+def _cb():
+    from caliber_k1.revc import REVC_LAYOUT
+    return REVC_LAYOUT["barrel"]
+
+
+def k2_extra_envelopes():
+    """The massing-relevant parts the r5 model forgot — reserved as
+    real envelopes so the gate and the plate account for them."""
+    from math import hypot as _h
+    B = K2_MET["m_barrel"]; E = K2_MET["m_escape"]; Bd = K2_MET["m_balance"]
+    W = K2_MET["m_w1"]; cx, cy = K2_PLATE["center"]
+    s = []
+    # barrel click, flush beside the ratchet
+    s.append(Sweep("m_click", B[0] + 13, B[1] - 9, 6.5, 16.05, 17.65,
+                   rotating=False))
+    # impulse roller on the balance staff (under the ring, esc band)
+    s.append(Sweep("m_roller", Bd[0], Bd[1], 6.0, *MZ["esc"]))
+    # balance cock: hub over the staff + two feet toward calm plate
+    rb = _h(Bd[0] - cx, Bd[1] - cy); ux, uy = (Bd[0]-cx)/rb, (Bd[1]-cy)/rb
+    px, py = -uy, ux
+    s.append(Sweep("m_cock", Bd[0], Bd[1], 9.0, 14.7, 17.7, rotating=False))
+    for sgn in (+1, -1):
+        s.append(Sweep("m_pillar", Bd[0] + sgn*24*px, Bd[1] + sgn*24*py,
+                       5.0, 6.5, 14.7, rotating=False))
+    # the two-position clutch works: in the OPEN GAP between the clock
+    # and metronome barrels, on the stem line cb->met arbor (one crown
+    # reaches both ratchets from here — the real keyless location)
+    cb = _cb()
+    sx, sy = B[0] - cb[0], B[1] - cb[1]; sl = _h(sx, sy); sx, sy = sx/sl, sy/sl
+    px2, py2 = -sy, sx
+    C0 = (cb[0] + 0.42*sl*sx, cb[1] + 0.42*sl*sy)
+    s.append(Sweep("m_clutch", C0[0], C0[1], 5.0, 12.0, 15.6))
+    s.append(Sweep("m_setting_lever", C0[0] + 10*px2, C0[1] + 10*py2, 8.0,
+                   12.0, 15.6, rotating=False))
+    s.append(Sweep("m_detent", C0[0] - 9*px2, C0[1] - 9*py2, 4.0,
+                   12.0, 15.6, rotating=False))
+    # metronome train bridge pillars (3, around the met cluster)
+    mid = ((B[0]+W[0]+E[0])/3, (B[1]+W[1]+E[1])/3)
+    for ang in (30, 150, 270):
+        from math import radians as _r, cos as _c, sin as _s
+        s.append(Sweep("m_pillar", mid[0] + 30*_c(_r(ang)),
+                       mid[1] + 30*_s(_r(ang)), 4.0, 6.5, 14.7,
+                       rotating=False))
+    return s
+
+
+for p in [("m_cock", "m_ring"), ("m_cock", "m_spring"), ("m_cock", "m_roller"),
+          ("m_roller", "m_lever_fork"), ("m_roller", "m_lever_hub"),
+          ("m_click", "m_ratchet"), ("m_click", "m_arbor"),
+          ("m_clutch", "m_stem"), ("m_clutch", "cw2_core"),
+          ("m_setting_lever", "m_clutch"), ("m_detent", "m_setting_lever"),
+          ("m_setting_lever", "m_stem"), ("m_detent", "m_stem")]:
+    MESH_PAIRS.add(frozenset(p))
+
 # --- THE K2 LAYOUT (joint free-station solve, frozen; Jon's gate next) --------
 # ONE round plate, FLAT stack (17.7 = K1's): the met stations interleave
 # among the clock's; one crown, two positions down the derived stem line.
@@ -324,7 +417,8 @@ def k2_sweeps():
     s = met_free_sweeps(K2_MET["m_barrel"][0], K2_MET["m_barrel"][1],
                         K2_MET["m_w1"], K2_MET["m_escape"],
                         K2_MET["m_balance"])
-    return s + winding_line(K2_MET["m_barrel"]) + k2_furniture()
+    return (s + winding_line(K2_MET["m_barrel"]) + k2_furniture()
+            + k2_extra_envelopes())
 
 
 def k2_gate():
