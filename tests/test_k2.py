@@ -1,7 +1,7 @@
-"""Caliber K2 gates: the frozen two-cluster placement stays globally
-clean (clock + metronome jointly), the energy budget holds, and the
-beat arithmetic is exact."""
-from caliber_k2.movement import (BEAT_BUDGET, K2_COUNTS, K2_PLACEMENT,
+"""Caliber K2 gates: the frozen joint layout stays globally clean
+(clock + metronome interleaved on ONE round plate, flat at 17.7),
+the energy budget holds, and the beat arithmetic is exact."""
+from caliber_k2.movement import (BEAT_BUDGET, K2_COUNTS, K2_MET,
                                  beats_available, k2_gate)
 
 
@@ -22,13 +22,10 @@ def test_k2_beat_gearing():
 
 
 def test_k2_one_crown_two_positions():
-    """ONE crown, TWO positions: both barrels' arbors sit on the north
-    winding corridor so the sliding clutch can reach either ratchet."""
-    from caliber_k2.movement import MET_BARREL_ZONE, cluster_sweeps
-    s, L = cluster_sweeps(K2_PLACEMENT["offset"][0],
-                          K2_PLACEMENT["offset"][1],
-                          K2_PLACEMENT["rot_deg"])
-    mbx, mby = L["barrel"]
-    assert MET_BARREL_ZONE["x"][0] <= mbx <= MET_BARREL_ZONE["x"][1]
-    assert MET_BARREL_ZONE["y"][0] <= mby <= MET_BARREL_ZONE["y"][1]
-    assert abs(0.0 - 0.0) < 8          # clock barrel x: on the corridor
+    """ONE crown, TWO positions: both ratchets flush at 16.05-17.65 on
+    the derived stem line, contrate cores both at stem z13."""
+    from caliber_k2.movement import k2_sweeps
+    names = [s.name for s in k2_sweeps()]
+    assert names.count("cw1_core") == 2 and names.count("cw2_core") == 2
+    ratchets = [s for s in k2_sweeps() if s.name == "m_ratchet"]
+    assert ratchets and all(abs(s.z0 - 16.05) < 0.01 for s in ratchets)

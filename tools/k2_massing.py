@@ -28,12 +28,12 @@ for s in list(clock_neighbors()) + list(k2_sweeps()):
                                                         align=B)))
 kids.append(L("clock bridge zone",
               Pos(-4, 4, 14.7) * Cylinder(62, 3.0, align=B)))
-from caliber_k2.movement import K2_PLACEMENT
-ox, oy = K2_PLACEMENT["offset"]
+from caliber_k2.movement import K2_MET
+mbx, mby = K2_MET["m_barrel"]
 kids.append(L("metronome bridge zone",
-              Pos(ox, oy, MZ["bridge"][0]) * Cylinder(60, 3.0, align=B)))
-asm = Compound(label="k2_massing_r4", children=kids)
-export_step(asm, "exports/k2/massing_r4.step")
+              Pos(mbx, mby, MZ["bridge"][0]) * Cylinder(52, 3.0, align=B)))
+asm = Compound(label="k2_massing_r5", children=kids)
+export_step(asm, "exports/k2/massing_r5.step")
 bb = asm.bounding_box()
-print(f"K2 massing r4: {bb.size.X:.0f} x {bb.size.Y:.0f} x "
+print(f"K2 massing r5: {bb.size.X:.0f} x {bb.size.Y:.0f} x "
       f"{bb.size.Z:.1f} mm, {len(kids)} components")

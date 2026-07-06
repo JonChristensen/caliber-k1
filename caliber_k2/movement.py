@@ -58,17 +58,19 @@ K2_COUNTS = dict(barrel=76, p1=8, w1=64, p2=8, esc_teeth=15)
 # 64t wheel on this plate (hub + w1 + clearance > any legal spacing).
 # The escapement gets its own storey; the escape arbor climbs to it
 # (the proven K1 escape-arbor pattern, inverted).
-# BOTH drums sink into the plate (Jon's call — no floating barrels):
-# the met drum gets a K1-style recess (z2.2-11) in the virgin northern
-# plate; its cluster placement must therefore clear the clock's planes
-# RADIALLY (the north is empty once the clock's private stem yields).
-MZ = dict(drum=(2.2, 11.0),            # SUNK, like K1's
-          trainA=(11.5, 12.65),        # drum-top gear band + p1
-          trainB=(12.85, 14.1),        # w1 + p2 interleave above
-          esc=(14.3, 16.9),            # club wheel + lever, own storey
-          bal=(17.1, 21.1),            # the variable-inertia ring
-          spring=(21.6, 24.1),
-          bridge=(24.6, 27.6))         # K2 tops at 27.6
+# Jon: "you can go up and DOWN as you add gears." At its northern
+# placement the met cluster clears the clock RADIALLY everywhere — so
+# it adopts K1's z-grammar VERBATIM: sunken drum, bay escapement,
+# plate-level balance, one bridge band. K2 is now exactly as tall as
+# K1 (17.7), and both ratchets share one level: the two-position
+# clutch becomes a plain horizontal keyless works.
+MZ = dict(drum=(2.2, 11.0),            # sunk, like K1's
+          trainA=(7.0, 10.5),          # = K1 plane A (drum gear + p1)
+          trainB=(11.0, 14.5),         # = K1 plane B (w1 + p2)
+          esc=(4.2, 6.7),              # = K1's BAY (recess in the north
+          bal=(7.6, 11.0),             #   plate); ring on the plate
+          spring=(11.7, 14.2),
+          bridge=(14.7, 17.7))         # K2 tops at 17.7 — same as K1
 LEVER_SPAN = 30.0
 
 
@@ -83,8 +85,7 @@ def k2_station_sweeps(kind, x, y):
                Sweep("m_w1", x, y, C["w1"] / 2 + 1, *MZ["trainB"])],
         "escape": [Sweep("m_p2", x, y, C["p2"] / 2 + 1, *MZ["trainB"]),
                    Sweep("m_esc_w", x, y, 12.0, *MZ["esc"]),
-                   Sweep("m_cam", x, y, 6.0, MZ["esc"][1] + 0.1,
-                         MZ["esc"][1] + 1.6)],
+                   Sweep("m_cam", x, y, 6.0, 7.25, 8.75)],
         "balance": [Sweep("m_ring", x, y, 21.0, *MZ["bal"]),
                     Sweep("m_spring", x, y, 14.0, *MZ["spring"])],
     }
@@ -116,45 +117,25 @@ def k2_check(sweeps, clearance=2.0):
     return bad
 
 
-CLUSTER = {          # the metronome cluster, LOCAL coordinates (v0 solve)
-    "balance": (14.0, 0.0),
-    "escape": (-14.2, 10.3),
-    "w1": (21.8, 10.3),
-    "barrel": (-14.6, -10.7),
-    "lever_span": 30.0,
-}
-M_CLUSTER_RIM = 60.0        # local reach 57.1 + margin
-
-
-def cluster_sweeps(dx=0.0, dy=0.0, rot_deg=0.0):
-    """The metronome cluster as sweeps, rotated then translated."""
-    from math import cos as c_, sin as s_
-    ca, sa = c_(radians(rot_deg)), s_(radians(rot_deg))
-
-    def T(p):
-        return (p[0] * ca - p[1] * sa + dx, p[0] * sa + p[1] * ca + dy)
-
-    L = {k: (T(v) if isinstance(v, tuple) else v) for k, v in CLUSTER.items()}
-    s = []
-    for kind, key in (("barrel", "barrel"), ("w1", "w1"),
-                      ("escape", "escape"), ("balance", "balance")):
-        s += k2_station_sweeps(kind, *L[key])
-    e, b = L["escape"], L["balance"]
-    ux, uy = ((b[0] - e[0]) / 30.0, (b[1] - e[1]) / 30.0)
-    s += [Sweep("m_lever_hub", e[0] + 15 * ux, e[1] + 15 * uy, 11, *MZ["esc"]),
-          Sweep("m_lever_fork", e[0] + 25 * ux, e[1] + 25 * uy, 4.5, *MZ["esc"]),
+def met_free_sweeps(bx, by, w1, e, b):
+    """The metronome's stations as FREE placements (the rigid v0
+    cluster died with the flat bands: its 21mm barrel-escape spacing
+    needs 50.5 once the escape wheel shares z with the drum body).
+    Stations interleave among the clock's — the K1 solve, replayed
+    with neighbors."""
+    s = k2_station_sweeps("barrel", bx, by)
+    s += k2_station_sweeps("w1", *w1)
+    s += k2_station_sweeps("escape", *e)
+    s += k2_station_sweeps("balance", *b)
+    ux, uy = ((b[0] - e[0]) / LEVER_SPAN, (b[1] - e[1]) / LEVER_SPAN)
+    s += [Sweep("m_lever_hub", e[0] + 15 * ux, e[1] + 15 * uy, 11,
+                *MZ["esc"]),
+          Sweep("m_lever_fork", e[0] + 25 * ux, e[1] + 25 * uy, 4.5,
+                *MZ["esc"]),
           Sweep("m_hammer", e[0] - 14 * ux, e[1] - 14 * uy, 9.0,
-                MZ["esc"][1] + 0.1, MZ["esc"][1] + 2.6),
-          # instrument furniture, riding the cluster frame:
-          Sweep("m_knob_line", *T((52.0, 0.0)), 5.0, *MZ["bal"]),
-          Sweep("m_pusher", *T((14.0, 48.0)), 4.0, *MZ["bal"], rotating=False),
-          # the metronome's OWN winding station (flush ratchet + crown
-          # wheel over its bridge; its crown exits the east rim)
-          Sweep("m_ratchet", *L["barrel"], 13.6,
-                MZ["bridge"][0] + 1.3, MZ["bridge"][1]),
-          Sweep("m_crown_w", *T((-14.6 + 24.0, -10.7 - 8.0)), 13.6,
-                MZ["bridge"][0] + 1.3, MZ["bridge"][1])]
-    return s, L
+                7.25, 10.25),
+          Sweep("m_ratchet", bx, by, 13.6, 16.05, 17.65)]
+    return s
 
 
 for p in [("m_ratchet", "m_crown_w"), ("m_ratchet", "m_arbor"),
@@ -213,10 +194,8 @@ def winding_line(met_arbor):
                16.05, 17.65),                       # spur tier: clock ratchet
          Sweep("cw2_core", mx + 52 * ux, my + 52 * uy, 10.0, 12.2, 13.8),
          Sweep("wind_idler", mx + 26 * ux, my + 26 * uy, 15.0,
-               MZ["bridge"][0] + 1.3, MZ["bridge"][1] + 1.6,
-               rotating=False),                     # met-ratchet transfer zone
-         Sweep("cw2_core", mx + 52 * ux, my + 52 * uy, 8.0,
-               MZ["bridge"][0] + 1.3, MZ["bridge"][1] + 1.6)]
+               16.05, 17.65, rotating=False),       # met-ratchet transfer
+         Sweep("cw2_core", mx + 52 * ux, my + 52 * uy, 8.0, 16.05, 17.65)]
     for k in (66, 78, 90):
         s.append(Sweep("m_stem", mx + k * ux, my + k * uy, 2.7, 10.4, 15.6))
     s.append(Sweep("k2_crown", mx + 102 * ux, my + 102 * uy, 7.0, 8.0, 18.0,
@@ -237,7 +216,8 @@ for p in [("cw1_core", "ratchet"), ("cw1_core", "b_arbor"),
     MESH_PAIRS.add(frozenset(p))
 
 
-OUTSIDE_OK = ("stem", "m_stem", "k2_crown")   # they exit/live past the rim
+OUTSIDE_OK = ("stem", "m_stem", "k2_crown",
+              "m_knob_line", "m_pusher")   # rim furniture: they exit
 
 
 def _enclosing_R(sweeps, cx, cy):
@@ -245,50 +225,106 @@ def _enclosing_R(sweeps, cx, cy):
                if s.name not in OUTSIDE_OK)
 
 
-def solve_k2_round(step_d=3,
-                   rots=(0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180,
-                         202.5, 225, 247.5, 270, 292.5, 315, 337.5)):
-    """One round plate, minimum radius. The met cluster slides under
-    two constraints: the joint gate (with the winding corridor), and
-    its BARREL inside the north corridor zone."""
-    best = None
+def solve_k2_round(step=12, barrel_step=6):
+    """The joint solve: met stations free among the clock's, flat
+    z-grammar (stack 17.7), winding line derived per candidate, plate
+    center + radius minimized over full survivors."""
+    C = K2_COUNTS
+    d_b1 = (C["barrel"] + C["p1"]) / 2
+    d_1e = (C["w1"] + C["p2"]) / 2
     clock = clock_neighbors()
-    for rot in rots:
-        for dx in range(-70, 71, step_d):
-            for dy in range(50, 141, step_d):
-                s, L = cluster_sweeps(dx, dy, rot)
-                mb = L["barrel"]
-                zx, zy = MET_BARREL_ZONE["x"], MET_BARREL_ZONE["y"]
-                if not (zx[0] <= mb[0] <= zx[1] and zy[0] <= mb[1] <= zy[1]):
+    best = None
+    for bx in range(-80, 101, barrel_step):
+        for by in range(30, 131, barrel_step):
+            s0 = k2_station_sweeps("barrel", bx, by) + \
+                [Sweep("m_ratchet", bx, by, 13.6, 16.05, 17.65)]
+            if [x for x in _core_check(clock + s0, 2.0)
+                    if "past rim" not in x]:
+                continue
+            for a1 in range(0, 360, step):
+                w1 = (bx + d_b1 * cos(radians(a1)),
+                      by + d_b1 * sin(radians(a1)))
+                s1 = s0 + k2_station_sweeps("w1", *w1)
+                if [x for x in _core_check(clock + s1, 2.0)
+                        if "past rim" not in x]:
                     continue
-                s = s + winding_line(mb)
-                # find a near-optimal plate center for THIS placement
-                for pcx in range(-16, 17, 8):
-                    for pcy in range(0, 81, 8):
-                        R = _enclosing_R(clock + s, pcx, pcy)
-                        if best is not None and R >= best[0]:
+                for a2 in range(0, 360, step):
+                    e = (w1[0] + d_1e * cos(radians(a2)),
+                         w1[1] + d_1e * sin(radians(a2)))
+                    s2 = s1 + k2_station_sweeps("escape", *e)
+                    if [x for x in _core_check(clock + s2, 2.0)
+                            if "past rim" not in x]:
+                        continue
+                    for a3 in range(0, 360, step):
+                        b = (e[0] + LEVER_SPAN * cos(radians(a3)),
+                             e[1] + LEVER_SPAN * sin(radians(a3)))
+                        s3 = met_free_sweeps(bx, by, w1, e, b) \
+                            + winding_line((bx, by))
+                        if [x for x in _core_check(clock + s3, 2.0)
+                                if "past rim" not in x]:
                             continue
-                        if k2_combined_check(s, (pcx, pcy), R + 2.0):
-                            continue
-                        best = (R, dict(offset=(dx, dy), rot_deg=rot,
-                                        plate_c=(pcx, pcy),
-                                        plate_r=round(R + 2.0, 1)))
+                        for pcx in range(-20, 41, 10):
+                            for pcy in range(0, 81, 10):
+                                R = _enclosing_R(clock + s3, pcx, pcy)
+                                if best is not None and R >= best[0]:
+                                    continue
+                                if k2_combined_check(s3, (pcx, pcy),
+                                                     R + 2.0):
+                                    continue
+                                best = (R, dict(
+                                    m_barrel=(bx, by),
+                                    m_w1=(round(w1[0], 1), round(w1[1], 1)),
+                                    m_escape=(round(e[0], 1), round(e[1], 1)),
+                                    m_balance=(round(b[0], 1), round(b[1], 1)),
+                                    plate_c=(pcx, pcy),
+                                    plate_r=round(R + 2.0, 1)))
     return best
-# --- THE K2 PLACEMENT (solver output, frozen; Jon's massing gate next) ---------
-# ONE round plate O215: clock south (frozen K1 coordinates), metronome
-# a storey higher in the north, ONE crown / TWO positions down the
-# shared corridor. Plate center (12,30) in clock coordinates.
-K2_PLACEMENT = dict(offset=(38.0, 95.0), rot_deg=135.0)
-K2_PLATE = dict(center=(16.0, 48.0), radius=125.8)
+
+
+# --- THE K2 LAYOUT (joint free-station solve, frozen; Jon's gate next) --------
+# ONE round plate, FLAT stack (17.7 = K1's): the met stations interleave
+# among the clock's; one crown, two positions down the derived stem line.
+K2_MET = {
+    "m_barrel": (40.0, 102.0),
+    "m_w1": (82.0, 102.0),
+    "m_escape": (93.1, 67.8),
+    "m_balance": (123.1, 67.8),
+}
+K2_PLATE = dict(center=(30.0, 40.0), radius=125.1)
+
+
+def k2_furniture():
+    """Tempo knob line + pen-cam pusher, anchored from the frozen
+    stations OUT to the real rim (no more floating zones)."""
+    cx, cy = K2_PLATE["center"]
+    b = K2_MET["m_balance"]
+    e = K2_MET["m_escape"]
+    d = hypot(b[0] - cx, b[1] - cy)
+    ux, uy = (b[0] - cx) / d, (b[1] - cy) / d
+    s = [Sweep("m_knob_line", b[0] + 26 * ux, b[1] + 26 * uy, 5.0,
+               *MZ["bal"], rotating=False),
+         Sweep("m_knob_line", b[0] + 38 * ux, b[1] + 38 * uy, 5.0,
+               *MZ["bal"], rotating=False)]
+    de = hypot(e[0] - cx, e[1] - cy)
+    ex, ey = (e[0] - cx) / de, (e[1] - cy) / de
+    s.append(Sweep("m_pusher", e[0] + 20 * ex, e[1] + 20 * ey, 4.0,
+                   *MZ["bal"], rotating=False))
+    return s
+
+
+for p in [("m_knob_line", "m_ring"), ("m_knob_line", "m_spring"),
+          ("m_pusher", "m_ring"), ("m_pusher", "m_hammer"),
+          ("m_knob_line", "m_stem"), ("m_pusher", "m_lever_fork")]:
+    MESH_PAIRS.add(frozenset(p))
 
 
 def k2_sweeps():
-    """The frozen metronome side + the real winding line (the clock
-    side is K1's own gated model, joined in k2_combined_check)."""
-    s, L = cluster_sweeps(K2_PLACEMENT["offset"][0],
-                          K2_PLACEMENT["offset"][1],
-                          K2_PLACEMENT["rot_deg"])
-    return s + winding_line(L["barrel"])
+    """The frozen met side + winding line + furniture (the clock side
+    is K1's own gated model, joined in k2_combined_check)."""
+    s = met_free_sweeps(K2_MET["m_barrel"][0], K2_MET["m_barrel"][1],
+                        K2_MET["m_w1"], K2_MET["m_escape"],
+                        K2_MET["m_balance"])
+    return s + winding_line(K2_MET["m_barrel"]) + k2_furniture()
 
 
 def k2_gate():
