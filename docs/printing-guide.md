@@ -112,6 +112,33 @@ wheel, ratchet, motion/moon wheels, roller, balance wheel)
 - **0.12 mm layers, 4 walls, 100% infill, 50 mm/s outer walls.**
 - Arbors print **vertical** (small pivot up), **brim on** — they're tall and
   thin. Flat wheels print flat.
+- **Arbors need painted supports** — each one is a stack of discs on a thin
+  stem, and every disc underside is a horizontal overhang (confirmed the hard
+  way: unsupported, the wheels spaghetti). Use Tree (manual) and paint ONLY
+  under discs with clear air to the plate:
+  - `minute_arbor`: under the 14t pinion + under the 80t wheel outside the
+    pinion's footprint
+  - `third_arbor`: under the 48t wheel (full annulus)
+  - `fourth_arbor`: under the 8t pinion + under the 36t wheel outside the
+    pinion's footprint
+  - `escape_arbor`: under the 18t pinion (the trees also brace the tall post)
+  - **Never** paint a ring that hovers ≤1 mm above the disc below it (wheel
+    directly over its pinion) — no room to remove support; the slight sag
+    self-heals and fuzz is fine. Collar steps ≤0.5 mm need nothing.
+  - Anti-scar settings: top Z distance 0.2, top interface layers 2, top
+    interface **spacing 0.4–0.5**, support/object XY distance 0.4,
+    on-build-plate only. (A dense 0.2 interface WELDS into matted fuzz —
+    proven on the first arbor batch. Loose interface peels as a sheet;
+    the supported face only needs to be blob-free, not smooth.)
+  - Put the arbors on their own plate — a toppled arbor shouldn't take the
+    flat parts with it.
+- **Cup-shaped parts print closed-face DOWN, mouth UP** (the drum: floor
+  down). The interior — the surface the mainspring rides — then prints
+  clean with zero support; auto-tree ≥50° catches only the outer gear-band
+  ledge and cover lugs. Band-down buries the interior in support.
+- Cleanup of supported faces: brass/nylon brush wheel in a rotary tool at
+  the LOWEST speed (PLA melts at dremel speeds), or a knife scrape.
+  Stay off tooth flanks.
 - Print the **spares** the manifest calls for. Small gears are cheap and
   bench tuning consumes escape wheels and forks.
 
@@ -146,5 +173,7 @@ decorative pass replaces those; `bridge_DRAFT` is only to prove the fit.
 
 ## Hardware (not printed — from the manifest)
 
-M3×8 ×7 + nuts (pillars, cock, feet), M2 ×6 (strap, click, platform),
-Super Lube (PTFE grease) on every pivot before assembly.
+M3×18 ×6 + nuts (bridge pillars, cock feet), M3×20 ×3 + nuts (stand feet),
+M2 self-tap ×6 (strap, click, platform), Super Lube (PTFE grease) on every
+pivot before assembly. *(An earlier revision said M3×8 — too short to reach
+the dial-side nut pockets through the 17.7 mm stack.)*
