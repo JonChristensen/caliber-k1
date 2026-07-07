@@ -149,7 +149,11 @@ for k, (name, px, py, tip, top) in enumerate(post_specs()):
                   Pos(px, py, tip) * dp.arbor_post_d(top - 0.1 - tip)))
 
 asm = Compound(label="revc_movement_r5", children=kids)
-export_step(asm, "exports/k1/revc/movement_r11.step")
-bb = asm.bounding_box()
-print(f"rev C movement r11: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
-      f"(z {bb.min.Z:.1f}..{bb.max.Z:.1f}), {len(kids)} components")
+
+if __name__ == "__main__":
+    # guarded: the tests import this module for the assembly — they must
+    # not rewrite the committed STEP on every run
+    export_step(asm, "exports/k1/revc/movement_r11.step")
+    bb = asm.bounding_box()
+    print(f"rev C movement r11: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm "
+          f"(z {bb.min.Z:.1f}..{bb.max.Z:.1f}), {len(kids)} components")
