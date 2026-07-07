@@ -5,23 +5,13 @@ whole-movement model — swept volumes, energy, and the layout solver.
 Parts get modeled only after a layout passes check_all() and Jon's
 massing gate.
 """
-from dataclasses import dataclass
 from math import cos, sin, pi, hypot
+
+from movement.solver import Sweep, check_sweeps
+from movement.springs import spring_model
 
 RIM = 83.0
 PLATE_T = 6.5
-
-
-@dataclass(frozen=True)
-class Sweep:
-    """A part's swept envelope: cylinder (rotating) or disc (static)."""
-    name: str
-    x: float
-    y: float
-    r: float
-    z0: float
-    z1: float
-    rotating: bool = True
 
 
 MESH_PAIRS = {frozenset(p) for p in [
@@ -40,53 +30,14 @@ MESH_PAIRS = {frozenset(p) for p in [
 
 
 def check_all(sweeps, clearance=2.0):
-    """THE global test: every pair involving a rotating part must clear
-    radially (if z-bands overlap) and stay inside the rim — EXCEPT
-    meshing pairs, whose intentional engagement is verified by the
-    phase-aligned probes at part level instead."""
-    bad = []
-    for s in sweeps:
-        if s.name == "stem":
-            continue                    # the stem EXITS the rim (crown)
-        if hypot(s.x, s.y) + s.r > RIM:
-            bad.append(f"{s.name}: past rim by "
-                       f"{hypot(s.x, s.y) + s.r - RIM:.1f}")
-    for i, a in enumerate(sweeps):
-        for b in sweeps[i + 1:]:
-            if not (a.rotating or b.rotating):
-                continue
-            if a.name == b.name:
-                continue                # segments of one part
-            if frozenset((a.name, b.name)) in MESH_PAIRS:
-                continue
-            if a.z1 <= b.z0 + 1e-9 or b.z1 <= a.z0 + 1e-9:
-                continue
-            d = hypot(a.x - b.x, a.y - b.y)
-            if d < 0.01:
-                continue
-            need = a.r + b.r + clearance
-            if d < need:
-                bad.append(f"{a.name} x {b.name}: {need - d:.2f} short "
-                           f"(z {max(a.z0,b.z0):.1f}-{min(a.z1,b.z1):.1f})")
-    return bad
+    """THE global test, K1 binding: rim 83, K1's mesh-pair exemptions,
+    and the stem exempt from the rim check (it EXITS toward the crown).
+    The machinery lives in movement.solver.check_sweeps."""
+    return check_sweeps(sweeps, clearance=clearance, rim=RIM,
+                        mesh_pairs=MESH_PAIRS, rim_exempt=("stem",))
 
 
-# --- energy model (replaces armchair spring math) ----------------------------
-
-def spring_model(drum_id, hub_d, strip_t, strip_h, module_E=2.0e9):
-    """PETG spiral in a drum: usable turns (half-fill rule), mean torque
-    (N*mm, linearized), strip length (mm)."""
-    r_wall, r_hub = drum_id / 2, hub_d / 2
-    area = pi * (r_wall**2 - r_hub**2)
-    L = area / 2 / strip_t
-    turns_wound = ((r_hub**2 + L * strip_t / pi) ** 0.5 - r_hub) / strip_t
-    turns_relax = (r_wall - (r_wall**2 - L * strip_t / pi) ** 0.5) / strip_t
-    turns = turns_wound - turns_relax
-    I_sec = strip_h * strip_t**3 / 12          # mm^4
-    k = module_E * I_sec / (L * 1e3)           # N*mm per radian-ish
-    tau_mean = k * (turns * 2 * pi) / 2 / 1e3  # rough mean torque N*mm... keep relative
-    return {"turns": turns, "length": L, "tau_rel": strip_h * strip_t**3 / L}
-
+# --- energy model: spring_model re-exported from movement.springs -------------
 
 def runtime_hours(turns, drum_ratio_to_center):
     """drum period = 1h * ratio (center wheel is exactly 60 min)."""
