@@ -15,7 +15,7 @@ All profiles are returned as build123d faces built from sampled polygons —
 numerically robust, no exotic B-rep operations.
 
 This module is caliber-agnostic: module/backlash/addendum/dedendum are
-explicit. Calibers bind their defaults (see caliber_k1.gears).
+explicit. Calibers bind their defaults (see calibers.k1.gears).
 """
 
 from math import atan2, cos, pi, sin

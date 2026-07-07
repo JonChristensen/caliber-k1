@@ -6,10 +6,10 @@ from math import atan2, degrees, hypot
 import pytest
 from build123d import Pos, Rot
 
-from caliber_k1.revc import REVC_LAYOUT
-from caliber_k1.revc_dial import (DIAL_BANDS, DIAL_LAYOUT, DIAL_TRAIN,
+from calibers.k1.revc import REVC_LAYOUT
+from calibers.k1.revc_dial import (DIAL_BANDS, DIAL_LAYOUT, DIAL_TRAIN,
                                   check_dial, dial_parts_list)
-from caliber_k1 import revc_dial_parts as dp
+from calibers.k1 import revc_dial_parts as dp
 
 
 def test_dial_layout_gate():
@@ -119,8 +119,8 @@ def test_dial_platform_covers_every_pocket():
     """Retention: every dial part's plan circle lies inside the platform
     outline (cover circles), and every post tip locates in a platform
     hole — nothing can lift before the platform is off."""
-    from caliber_k1.revc_dial import post_specs
-    from caliber_k1.revc_dial_parts import PLATFORM_SCREWS, TIP as T2
+    from calibers.k1.revc_dial import post_specs
+    from calibers.k1.revc_dial_parts import PLATFORM_SCREWS, TIP as T2
     L = DIAL_LAYOUT
     covers = [((0, 0), 23.0),
               (L["motion"], T2["motion_w"] + 4.0), (L["w1"], T2["w1_w"] + 2.0),
@@ -139,7 +139,7 @@ def test_dial_platform_covers_every_pocket():
 def test_display_stack_flies_clear():
     """Hands over dial over platform: each layer 0.1+ air, hands never
     strike the moon bezel, dial feet land on the post tips."""
-    from caliber_k1.revc_dial import post_specs
+    from calibers.k1.revc_dial import post_specs
     dial = dp.dial_sheet_d()
     mh, hh = dp.minute_hand_d(), dp.hour_hand_d()
     from build123d import Rot

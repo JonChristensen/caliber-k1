@@ -10,8 +10,8 @@ from math import cos, sin, radians
 
 from build123d import Align, Compound, Cylinder, Pos, export_step
 
-from caliber_k1.revc import revc_sweeps, PLATE_T, REVC_LAYOUT
-from caliber_k2.movement import (module_sweeps, winding_link_zone, K2_MODULE,
+from calibers.k1.revc import revc_sweeps, PLATE_T, REVC_LAYOUT
+from calibers.k2.movement import (module_sweeps, winding_link_zone, K2_MODULE,
                                  K2_PLATE, MODULE_PLATE_Z, MMZ, K2_COUNTS,
                                  OUTSIDE_OK)
 

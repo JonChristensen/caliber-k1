@@ -7,10 +7,10 @@ from math import atan2, degrees, hypot
 import pytest
 from build123d import Pos, Rot
 
-from caliber_k1.revc import (BAY_FLOOR, PLATE_T, REVC_LAYOUT, RING, ZC,
+from calibers.k1.revc import (BAY_FLOOR, PLATE_T, REVC_LAYOUT, RING, ZC,
                              bay_stations, bridge_pillar_xy, cock_layout_c,
                              lever_layout_c, mesh_ideals, revc_sweeps)
-from caliber_k1 import revc_parts as rp
+from calibers.k1 import revc_parts as rp
 
 
 def _d(a, b):
@@ -60,7 +60,7 @@ def test_revc_lever_gates_the_escape_wheel():
     Metal variant: KNOWN OPEN ITEM — the 1.5/13 deg table angles (log
     0015) leave no drop window with 0.12 backlash; the DFM pass must
     retune lock/draw/backlash together. Tracked, not hidden."""
-    from caliber_k1.revb import active_variant
+    from calibers.k1.variants import active_variant
     if active_variant().name == "metal":
         pytest.skip("metal escapement angles await the DFM retune (0017)")
     lv = lever_layout_c()
@@ -138,7 +138,7 @@ def test_revc_bay_service_contracts():
     walls on solid plate; the dial-face web under every bay cup >= 1.5."""
     lv = lever_layout_c()
     assert ZC["strap"][1] <= RING[0] - 0.5, "strap rubs the ring"
-    from caliber_k1.revc import bay_band
+    from calibers.k1.revc import bay_band
     bpath, bhw = bay_band()
     for f in lv["strap_feet"]:
         assert _d(f, lv["B"]) > 26.0 + 1.1, "screw head under the ring"
@@ -220,7 +220,7 @@ def test_revc_assembled_movement_no_interference():
     # tooth pitch there must be a SETTLED phase (tip in a gap) and a
     # BITING phase (it truly jams let-down)
     from build123d import Pos as P2, Rot as R2
-    from caliber_k1.revc import REVC_LAYOUT as _L
+    from calibers.k1.revc import REVC_LAYOUT as _L
     click = get("click (")
     r0 = rp.ratchet_c()
     bites = []
@@ -265,7 +265,7 @@ def test_inventory_is_complete_in_the_gate():
     """Jon's rule: recite the full cast before massing. Every sweep-kind
     inventory item must appear in revc_sweeps(); the massing tool builds
     from the same list and asserts its own completeness."""
-    from caliber_k1.revc import INVENTORY, revc_sweeps
+    from calibers.k1.revc import INVENTORY, revc_sweeps
     names = {s.name for s in revc_sweeps()}
     for item, kind in INVENTORY:
         if kind == "sweep":
@@ -280,7 +280,7 @@ def test_winding_station():
     ratio winds the ~2.8-turn spring in under 15 crown turns."""
     from math import atan2, degrees
     from build123d import Pos, Rot
-    from caliber_k1.revc import REVC_LAYOUT as _L, WINDING
+    from calibers.k1.revc import REVC_LAYOUT as _L, WINDING
     _mesh_pair(rp.ratchet_c(), rp.crown_wheel_c(),
                _L["barrel"], WINDING["crown_wheel"], 24, 24)
     # slot mesh: clear at pose for SOME stem roll, engaged when the
@@ -315,7 +315,7 @@ def test_revc_bridge_structural():
     plate held by >=2 screw anchors, every train pivot boss intact on
     exactly one plate, nothing shattered into slivers."""
     from build123d import Cylinder, Align
-    from caliber_k1.revc import bridge_pillar_xy
+    from calibers.k1.revc import bridge_pillar_xy
     B = (Align.CENTER, Align.CENTER, Align.MIN)
     plates = [s for s in rp.bridge_c().solids() if s.volume > 200]
     assert 1 <= len(plates) <= 5

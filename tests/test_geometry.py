@@ -8,7 +8,7 @@ from math import sqrt
 
 import pytest
 
-from caliber_k1.parameters import (
+from calibers.k1.parameters import (
     ARBOR, BARREL, RATCHET, SPRING, STAND, TOL,
     approx_winding_turns, pillar_height, spring_pitch, spring_radial_span,
 )
@@ -62,7 +62,7 @@ def test_stack_height_consistent():
 # --- solid-construction checks (build real OCCT geometry) ------------------
 
 def test_parts_build_and_have_volume():
-    from caliber_k1 import barrel, stand
+    from attic.reva import barrel, stand
 
     for maker in (barrel.ratchet_wheel, barrel.click, barrel.lock_pin, stand.pillar):
         part = maker()
@@ -70,7 +70,7 @@ def test_parts_build_and_have_volume():
 
 
 def test_arbor_length_matches_stack():
-    from caliber_k1.barrel import arbor, arbor_total_length
+    from attic.reva.barrel import arbor, arbor_total_length
 
     part = arbor()
     bb = part.bounding_box()
@@ -79,7 +79,7 @@ def test_arbor_length_matches_stack():
 
 # --- Milestone 2: train math, layout clearances, and the tripod fix --------
 
-from caliber_k1.parameters import TRAIN, train_layout, train_periods
+from calibers.k1.parameters import TRAIN, train_layout, train_periods
 
 
 def _dist(a, b):
@@ -87,7 +87,7 @@ def _dist(a, b):
 
 
 def test_pillar_positions_distinct():
-    from caliber_k1.stand import _pillar_positions
+    from attic.reva.stand import _pillar_positions
     pts = _pillar_positions()
     for i in range(len(pts)):
         for j in range(i + 1, len(pts)):
@@ -116,8 +116,8 @@ def test_mesh_center_distances():
 
 def test_layout_clearances():
     """Every rotating tip circle clears every static obstacle by >=1.5mm."""
-    from caliber_k1.stand import _pillar_positions
-    from caliber_k1.parameters import MOVEMENT_DIAMETER
+    from attic.reva.stand import _pillar_positions
+    from calibers.k1.parameters import MOVEMENT_DIAMETER
     lay = train_layout()
     m = TRAIN.module
     add = TRAIN.wheel_addendum * m
@@ -144,21 +144,21 @@ def test_layout_clearances():
 
 
 def test_train_under_spider():
-    from caliber_k1.parameters import TRAIN_LEVELS
+    from calibers.k1.parameters import TRAIN_LEVELS
     bridge_top = TRAIN_LEVELS["bridge_z"] + TRAIN_LEVELS["bridge_t"]
     assert bridge_top < pillar_height() - 1.0, \
         "wave bridge must clear the spider plate underside"
 
 
 def test_m2_parts_build():
-    from caliber_k1 import train_parts
+    from attic.reva import train_parts
     w1 = train_parts.w1_arbor()
     bridge = train_parts.wave_bridge()
     plate = train_parts.rig_plate()
     assert w1.volume > 500
     assert bridge.volume > 1000
     assert plate.volume > 10000
-    from caliber_k1.parameters import TRAIN_LEVELS
+    from calibers.k1.parameters import TRAIN_LEVELS
     expected = 4 + TRAIN_LEVELS["bridge_z"] + 4  # pivot..bridge-pivot top
     assert w1.bounding_box().size.Z == pytest.approx(expected, abs=0.01)
 
@@ -166,7 +166,7 @@ def test_m2_parts_build():
 def test_bridge_band_clears_pillars_and_drum():
     """The bridge body (half-width 6.5) must not sweep through a pillar,
     and its inner edge must clear the spinning drum wall (r36)."""
-    from caliber_k1.stand import _pillar_positions
+    from attic.reva.stand import _pillar_positions
     lay = train_layout()
     path = [lay["foot_a"], lay["w1"], lay["w4"], lay["esc"], lay["foot_b"]]
     half_w = 6.5
@@ -195,7 +195,7 @@ def test_wave_tube_is_a_balance_seat():
     """Milestone 3 contract: the wave tube center must stay at Swiss-lever
     span from the escape arbor (2.0-2.4x escape pitch radius), so the
     balance jewel can live in the barrel of the wave."""
-    from caliber_k1.decor import wave_tube_center
+    from calibers.k1.decor import wave_tube_center
     lay = train_layout()
     path = [lay["foot_a"], lay["w1"], lay["w4"], lay["esc"], lay["foot_b"]]
     tube = wave_tube_center(path)
@@ -207,7 +207,7 @@ def test_wave_tube_is_a_balance_seat():
 
 # --- Milestone 3: escapement + balance --------------------------------------
 
-from caliber_k1.parameters import (
+from calibers.k1.parameters import (
     BAL, ESC, M3_LEVELS, MOVEMENT_DIAMETER, m3_layout, predicted_period,
 )
 
@@ -260,7 +260,7 @@ def test_balance_ring_clears_platform():
 
 
 def test_m3_parts_build():
-    from caliber_k1 import escapement
+    from attic.reva import escapement
     for maker in (escapement.escape_wheel, escapement.pallet_lever,
                   escapement.balance_cock, escapement.hairspring):
         part = maker()
@@ -270,7 +270,7 @@ def test_m3_parts_build():
 # --- Milestone 4: motion works arithmetic ------------------------------------
 
 def test_motion_works_exact():
-    from caliber_k1.parameters import motion_periods
+    from calibers.k1.parameters import motion_periods
     p = motion_periods()
     assert p["minute_s"] == pytest.approx(3600.0), "minute hand must be exactly 1 hr"
     assert p["hour_s"] == pytest.approx(43200.0), "hour hand must be exactly 12 hr"
@@ -279,7 +279,7 @@ def test_motion_works_exact():
 # --- Milestone 4: upper-deck motion works layout -----------------------------
 
 def test_m4_mesh_distances_exact():
-    from caliber_k1.parameters import m4_layout
+    from calibers.k1.parameters import m4_layout
     m = m4_layout()
     W1 = train_layout()["w1"]
     assert _dist(W1, m["R1"]) == pytest.approx((16 + 24) / 2, abs=0.05)
@@ -289,7 +289,7 @@ def test_m4_mesh_distances_exact():
 
 
 def test_m4_deck_clearances():
-    from caliber_k1.parameters import m4_layout, m3_layout
+    from calibers.k1.parameters import m4_layout, m3_layout
     m, e = m4_layout(), m3_layout()
     tips = {"R1": 13, "R2": 17, "T": 16, "M": 19}
     # R1's wheel lives DOWN at z10.5-15.5: check the ground-floor gap
@@ -312,7 +312,7 @@ def test_m4_deck_clearances():
 
 
 def test_m4_zstack_consistent():
-    from caliber_k1.parameters import M4_LEVELS as L
+    from calibers.k1.parameters import M4_LEVELS as L
     assert L["deck_plate_z"] > 27.8        # flies over the spider
     assert L["mesh1_z"] >= L["deck_plate_z"] + L["deck_plate_t"]
     assert L["mesh2_z"] >= L["mesh1_z"] + 5.5 and L["mesh3_z"] >= L["mesh2_z"] + 5.5
@@ -321,14 +321,14 @@ def test_m4_zstack_consistent():
 
 
 def test_m4_parts_build():
-    from caliber_k1 import motion
+    from attic.reva import motion
     for maker in (motion.r1_arbor, motion.t_arbor, motion.deck_plate,
                   motion.dial_cock, motion.winding_knob):
         assert maker().volume > 150, f"{maker.__name__} implausibly small"
 
 
 def test_moon_phase_accuracy():
-    from caliber_k1.parameters import lunation_days
+    from calibers.k1.parameters import lunation_days
     true_lun = 29.530588853
     err_per_lun = abs(lunation_days() - true_lun)          # days
     years_to_one_day = true_lun / err_per_lun / 12.368
@@ -343,7 +343,7 @@ def test_hour_pipe_passes_dial_cock():
 # --- Rev B: dual-train arithmetic --------------------------------------------
 
 def test_revb_trains_exact():
-    from caliber_k1.revb import train_check
+    from attic.revb.revb import train_check
     for variant in ("metal", "print"):
         r = train_check(variant)
         assert r["center_min"] == pytest.approx(60.0), f"{variant}: center wheel"
@@ -354,7 +354,7 @@ def test_revb_trains_exact():
 
 
 def test_revb_layout_meshes_and_fits():
-    from caliber_k1.revb import revb_layout, TRAINS
+    from attic.revb.revb import revb_layout, TRAINS
     m, t = revb_layout(), TRAINS["metal"]
     pairs = [("barrel", "center", (t["barrel"] + t["c_pin"]) / 2),
              ("center", "third", (t["center"] + t["t_pin"]) / 2),
@@ -374,18 +374,18 @@ def test_revb_layout_meshes_and_fits():
 
 
 def test_revb_mainplate_builds():
-    from caliber_k1.revb_parts import mainplate
+    from attic.revb.revb_parts import mainplate
     p = mainplate()
     assert p.volume > 80000, "mainplate implausibly small"
-    from caliber_k1.revb import PLATE_T
+    from attic.revb.revb import PLATE_T
     assert p.bounding_box().size.Z == pytest.approx(PLATE_T, abs=0.01)
 
 
 def test_revb_wave_bridge_tube_clears_balance_staff():
     """The staff's path through the bridge must be genuinely empty."""
     from build123d import Cylinder, Pos, Align
-    from caliber_k1.revb import revb_layout
-    from caliber_k1.revb_parts import wave_bridge_b
+    from attic.revb.revb import revb_layout
+    from attic.revb.revb_parts import wave_bridge_b
     b = wave_bridge_b()
     x, y = revb_layout()["balance"]
     probe = Pos(x, y, -5) * Cylinder(2.8, 20,
@@ -398,8 +398,8 @@ def test_revb_wave_bridge_tube_clears_balance_staff():
 
 def test_broad_bridge_well_and_bearings():
     from build123d import Cylinder, Pos, Align
-    from caliber_k1.revb import revb_layout
-    from caliber_k1.revb_parts import broad_wave_bridge
+    from attic.revb.revb import revb_layout
+    from attic.revb.revb_parts import broad_wave_bridge
     b = broad_wave_bridge()
     m = revb_layout()
     BM = (Align.CENTER, Align.CENTER, Align.MIN)
@@ -418,7 +418,7 @@ def test_broad_bridge_well_and_bearings():
 
 
 def test_revb_escapement_packing():
-    from caliber_k1.revb import escapement_layout_b, revb_layout, ZB
+    from attic.revb.revb import escapement_layout_b, revb_layout, ZB
     e, m = escapement_layout_b(), revb_layout()
     # pallet feet must clear the escape wheel sweep (r16) at post level
     for f in e["pallet_feet"]:
@@ -434,20 +434,20 @@ def test_revb_escapement_packing():
 
 
 def test_revb_cocks_build():
-    from caliber_k1.revb_parts import pallet_cock, balance_cock_b
+    from attic.revb.revb_parts import pallet_cock, balance_cock_b
     assert pallet_cock().volume > 200
     assert balance_cock_b().volume > 800
 
 
 def test_bridge_stays_on_the_plate():
-    from caliber_k1.revb_parts import broad_wave_bridge
+    from attic.revb.revb_parts import broad_wave_bridge
     bb = broad_wave_bridge().bounding_box()
     for v in (bb.min.X, bb.min.Y, bb.max.X, bb.max.Y):
         assert abs(v) <= 85.5, f"bridge overhangs the mainplate rim: {v:.1f}"
 
 
 def test_keyless_layout():
-    from caliber_k1.revb import keyless_layout_b, revb_layout
+    from attic.revb.revb import keyless_layout_b, revb_layout
     k, m = keyless_layout_b(), revb_layout()
     # crown wheel meshes the ratchet at 24t+24t module-1 center distance
     assert _dist(k["crown_wheel"], m["barrel"]) == pytest.approx(24.0, abs=0.05)
@@ -460,13 +460,13 @@ def test_keyless_layout():
 
 
 def test_revb_keyless_parts_build():
-    from caliber_k1 import revb_parts as rp
+    from attic.revb import revb_parts as rp
     for mk in (rp.ratchet_b, rp.crown_wheel_b, rp.stem_crown, rp.click_b):
         assert mk().volume > 150, f"{mk.__name__} implausibly small"
 
 
 def test_click_actually_reaches_the_ratchet():
-    from caliber_k1.revb import click_geometry_b
+    from attic.revb.revb import click_geometry_b
     g = click_geometry_b()
     root_r, tip_r = 12.0 - 1.3, 13.0          # 24t module-1 wheel
     assert root_r + 0.3 < g["tip_r"] < tip_r - 0.3, \
@@ -478,8 +478,8 @@ def test_click_part_tip_engages_in_place():
     verify solid material lands inside the tooth engagement band."""
     from math import radians
     from build123d import Cylinder, Pos, Rot, Align
-    from caliber_k1.revb import revb_layout
-    from caliber_k1.revb_parts import click_b
+    from attic.revb.revb import revb_layout
+    from attic.revb.revb_parts import click_b
     bx, by = revb_layout()["barrel"]
     placed = Pos(bx, by, 0) * Rot(0, 0, -30) * click_b()
     band = Pos(bx, by, -1) * Cylinder(12.6, 6, align=(
@@ -494,7 +494,7 @@ def test_click_part_tip_engages_in_place():
 def test_crown_knob_clears_the_bridge():
     """Crown at r88: its inner face (r85) must stay outboard of the
     bridge's maximum extent (<=85.5 asserted elsewhere, real edge ~84)."""
-    from caliber_k1.revb_parts import broad_wave_bridge
+    from attic.revb.revb_parts import broad_wave_bridge
     bb = broad_wave_bridge().bounding_box()
     bridge_max_r = max(abs(bb.min.X), abs(bb.min.Y), bb.max.X, bb.max.Y)
     knob_inner_r = 88 - 3
@@ -505,7 +505,7 @@ def test_crown_knob_clears_the_bridge():
 # --- The variant switch -------------------------------------------------------
 
 def test_variant_switch_reflows_the_stem():
-    from caliber_k1.revb import VARIANTS, stem_line_z, bridge_z, drum_top_z
+    from attic.revb.revb import VARIANTS, stem_line_z, bridge_z, drum_top_z
     zp, zm = stem_line_z(VARIANTS["print"]), stem_line_z(VARIANTS["metal"])
     assert zp > zm + 10, "metal stem must drop with its slim barrel"
     for v in VARIANTS.values():
@@ -516,7 +516,7 @@ def test_variant_switch_reflows_the_stem():
 def test_variants_share_the_layout():
     """The whole point: identical wheels, identical positions, both worlds.
     Layout functions take no variant — geometry cannot fork by accident."""
-    from caliber_k1.revb import TRAINS
+    from attic.revb.revb import TRAINS
     for key in ("barrel", "c_pin", "center", "t_pin", "third",
                 "f_pin", "fourth", "e_pin"):
         assert TRAINS["print"][key] == TRAINS["metal"][key]
@@ -525,7 +525,7 @@ def test_variants_share_the_layout():
 # --- 2e: dial side ------------------------------------------------------------
 
 def test_motion_works_module_trick():
-    from caliber_k1.revb import M2E, motion_layout_b
+    from attic.revb.revb import M2E, motion_layout_b
     m = motion_layout_b()
     assert _dist(m["minute"], (0, 0)) == pytest.approx((12 + 36) / 2 * 1.0)
     assert (10 + 40) / 2 * M2E["hour_mesh_module"] == pytest.approx(24.0)
@@ -533,7 +533,7 @@ def test_motion_works_module_trick():
 
 
 def test_moon_disc_packs_clear():
-    from caliber_k1.revb import M2E, motion_layout_b
+    from attic.revb.revb import M2E, motion_layout_b
     m = motion_layout_b()
     tip = 105 * M2E["moon_module"] / 2 + M2E["moon_module"]
     assert _dist(m["disc"], (0, 0)) + tip < 84, "disc past the rim"
@@ -542,7 +542,7 @@ def test_moon_disc_packs_clear():
 
 
 def test_dial_parts_build():
-    from caliber_k1 import revb_parts as rp
+    from attic.revb import revb_parts as rp
     for mk in (rp.cannon_pinion_b, rp.minute_wheel_b, rp.hour_wheel_dial_b,
                rp.moon_s1_b, rp.moon_disc_b, rp.dial_platform):
         assert mk().volume > 80, f"{mk.__name__} implausibly small"
@@ -551,7 +551,7 @@ def test_dial_parts_build():
 def test_the_dial_actually_fits():
     """Pocketed scheme (log 0013): works inside the plate, platform
     closes the pocket, dial beyond it, hands outermost."""
-    from caliber_k1.revb import M2E, PLATE_T
+    from attic.revb.revb import M2E, PLATE_T
     assert M2E["pocket_depth"] <= PLATE_T - 3.5, "pocket eats the bridge-side bushings"
     assert M2E["planeA"][1] <= M2E["pocket_depth"] + 1e-9
     assert M2E["platform"][1] < 0 < M2E["platform"][0] + 1e-9
@@ -566,8 +566,8 @@ def test_moon_is_actually_visible():
     open sky over a moon sitting at the aperture position."""
     from math import cos, sin, radians
     from build123d import Cylinder, Pos, Align
-    from caliber_k1.revb import M2E, motion_layout_b
-    from caliber_k1.revb_parts import dial_platform
+    from attic.revb.revb import M2E, motion_layout_b
+    from attic.revb.revb_parts import dial_platform
     ml = motion_layout_b()
     a = radians(M2E["moon_aperture_az_deg"])
     ax = ml["disc"][0] + 18 * cos(a)
@@ -582,8 +582,8 @@ def test_plate_bushings_open_from_the_top():
     """A pivot must be able to ENTER every bridge-side bushing (they
     sealed shut when PLATE_T grew — never again)."""
     from build123d import Cylinder, Pos, Align
-    from caliber_k1.revb import revb_layout, PLATE_T
-    from caliber_k1.revb_parts import mainplate
+    from attic.revb.revb import revb_layout, PLATE_T
+    from attic.revb.revb_parts import mainplate
     p = mainplate()
     m = revb_layout()
     for k, r in (("barrel", 3.9), ("center", 1.4), ("third", 1.4),
@@ -598,10 +598,10 @@ def test_plate_bushings_open_from_the_top():
 # --- 2e-half: the real train --------------------------------------------------
 
 def test_train_arbors_span_plate_to_bridge_boss():
-    from caliber_k1 import revb_parts as rp
-    from caliber_k1.revb import active_variant, train_upper_bearing_z
+    from attic.revb import revb_parts as rp
+    from attic.revb.revb import active_variant, train_upper_bearing_z
     boss = train_upper_bearing_z(active_variant())
-    from caliber_k1.revb import bridge_z
+    from attic.revb.revb import bridge_z
     bz = bridge_z(active_variant())
     spans = {rp.center_arbor_b: (1.2, bz + 2.5), rp.third_arbor_b: (3.5, bz + 2.5),
              rp.fourth_arbor_b: (3.5, boss + 4.0), rp.escape_arbor_b: (3.5, boss + 4.0)}
@@ -612,13 +612,13 @@ def test_train_arbors_span_plate_to_bridge_boss():
 
 
 def test_escape_wheel_clears_bridge_bosses():
-    from caliber_k1.revb import GEAR_PLANES, active_variant, train_upper_bearing_z
+    from attic.revb.revb import GEAR_PLANES, active_variant, train_upper_bearing_z
     assert GEAR_PLANES["ESC"][1] + 1.0 <= train_upper_bearing_z(active_variant())
 
 
 def test_balance_staff_reaches_cock():
-    from caliber_k1.revb_parts import balance_staff_rev_b
-    from caliber_k1.revb import active_variant, osc_stack
+    from attic.revb.revb_parts import balance_staff_rev_b
+    from attic.revb.revb import active_variant, osc_stack
     bb = balance_staff_rev_b().bounding_box()
     assert bb.max.Z == pytest.approx(osc_stack(active_variant())["staff_top"], abs=0.05)
 
@@ -626,7 +626,7 @@ def test_balance_staff_reaches_cock():
 def test_balance_ring_sits_between_strap_and_center_wheel():
     """Jon's placement: ring UNDER the bridge, in the well — above the
     pallet bridge's thin upper strap, below the high center wheel."""
-    from caliber_k1.revb import active_variant, p1_high, osc_stack
+    from attic.revb.revb import active_variant, p1_high, osc_stack
     v = active_variant()
     o = osc_stack(v)
     strap_top = 22.0 + 0.2 + 1.5
@@ -641,9 +641,9 @@ def test_train_meshes_phase_aligned():
     (First probe version skipped phasing — two pairs passed by luck.)"""
     from math import hypot, atan2, degrees
     from build123d import Pos, Rot
-    from caliber_k1 import barrel as m1
-    from caliber_k1.revb import revb_layout, PLATE_T
-    from caliber_k1 import revb_parts as rp
+    from attic.reva import barrel as m1
+    from attic.revb.revb import revb_layout, PLATE_T
+    from attic.revb import revb_parts as rp
     m = revb_layout()
     parts = {"drum": (m1.drum(), PLATE_T + 0.5, m["barrel"]),
              "center": (rp.center_arbor_b(), 1.2, m["center"]),
@@ -677,8 +677,8 @@ def test_swiss_lever_gates_the_escape_wheel():
     commands the wheel. Dynamic behavior is the bench's job."""
     from math import degrees
     from build123d import Pos, Rot
-    from caliber_k1.revb import lever_layout_b
-    from caliber_k1.revb_parts import club_escape_wheel_b, swiss_lever_b
+    from attic.revb.revb import lever_layout_b
+    from attic.revb.revb_parts import club_escape_wheel_b, swiss_lever_b
     L = lever_layout_b()
     wheel0 = club_escape_wheel_b()
     lever0 = swiss_lever_b()
@@ -712,8 +712,8 @@ def test_pallet_bridge_serviceable():
     """The removable cassette: builds, its feet clear the escape wheel
     sweep and sit under the balance ring's airspace, and the fork's
     short arbor spans exactly the two bearing cups."""
-    from caliber_k1.revb import lever_layout_b
-    from caliber_k1.revb_parts import pallet_bridge_b, swiss_lever_b
+    from attic.revb.revb import lever_layout_b
+    from attic.revb.revb_parts import pallet_bridge_b, swiss_lever_b
     L = lever_layout_b()
     for f in L["bridge_feet"]:
         assert _dist(f, L["E"]) > 16 + 4 + 1.0, "bridge foot in wheel sweep"
@@ -727,8 +727,8 @@ def test_pallet_bridge_serviceable():
 def test_escapement_safety_parts():
     """Banking pins limit the swing; the guard finger stops 0.3 off the
     safety roller; the crescent lets it pass only in line."""
-    from caliber_k1.revb import lever_layout_b
-    from caliber_k1.revb_parts import swiss_lever_b, roller_b, pallet_bridge_b
+    from attic.revb.revb import lever_layout_b
+    from attic.revb.revb_parts import swiss_lever_b, roller_b, pallet_bridge_b
     L = lever_layout_b()
     lv = swiss_lever_b()
     r = roller_b()
@@ -742,7 +742,7 @@ def test_escapement_safety_parts():
 def test_steel_staff_conversion():
     """Register upgrades: every balance-borne part grips the Ø3 rod, and
     the collet is slit (friction clamp, rotatable = beat adjustment)."""
-    from caliber_k1.revb_parts import balance_wheel_b, hairspring_b, roller_b
+    from attic.revb.revb_parts import balance_wheel_b, hairspring_b, roller_b
     for mk in (balance_wheel_b, hairspring_b, roller_b):
         assert mk().volume > 25, f"{mk.__name__} implausible"
     hs = hairspring_b()
@@ -758,7 +758,7 @@ def test_hairspring_nests_in_the_well():
     """Jon's arrangement: spring inside the bridge's thickness, clear of
     the center wheel band below and NEVER touching the balance wheel —
     connected only through the collet on the staff."""
-    from caliber_k1.revb import active_variant, bridge_z, p1_high, osc_stack
+    from attic.revb.revb import active_variant, bridge_z, p1_high, osc_stack
     v = active_variant()
     o = osc_stack(v)
     assert o["hs_lo"] >= p1_high(v)[1] + 0.5, "spring combs the center wheel"
@@ -773,13 +773,13 @@ def test_revc_layout_globally_clean():
     """THE test rev A and rev B never had: the entire movement's swept
     volumes, checked pairwise, forever. Any future part that changes a
     sweep re-runs this gate."""
-    from caliber_k1.revc import revc_sweeps, check_all, REVC_LAYOUT
+    from calibers.k1.revc import revc_sweeps, check_all, REVC_LAYOUT
     violations = check_all(revc_sweeps())
     assert violations == [], f"global collisions: {violations[:5]}"
     # stack: cock top at 17.7, escapement bay recessed into the plate,
     # cock coplanar with the bridge — nothing stands above them (Jon's
     # massing r2 notes), and 2.0mm clearance everywhere (rim-room note)
-    from caliber_k1.revc import COCK, BRIDGE, ROLLER_Z, PLATE_T
+    from calibers.k1.revc import COCK, BRIDGE, ROLLER_Z, PLATE_T
     assert COCK[1] <= 17.7 + 1e-9
     assert COCK == BRIDGE                    # coplanar, nothing higher
     assert ROLLER_Z[0] < PLATE_T - 2.0       # bay truly inside the plate

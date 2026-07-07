@@ -4,7 +4,7 @@ geometry until a layout of Sweeps passes the check.
 
 Calibers bind their own rim radius, mesh-pair exemptions and rim
 exemptions (e.g. a stem that legitimately exits the rim toward its
-crown) — see caliber_k1.revc.check_all for the K1 binding.
+crown) — see calibers.k1.revc.check_all for the K1 binding.
 """
 from dataclasses import dataclass
 from math import hypot

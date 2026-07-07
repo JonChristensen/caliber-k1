@@ -2,8 +2,8 @@
 + the metronome cluster (east disc), every can labeled."""
 from build123d import Align, Compound, Cylinder, Pos, export_step
 
-from caliber_k1.revc import PLATE_T
-from caliber_k2.movement import (K2_PLATE, MZ, clock_neighbors, k2_gate,
+from calibers.k1.revc import PLATE_T
+from calibers.k2.movement import (K2_PLATE, MZ, clock_neighbors, k2_gate,
                                  k2_sweeps)
 
 B = (Align.CENTER, Align.CENTER, Align.MIN)
@@ -28,7 +28,7 @@ for s in list(clock_neighbors()) + list(k2_sweeps()):
                                                         align=B)))
 kids.append(L("clock bridge zone",
               Pos(-4, 4, 14.7) * Cylinder(62, 3.0, align=B)))
-from caliber_k2.movement import K2_MET
+from calibers.k2.movement import K2_MET
 mbx, mby = K2_MET["m_barrel"]
 kids.append(L("metronome bridge zone",
               Pos(mbx, mby, MZ["bridge"][0]) * Cylinder(52, 3.0, align=B)))

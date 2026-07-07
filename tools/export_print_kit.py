@@ -139,7 +139,7 @@ POST_NOTE = "vertical; or Ø2 steel pin"
 
 
 def manifest_rows():
-    from caliber_k1.revc_dial import post_specs
+    from calibers.k1.revc_dial import post_specs
     rows = [(n, q, c, note) for n, _, q, c, note in KIT + KIT_DIAL]
     rows.append((BRIDGE_ROW[0], BRIDGE_ROW[2], BRIDGE_ROW[3], BRIDGE_ROW[4]))
     rows += [(f"arbor_post_{n}", 1, "D", POST_NOTE)
@@ -156,9 +156,9 @@ def write_manifest():
 
 def export_stls():
     from build123d import export_stl
-    from caliber_k1 import revc_parts as rp
-    from caliber_k1 import revc_dial_parts as dp
-    from caliber_k1.revc_dial import post_specs
+    from calibers.k1 import revc_parts as rp
+    from calibers.k1 import revc_dial_parts as dp
+    from calibers.k1.revc_dial import post_specs
 
     builders = [(n, getattr(rp, fn)) for n, fn, *_ in KIT]
     builders += [(n, getattr(dp, fn)) for n, fn, *_ in KIT_DIAL]

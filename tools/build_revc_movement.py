@@ -6,10 +6,10 @@ from math import atan2, degrees
 
 from build123d import Compound, Pos, Rot, export_step
 
-from caliber_k1.revc import REVC_LAYOUT, cock_layout_c, lever_layout_c
-from caliber_k1.revc_dial import DIAL_LAYOUT, DIAL_TRAIN
-from caliber_k1 import revc_parts as rp
-from caliber_k1 import revc_dial_parts as dp
+from calibers.k1.revc import REVC_LAYOUT, cock_layout_c, lever_layout_c
+from calibers.k1.revc_dial import DIAL_LAYOUT, DIAL_TRAIN
+from calibers.k1 import revc_parts as rp
+from calibers.k1 import revc_dial_parts as dp
 
 
 def L(name, part):
@@ -84,7 +84,7 @@ for i, s in enumerate(sorted(_plates, key=lambda s: -s.volume)):
 
 # winding stage: crown wheel phased to the ratchet (which stays square-
 # aligned on the arbor); stem rolled so a tooth centers on a slot
-from caliber_k1.revc import WINDING
+from calibers.k1.revc import WINDING
 cw = WINDING["crown_wheel"]
 ra, rb = mesh_rots(lay["barrel"], cw, 24, 24)
 R_crown = rb + ra                      # ratchet phase 0 (square-aligned)
@@ -143,7 +143,7 @@ kids += [
     L("minute hand", Rot(0, 0, 90) * dp.minute_hand_d()),
     L("hour hand", Rot(0, 0, 300) * dp.hour_hand_d()),
 ]
-from caliber_k1.revc_dial import post_specs
+from calibers.k1.revc_dial import post_specs
 for k, (name, px, py, tip, top) in enumerate(post_specs()):
     kids.append(L(f"arbor post {k+1}: {name} (O2 register pin)",
                   Pos(px, py, tip) * dp.arbor_post_d(top - 0.1 - tip)))

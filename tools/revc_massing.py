@@ -4,11 +4,11 @@ the run fails loudly if any inventory item is missing from the output).
 Collisions are already proven by the global gate."""
 from build123d import Align, Box, Compound, Cylinder, Pos, export_step, extrude
 
-from caliber_k1.revc import (BAY_FLOOR, INVENTORY, PLATE_T, REVC_LAYOUT,
+from calibers.k1.revc import (BAY_FLOOR, INVENTORY, PLATE_T, REVC_LAYOUT,
                              WINDING, ZC, bay_band, bay_stations,
                              cock_layout_c, lever_layout_c, revc_sweeps)
-from caliber_k1.revc_dial import DIAL_BANDS, dial_parts_list
-from caliber_k1.revc_parts import _band
+from calibers.k1.revc_dial import DIAL_BANDS, dial_parts_list
+from calibers.k1.revc_parts import _band
 
 B = (Align.CENTER, Align.CENTER, Align.MIN)
 

@@ -1,7 +1,7 @@
 """Caliber K2 gates: the frozen joint layout stays globally clean
 (clock + metronome interleaved on ONE round plate, flat at 17.7),
 the energy budget holds, and the beat arithmetic is exact."""
-from caliber_k2.movement import (BEAT_BUDGET, K2_COUNTS,
+from calibers.k2.movement import (BEAT_BUDGET, K2_COUNTS,
                                  beats_available, k2_module_gate)
 
 
@@ -9,7 +9,7 @@ def test_k2_inventory_complete():
     """Jon's rule: recite the full cast before massing. Every 'sweep'
     part owns an envelope on the module plate; the 'pending' tier is
     exactly the winding-link + chrono works awaiting their solve (0023)."""
-    from caliber_k2.movement import (K2_INVENTORY, module_sweeps,
+    from calibers.k2.movement import (K2_INVENTORY, module_sweeps,
                                      winding_link_sweeps)
     have = set(s.name for s in module_sweeps() + winding_link_sweeps())
     missing = [n for n, k in K2_INVENTORY if k == "sweep" and n not in have]
@@ -23,7 +23,7 @@ def test_k2_winding_position2_clean():
     """The cross-plate winding (position 2, log 0023): one NE crown ->
     riser up the drum flank -> transfer -> module crown wheel -> module
     ratchet, globally clean against both plates."""
-    from caliber_k2.movement import k2_winding_gate
+    from calibers.k2.movement import k2_winding_gate
     assert k2_winding_gate() == []
 
 
@@ -50,7 +50,7 @@ def test_k2_two_sided_stack():
     """Two-sided: base (K1 z-grammar, tops 17.7) + module plate stacked
     at 18.2, metronome works above it. The module ratchet is flush in the
     module bridge; the two plates share the O166 diameter."""
-    from caliber_k2.movement import (module_sweeps, MODULE_PLATE_Z, MMZ,
+    from calibers.k2.movement import (module_sweeps, MODULE_PLATE_Z, MMZ,
                                      K2_PLATE)
     assert MODULE_PLATE_Z >= 17.7                    # module clears the base
     names = [s.name for s in module_sweeps()]
