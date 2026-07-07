@@ -11,9 +11,10 @@ from math import cos, sin, radians
 from build123d import Align, Compound, Cylinder, Pos, export_step
 
 from calibers.k1.revc import revc_sweeps, PLATE_T, REVC_LAYOUT
-from calibers.k2.movement import (module_sweeps, winding_link_zone, K2_MODULE,
-                                 K2_PLATE, MODULE_PLATE_Z, MMZ, K2_COUNTS,
-                                 OUTSIDE_OK)
+from calibers.k2.brief import K2_COUNTS, OUTSIDE_OK
+from calibers.k2.layout import (module_sweeps, K2_MODULE, K2_PLATE,
+                                MODULE_PLATE_Z, MMZ)
+from calibers.k2.winding import winding_link_zone
 
 B = (Align.CENTER, Align.CENTER, Align.MIN)
 R = K2_PLATE["radius"]
