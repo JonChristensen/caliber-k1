@@ -74,7 +74,7 @@ from caliber_k1.revb_parts import balance_wheel_b, hairspring_b
 kids.append(L("balance_wheel (in the well, under the bridge)", Pos(m["balance"][0], m["balance"][1], OS["ring_lo"]) * balance_wheel_b()))
 kids.append(L("hairspring (slit collet, over the well)", Pos(m["balance"][0], m["balance"][1], OS["hs_lo"]) * hairspring_b()))
 asm = Compound(label="k1_revb_full_r5", children=kids)
-export_step(asm, "exports/revb/review_full_movement_r13.step")
+export_step(asm, "exports/k1/revb/review_full_movement_r13.step")
 export_stl(asm, "/tmp/full.stl")
 bb = asm.bounding_box()
 print(f"full movement r2: {bb.size.X:.0f} x {bb.size.Y:.0f} x {bb.size.Z:.1f} mm, "

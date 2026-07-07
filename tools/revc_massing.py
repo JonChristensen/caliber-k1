@@ -66,7 +66,7 @@ kids.append(L("crown (outside the rim, mid-height)",
               Pos(0, 91, WINDING["stem_z"] - 6.5) * Cylinder(7, 13, align=B)))
 
 asm = Compound(label="revc_massing_r6", children=kids)
-export_step(asm, "exports/revc/massing_r6.step")
+export_step(asm, "exports/k1/revc/massing_r6.step")
 bb = asm.bounding_box()
 labels = [k.label for k in kids]
 missing = [n for n, kind in INVENTORY

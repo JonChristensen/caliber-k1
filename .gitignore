@@ -4,3 +4,8 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .DS_Store
+
+# slicer scratch projects — only curated plates are tracked
+# (see exports/k1/print/plates/README.md for the curation rule)
+exports/**/*.3mf
+!exports/k1/print/plates/*.3mf

@@ -3,7 +3,7 @@
 *(Plain-English companion to `caliber_k1/revc.py` — the code is ~80 lines;
 this is the idea behind them.)*
 
-![The solver in three pictures](img/revc-solver.svg)
+![The solver in three pictures](images/revc-solver.svg)
 
 ## The trick that makes it all possible: forget the tooth shapes
 

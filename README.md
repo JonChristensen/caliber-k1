@@ -39,7 +39,7 @@ library rev B is built from.
 
 Milestone 1's barrel frame is PRINTED and bench-verified; rev A remains
 in-tree as the proving ground. Full review assembly:
-`exports/revb/review_full_movement_r10.step` (versioned; always grab
+`exports/k1/revb/review_full_movement_r13.step` (versioned; always grab
 the highest r-number).
 
 Scale: this is a desk-scale movement (Ø150 mm plate) — watch architecture at a
@@ -62,7 +62,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 Slice the STLs (or the STEPs directly) in Bambu Studio / your slicer of choice.
 Print settings and the metal-parts shopping list are in
-[docs/milestones/01-going-barrel.md](docs/milestones/01-going-barrel.md).
+[docs/k1/milestones/01-going-barrel.md](docs/k1/milestones/01-going-barrel.md).
 
 ## Repository layout
 
@@ -71,7 +71,7 @@ Print settings and the metal-parts shopping list are in
 - `caliber_k1/stand.py` — test-stand fixture
 - `caliber_k1/export.py` — regenerates all output files
 - `tests/` — geometry checks that run in CI before anything gets printed
-- `docs/milestones/` — build guides, print settings, BOMs
+- `docs/k1/milestones/` — build guides, print settings, BOMs
 - `docs/log/` — the engineering log (decisions and why)
 
 ## Licensing

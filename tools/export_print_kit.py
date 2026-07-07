@@ -1,12 +1,12 @@
 """The FDM print kit: every part as its own STL + a manifest with
-print profiles, orientation and support maps. Jon prints from exports/print/.
+print profiles, orientation and support maps. Jon prints from exports/k1/print/.
 
 The MANIFEST is GENERATED here — edit THIS file, never the .md by hand.
 `python tools/export_print_kit.py --manifest-only` rewrites just the
 manifest (fast check that the .md in git matches this source).
 
 Orientation + support notes are bench-proven (July 2026 first build):
-see docs/printing-guide.md for the reasoning behind each rule.
+see docs/k1/printing-guide.md for the reasoning behind each rule.
 """
 import os
 import sys
@@ -148,7 +148,7 @@ def manifest_rows():
 
 
 def write_manifest():
-    with open("exports/print/MANIFEST.md", "w") as f:
+    with open("exports/k1/print/MANIFEST.md", "w") as f:
         f.write(HEADER)
         for name, qty, cls, note in manifest_rows():
             f.write(f"| {name} | {qty} | {cls} | {note} |\n")
@@ -166,12 +166,12 @@ def export_stls():
     builders += [(f"arbor_post_{n}", (lambda L=(top - 0.1 - tip): dp.arbor_post_d(L)))
                  for (n, x, y, tip, top) in post_specs()]
     for name, fn in builders:
-        export_stl(fn(), f"exports/print/{name}.stl", tolerance=0.02)
+        export_stl(fn(), f"exports/k1/print/{name}.stl", tolerance=0.02)
     return len(builders)
 
 
 if __name__ == "__main__":
-    os.makedirs("exports/print", exist_ok=True)
+    os.makedirs("exports/k1/print", exist_ok=True)
     if "--manifest-only" in sys.argv:
         write_manifest()
         print(f"MANIFEST.md rewritten ({len(manifest_rows())} rows)")
